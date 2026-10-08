@@ -43,6 +43,9 @@ def _export(root, request, output, reference_rules=None):
     for rule in reference_rules or []:
         if rule["status"] not in ("reference_consensus", "official_disambiguation"): continue
         if rule["property"] == "body_columns" and rule["value"] != 2: raise StudioError("UNSUPPORTED_BODY_COLUMN_RULE")
+        supported={"table_lines":"three_line","table_caption_position":"above","figure_caption_position":"below"}
+        if rule["property"] in supported and rule["value"] != supported[rule["property"]]:
+            raise StudioError("UNSUPPORTED_REFERENCE_RULE: "+rule["property"])
         if rule["property"] == "english_abstract_position": profile["english_abstract_position"] = rule["value"]
         applied_rules.append(rule)
     write_json(output/"effective-profile.json", {**profile,"adopted_reference_rules":applied_rules})
@@ -100,5 +103,7 @@ def _export(root, request, output, reference_rules=None):
               "input_sha256": digest(source), "layout": layout, "docx": docx, "content": content, "pdfs": pdfs,
               "font_substitution": {"fonts": profile["fonts"], "exact_reference_match": False, "reason": "Open-source portable proof fonts"},
               "renderer": {"word_pdf": "LibreOffice compatibility rendering, not Microsoft Word native", "latex_pdf": "XeLaTeX"}}
+    report["implementation_version"] = __import__("studio").__version__
+    report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
     write_json(output/"acceptance.json", report)
     return report

@@ -74,6 +74,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \setlength{\tabcolsep}{3pt}
 \captionsetup[table]{position=top}
 \captionsetup[figure]{position=bottom}
+\captionsetup{labelformat=empty}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \newcommand{\passthrough}[1]{#1}
 \newenvironment{CSLReferences}[2]{\begin{list}{}{\setlength{\leftmargin}{1em}\setlength{\itemindent}{-1em}}\item[]}{\end{list}}

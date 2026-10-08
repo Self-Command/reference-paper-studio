@@ -5,7 +5,7 @@ import re
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt, Cm
+from docx.shared import Pt, Cm, RGBColor
 from lxml import etree
 from .runtime import StudioError, require_actions
 from .vendor.ptlib.apply import _apply_sectpr, _three_line
@@ -53,7 +53,10 @@ def metadata_paragraphs(meta, english=False):
             value = "; ".join(value)
         if value:
             prefix = ("Abstract: " if english else "摘要：") if key == "abstract" else ("Keywords: " if english else "关键词：") if key == "keywords" else ""
-            result.append(_paragraph(prefix + value, style))
+            paragraph=_paragraph(prefix + value, style)
+            if key in ("title","authors","affiliation"):
+                set_child(paragraph.find(qn("w:pPr")),"jc",{"w:val":"center"})
+            result.append(paragraph)
     return result
 
 
@@ -103,6 +106,8 @@ def apply_layout(path, metadata, profile, equations):
         style = ensure_style(doc, name)
         style.font.name = profile["fonts"]["latin"]
         style.font.size = Pt(profile["body_size_pt"] if name != "Title" else 16)
+        if name=="Title": style.font.bold=True
+        style.font.color.rgb = RGBColor(0,0,0)
         rpr = style.element.get_or_add_rPr()
         fonts = rpr.find(qn("w:rFonts"))
         if fonts is None: fonts = OxmlElement("w:rFonts"); rpr.append(fonts)
@@ -114,6 +119,7 @@ def apply_layout(path, metadata, profile, equations):
         style.font.name = profile["fonts"]["latin"]
         style.font.size = Pt(12 if i == 1 else 10.5)
         style.font.bold = True
+        style.font.color.rgb = RGBColor(0,0,0)
         fonts = style.element.get_or_add_rPr().find(qn("w:rFonts"))
         if fonts is None: fonts = OxmlElement("w:rFonts"); style.element.get_or_add_rPr().append(fonts)
         fonts.set(qn("w:eastAsia"), profile["fonts"]["cjk"])
@@ -152,7 +158,10 @@ def apply_layout(path, metadata, profile, equations):
     moved = move_table_captions(doc)
     for table in doc.tables:
         # Tables are data objects. Wide symbol tables need their own full-width section.
-        table._tbl.addprevious(section_break(2, profile))
+        before=table._tbl.getprevious()
+        if before is not None and before.tag==qn("w:p") and re.match(r"^(表\s*\d|Table\s+\d)","".join(t.text or "" for t in before.iter(qn("w:t")))):
+            before.addprevious(section_break(2, profile))
+        else: table._tbl.addprevious(section_break(2, profile))
         table._tbl.addnext(section_break(1, profile))
         _three_line(table, profile["tables"], None)
         # Pandoc can hardcode widths for a full page; recompute for the body column.
@@ -165,6 +174,13 @@ def apply_layout(path, metadata, profile, equations):
                         fonts = r._r.get_or_add_rPr().find(qn("w:rFonts"))
                         if fonts is None: fonts=OxmlElement("w:rFonts"); r._r.get_or_add_rPr().append(fonts)
                         fonts.set(qn("w:eastAsia"), profile["fonts"]["cjk"])
+    for element in original:
+        if element.tag==qn("w:p") and list(element.iter(qn("w:drawing"))):
+            element.addprevious(section_break(2, profile))
+            after=element.getnext()
+            if after is not None and after.tag==qn("w:p") and re.match(r"^(图\s*\d|Fig(?:ure)?\.?\s*\d)","".join(t.text or "" for t in after.iter(qn("w:t")))):
+                after.addnext(section_break(1, profile))
+            else: element.addnext(section_break(1, profile))
     if before_math != object_math(doc._element):
         raise StudioError("MATH_CHANGED_DURING_LAYOUT")
     doc.save(path)
