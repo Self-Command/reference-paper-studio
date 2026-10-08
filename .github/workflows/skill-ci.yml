@@ -19,6 +19,7 @@ jobs:
       - run: bash ci/setup.sh
       - run: python ci/validate_skill.py
       - run: python -m pytest -q --junitxml=build/test-results.xml
+      - run: python ci/probe_math.py
       - run: python ci/regression.py
       - run: python ci/package.py
       - run: git rev-parse HEAD > build/skill-commit.txt
@@ -36,6 +37,7 @@ jobs:
             build/model/latex/body.tex
             build/libreoffice-version.txt
             build/pandoc-version.txt
+            build/probe/comparison.png
           retention-days: 30
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
