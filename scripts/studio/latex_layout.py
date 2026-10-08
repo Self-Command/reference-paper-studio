@@ -72,6 +72,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \setlength{\parindent}{2em}
 \setlength{\emergencystretch}{1em}
 \setlength{\tabcolsep}{3pt}
+\setcounter{secnumdepth}{0}
 \captionsetup[table]{position=top}
 \captionsetup[figure]{position=bottom}
 \captionsetup{labelformat=empty}

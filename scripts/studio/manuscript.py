@@ -21,6 +21,11 @@ def walk(value):
 
 def text_of(value):
     if isinstance(value, dict):
+        # Short captions and image alt text are aliases, not repeated visible prose.
+        if value.get("t") == "Table":
+            return text_of(value["c"][1][1])+text_of(value["c"][3:])
+        if value.get("t") == "Figure":
+            return text_of(value["c"][1][1])
         if value.get("t") == "Str":
             return value["c"]
         if value.get("t") in ("Space", "SoftBreak", "LineBreak"):

@@ -26,16 +26,26 @@ def assert_text(left, right, label):
         raise StudioError(f"CONTENT_CHANGED {label} at {index}: {a[max(0,index-30):index+70]!r} != {b[max(0,index-30):index+70]!r}")
 
 
+def visible_docx(path):
+    # Read actual WordprocessingML text once. Pandoc's reader can repeat the
+    # caption as both a short/long alias; those aliases are not extra Word text.
+    with zipfile.ZipFile(path) as package:
+        xml=etree.fromstring(package.read("word/document.xml"))
+    return {"blocks":[{"t":"Str","c":"".join(t.text or "" for t in xml.iter(W+"t"))}]}
+
+
 def check_roundtrips(ast, baseline, final, latex_body, output):
     require_actions()
     baseline_ast = read_ast(baseline, "docx")
-    assert_text(ast, baseline_ast, "source -> native DOCX")
+    write_json(Path(output)/"docx-readback.json",baseline_ast)
+    assert_text(ast, visible_docx(baseline), "source -> native DOCX XML text")
     body_only_docx(final, Path(output)/"body-audit.docx")
     final_ast = read_ast(Path(output)/"body-audit.docx", "docx")
-    assert_text(ast, final_ast, "formatted DOCX")
+    assert_text(ast, visible_docx(Path(output)/"body-audit.docx"), "formatted DOCX XML text")
     if math_list(baseline_ast) != math_list(final_ast):
         raise StudioError("MATH_CHANGED: formatted DOCX readback")
     latex_ast = read_ast(latex_body, "latex")
+    write_json(Path(output)/"latex-readback.json",latex_ast)
     assert_text(ast, latex_ast, "LaTeX readback")
     if math_list(ast) != math_list(latex_ast):
         raise StudioError("MATH_CHANGED: LaTeX readback")

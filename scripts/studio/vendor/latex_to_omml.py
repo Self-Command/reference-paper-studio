@@ -10,7 +10,7 @@ def latex_to_omml(latex_string):
     Converts a LaTeX math string into Microsoft Word OMML (Office Math Markup Language) XML.
     Uses pandoc as the conversion engine.
     """
-    from ..runtime import require_actions
+    from studio.runtime import require_actions, StudioError
     require_actions()
     # Create a temporary directory to work in
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -24,11 +24,13 @@ def latex_to_omml(latex_string):
         # Run pandoc to convert the markdown with math into a docx file
         # Pandoc natively converts LaTeX math into OMML in docx output
         try:
-            subprocess.run(
+            result = subprocess.run(
                 ["pandoc", md_file, "-o", docx_file], 
                 check=True,
                 capture_output=True
             )
+            if b"[WARNING]" in result.stderr:
+                raise StudioError("FORMULA_CONVERSION_FAILED: "+result.stderr.decode("utf-8",errors="replace"))
         except subprocess.CalledProcessError as e:
             print("Error running pandoc. Ensure pandoc is installed.")
             print(e.stderr.decode("utf-8", errors="ignore"))
@@ -71,6 +73,8 @@ def latex_to_omml(latex_string):
 if __name__ == "__main__":
     if os.environ.get('GITHUB_ACTIONS') != 'true' or not os.environ.get('GITHUB_RUN_ID'):
         sys.exit('CLOUD_ONLY: formula conversion must run in GitHub Actions')
+    from pathlib import Path
+    sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
     if len(sys.argv) < 2:
         print("Usage: python latex_to_omml.py \"<latex_formula>\"")
         print("Example: python latex_to_omml.py \"E = mc^2\"")
