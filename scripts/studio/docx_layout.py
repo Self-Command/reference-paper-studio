@@ -5,7 +5,7 @@ import re
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt, Cm, RGBColor
+from docx.shared import Pt, Cm, RGBColor, Twips
 from lxml import etree
 from .runtime import StudioError, require_actions
 from .vendor.ptlib.apply import _apply_sectpr, _three_line
@@ -80,6 +80,7 @@ def configure_math_font(path, profile):
             position=1 if run.find(M+"rPr") is not None else 0
             run.insert(position,props)
         set_fonts(props,latin=profile["fonts"].get("math","Latin Modern Math"),cjk=profile["fonts"]["cjk"])
+        set_child(props,"sz",{"w:val":str(round(profile["body_size_pt"]*2))})
     doc.save(path)
 
 
@@ -131,6 +132,7 @@ def apply_layout(path, metadata, profile, equations):
         fonts = rpr.find(qn("w:rFonts"))
         if fonts is None: fonts = OxmlElement("w:rFonts"); rpr.append(fonts)
         fonts.set(qn("w:eastAsia"), profile["fonts"]["cjk"])
+        set_fonts(rpr,latin=profile["fonts"]["latin"],cjk=profile["fonts"]["cjk"])
         style.paragraph_format.space_after = Pt(3)
         style.paragraph_format.line_spacing = 1.08
     for i in range(1, 5):
@@ -142,6 +144,7 @@ def apply_layout(path, metadata, profile, equations):
         fonts = style.element.get_or_add_rPr().find(qn("w:rFonts"))
         if fonts is None: fonts = OxmlElement("w:rFonts"); style.element.get_or_add_rPr().append(fonts)
         fonts.set(qn("w:eastAsia"), profile["fonts"]["cjk"])
+        set_fonts(style.element.get_or_add_rPr(),latin=profile["fonts"]["latin"],cjk=profile["fonts"]["cjk"])
     displays = []
     for element in original:
         if element.tag == qn("w:p") and list(element.iter(M + "oMathPara")):
@@ -153,29 +156,37 @@ def apply_layout(path, metadata, profile, equations):
     for index, p in enumerate(displays):
         equation = equations[index]
         complex_formula = len(equation["source"]) > 105 or "\\begin" in equation["source"]
-        if complex_formula:
-            p.addprevious(section_break(2, profile)); p.addnext(section_break(1, profile))
-        ppr = p.find(qn("w:pPr"))
-        if ppr is None: ppr = OxmlElement("w:pPr"); p.insert(0, ppr)
-        tabs = OxmlElement("w:tabs")
-        width = 9300 if complex_formula else 4500
-        for val, position in [("center", width//2), ("right", width)]:
-            tab = OxmlElement("w:tab"); tab.set(qn("w:val"), val); tab.set(qn("w:pos"), str(position)); tabs.append(tab)
-        old = ppr.find(qn("w:tabs"))
-        if old is not None: ppr.remove(old)
-        ordered_tabs = set_child(ppr, "tabs")
-        for tab in list(tabs): ordered_tabs.append(tab)
-        for math_para in list(p.iter(M + "oMathPara")):
-            # Number and equation must share a Word paragraph. Preserve oMath exactly.
-            position = p.index(math_para)
-            for omath in list(math_para):
-                if omath.tag == M + "oMath": p.insert(position, omath); position += 1
-            p.remove(math_para)
-        leading = OxmlElement("w:r"); leading.append(OxmlElement("w:tab")); p.insert(1, leading)
+        # Equation tables are explicit layout objects, never data tables. Keeping
+        # oMathPara intact avoids tab/number wrapping and native display import bugs.
+        table=doc.add_table(rows=1,cols=2)
+        props=table._tbl.tblPr
+        set_child(props,"tblDescription",{"w:val":"RPS_EQUATION_LAYOUT"})
+        set_child(props,"tblLayout",{"w:type":"fixed"})
+        width=9300 if complex_formula else 4500
+        set_child(props,"tblW",{"w:w":str(width),"w:type":"dxa"})
+        borders=set_child(props,"tblBorders")
+        for edge in ("top","bottom","left","right","insideH","insideV"): set_child(borders,edge,{"w:val":"nil"})
+        table.autofit=False
+        for cell,column,cell_width in zip(table.rows[0].cells,table.columns,(width-650,650)):
+            column.width=Twips(cell_width);cell.width=Twips(cell_width)
+            set_child(cell._tc.get_or_add_tcPr(),"vAlign",{"w:val":"center"})
+        left=table.cell(0,0)
+        for paragraph in list(left._tc.findall(qn("w:p"))): left._tc.remove(paragraph)
+        p.addprevious(table._tbl)
+        left._tc.append(p)
+        ppr=p.find(qn("w:pPr"))
+        if ppr is None: ppr=OxmlElement("w:pPr");p.insert(0,ppr)
+        set_child(ppr,"jc",{"w:val":"center"})
         number = equation["id"] if profile["equation_numbering"] == "preserve" else str(index+1)
-        r = OxmlElement("w:r"); r.append(OxmlElement("w:tab")); t = OxmlElement("w:t"); t.text = f"({number})"; r.append(t); p.append(r)
+        label=table.cell(0,1).paragraphs[0];label.text=f"({number})";label.alignment=2
+        label.runs[0].font.size=Pt(profile["body_size_pt"])
+        set_fonts(label.runs[0]._r.get_or_add_rPr(),latin=profile["fonts"]["latin"],cjk=profile["fonts"]["cjk"])
+        set_child(table.rows[0]._tr.get_or_add_trPr(),"cantSplit")
+        if complex_formula:
+            table._tbl.addprevious(section_break(2,profile));table._tbl.addnext(section_break(1,profile))
     moved = move_table_captions(doc)
     for table in doc.tables:
+        if is_equation_table(table._tbl): continue
         # Tables are data objects. Wide symbol tables need their own full-width section.
         before=table._tbl.getprevious()
         if before is not None and before.tag==qn("w:p") and re.match(r"^(表\s*\d|Table\s+\d)","".join(t.text or "" for t in before.iter(qn("w:t")))):
@@ -193,6 +204,7 @@ def apply_layout(path, metadata, profile, equations):
                         fonts = r._r.get_or_add_rPr().find(qn("w:rFonts"))
                         if fonts is None: fonts=OxmlElement("w:rFonts"); r._r.get_or_add_rPr().append(fonts)
                         fonts.set(qn("w:eastAsia"), profile["fonts"]["cjk"])
+                        set_fonts(r._r.get_or_add_rPr(),latin=profile["fonts"]["latin"],cjk=profile["fonts"]["cjk"])
     for element in original:
         if element.tag==qn("w:p") and list(element.iter(qn("w:drawing"))):
             element.addprevious(section_break(2, profile))
@@ -220,8 +232,16 @@ def body_only_docx(source, target):
             active=False; body.remove(element); continue
         if not active:
             body.remove(element); continue
+        if is_equation_table(element):
+            paragraph=element.find(qn("w:tr")).find(qn("w:tc")).find(qn("w:p"))
+            element.addprevious(paragraph);body.remove(element);element=paragraph
         if list(element.iter(M+"oMath")):
             for r in list(element.findall(qn("w:r"))):
                 text="".join(t.text or "" for t in r.iter(qn("w:t")))
                 if r.find(qn("w:tab")) is not None and re.fullmatch(r"\([\w.:-]+\)", text): element.remove(r)
     doc.save(target)
+
+
+def is_equation_table(element):
+    description=element.find(qn("w:tblPr")+"/"+qn("w:tblDescription"))
+    return description is not None and description.get(qn("w:val"))=="RPS_EQUATION_LAYOUT"

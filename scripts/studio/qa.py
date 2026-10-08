@@ -8,7 +8,7 @@ from docx import Document
 import pdfplumber
 from .runtime import StudioError, require_actions, run, digest, write_json
 from .manuscript import normalized_text, walk
-from .docx_layout import body_only_docx, M, W
+from .docx_layout import body_only_docx, is_equation_table, M, W
 
 
 def read_ast(path, fmt):
@@ -99,13 +99,14 @@ def check_docx(path):
     if 1 not in columns or 2 not in columns:
         raise StudioError("MIXED_COLUMNS_LOST")
     for table in doc.tables:
+        if is_equation_table(table._tbl): continue
         for edge in table._tbl.iter():
             if etree.QName(edge).localname in ("left", "right", "insideV", "start", "end") and edge.get(W+"val") not in (None, "nil", "none", "0"):
                 raise StudioError("TABLE_VERTICAL_BORDER")
         after = table._tbl.getnext()
         if after is not None and re.match(r"^(表\s*\d|Table\s+\d)", "".join(t.text or "" for t in after.iter(W+"t"))):
             raise StudioError("TABLE_CAPTION_BELOW")
-    return {"section_columns": columns, "data_tables": len(doc.tables), "three_line_tables": "checked"}
+    return {"section_columns": columns, "data_tables": sum(not is_equation_table(t._tbl) for t in doc.tables), "equation_layouts":sum(is_equation_table(t._tbl) for t in doc.tables), "three_line_tables": "checked"}
 
 
 def check_fonts(profile):
