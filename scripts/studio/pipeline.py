@@ -58,6 +58,12 @@ def _export(root, request, output, reference_rules=None):
     if ast["blocks"] and ast["blocks"][0].get("t")=="Header" and ast["blocks"][0]["c"][0]==1 and text_of(ast["blocks"][0])==meta.get("title_zh"):
         promoted_title=text_of(ast["blocks"].pop(0))
     object_map = resolve_crossrefs(ast, equations, profile["equation_numbering"])
+    if request.get("document_kind")=="paper" and any(r["property"]=="bilingual_captions" and r["value"] is True for r in applied_rules):
+        for node in walk(ast):
+            if node.get("t") in ("Table","Figure"):
+                caption=text_of(node["c"][1][1])
+                if not re.search(r"\b(?:Table|Fig\.?|Figure)\s*\d",caption):
+                    raise StudioError("BILINGUAL_CAPTION_REQUIRED: "+node["t"]+"; provide and verify the English caption")
     validate_assets(ast, root); validate_references(ast)
     if request.get("expected_equations") is not None and len(equations) != request["expected_equations"]:
         raise StudioError("EQUATION_COUNT_CHANGED")

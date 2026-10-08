@@ -11,4 +11,6 @@ for folder in ("agents","assets","references","scripts","third_party"):
     allowed += [p for p in (root/folder).rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix!=".pyc"]
 with zipfile.ZipFile(output,"w",zipfile.ZIP_DEFLATED) as package:
     for p in sorted(allowed): package.write(p,"reference-paper-studio/"+p.relative_to(root).as_posix())
+    for name in ("reference-rules.md","reference-report.json"):
+        package.write(root/"build/reference-analysis"/name,"reference-paper-studio/references/baseline-"+name)
 write_json(root/"build/package-manifest.json",{"file":output.name,"sha256":digest(output),"excluded":"private reference PDFs, model fixtures, task files, tests and build outputs","files":len(allowed)})
