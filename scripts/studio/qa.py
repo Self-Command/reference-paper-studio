@@ -56,7 +56,19 @@ def check_equation_visibility(path, identifiers):
                 identifier=word["text"].strip("()")
                 if word["text"] != f"({identifier})" or identifier not in identifiers: continue
                 center=(word["top"]+word["bottom"])/2
-                glyphs=[c for c in page.chars if c["text"].strip() and 45 < c["x0"] and c["x1"] < word["x0"]-5 and abs((c["top"]+c["bottom"])/2-center)<6]
+                # A native OMML cases/aligned expression can occupy several
+                # baselines while its right-side number is emitted on only
+                # one baseline.  Keep the horizontal relationship strict,
+                # but allow the expression's measured line span.  The
+                # number itself is excluded from candidates, so a missing
+                # formula still produces no evidence.
+                nearby=[c for c in page.chars if c["text"].strip() and 45 < c["x0"] and c["x1"] < word["x0"]-5]
+                if nearby:
+                    tops=[c["top"] for c in nearby]; bottoms=[c["bottom"] for c in nearby]
+                    line_span=max(6, min(36, max(bottoms)-min(tops)+2))
+                else:
+                    line_span=6
+                glyphs=[c for c in nearby if abs((c["top"]+c["bottom"])/2-center)<line_span]
                 found[identifier]={"page":number,"formula_line_glyphs":len(glyphs)}
     missing=[label for label in identifiers if label not in found or found[label]["formula_line_glyphs"]==0]
     write_json(Path(path).parent/"equation-visibility.json",{"equations":found,"missing":missing})
