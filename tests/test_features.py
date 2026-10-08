@@ -10,7 +10,7 @@ from studio.references import resolve_rules, inspect_pdf
 from studio.manuscript import parse, validate_assets, validate_references, model_gate, resolve_crossrefs
 from studio.docx_layout import move_table_captions, apply_layout
 from studio.pipeline import strict_pandoc
-from studio.qa import check_fonts, check_docx, assert_text
+from studio.qa import check_fonts, check_docx, assert_text, check_equation_visibility, latex_reader_copy
 from studio.vendor.latex_to_omml import latex_to_omml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -140,3 +140,30 @@ def test_results_section_needs_source_data(tmp_path):
     evidence={"status":"passed","author_approved":True,"model":"paper.md","report":"report.md","model_sha256":digest(tmp_path/"paper.md"),"report_sha256":digest(tmp_path/"report.md")}
     (tmp_path/"evidence.json").write_text(json.dumps(evidence))
     with pytest.raises(StudioError,match="RESULTS_WITHOUT_DATA"): model_gate(tmp_path,"paper.md","evidence.json",True)
+
+
+def test_real_invisible_math_pdf_regression():
+    with pytest.raises(StudioError,match="WORD_PDF_MATH_NOT_VISIBLE"):
+        check_equation_visibility(ROOT/"fixtures/regressions/invisible-math.pdf",[f"M{i}" for i in range(1,31)])
+
+
+def test_only_identical_repeated_page_headers_normalized(tmp_path):
+    source=tmp_path/"tables.tex"
+    first=r"\begin{longtable}{ll}\toprule A&B\\\endhead 1&2\\\end{longtable}"
+    second=r"\begin{longtable}{ll}\toprule X&Y\\\midrule\endfirsthead\toprule X&Y\\\midrule\endhead 3&4\\\end{longtable}"
+    source.write_text(first+second)
+    result=latex_reader_copy(source,tmp_path).read_text()
+    assert result.count("X&Y")==1 and "A&B" in result and "3&4" in result
+    source.write_text(second.replace(r"\endfirsthead\toprule X&Y",r"\endfirsthead\toprule X&Z"))
+    with pytest.raises(StudioError,match="UNEXPECTED_REPEATED_TABLE_HEADER"): latex_reader_copy(source,tmp_path)
+
+
+def test_citeproc_numeric_and_missing_keys(tmp_path):
+    source=tmp_path/"cite.md"; source.write_text("A reference [@yuan2007].")
+    bibliography=tmp_path/"references.json"
+    bibliography.write_text(json.dumps([{"id":"yuan2007","type":"paper-conference","title":"Allocating dynamic time-spectrum blocks in cognitive radio networks","author":[{"family":"Yuan","given":"Y"}],"issued":{"date-parts":[[2007]]}}]))
+    result=strict_pandoc(["pandoc",source,"-t","plain","--citeproc","--bibliography",bibliography,"--csl",ROOT/"assets/numbered.csl"])
+    assert "[1]" in result and "Allocating dynamic" in result
+    source.write_text("Missing [@unknown-studio-key].")
+    with pytest.raises(StudioError,match="CONVERSION_FAILED"):
+        strict_pandoc(["pandoc",source,"-t","plain","--citeproc","--bibliography",bibliography])
