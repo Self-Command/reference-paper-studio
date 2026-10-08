@@ -23,6 +23,15 @@ def strict_pandoc(args, cwd=None):
 
 def export(root, request, output, reference_rules=None):
     require_actions()
+    try:
+        return _export(root, request, output, reference_rules)
+    except Exception as error:
+        write_json(Path(output)/"acceptance.json", {"build":"failed", "automatic_acceptance":"failed", "visual_review":"not_available", "error":str(error), "exception_type":type(error).__name__})
+        raise
+
+
+def _export(root, request, output, reference_rules=None):
+    require_actions()
     root, output = Path(root).resolve(), Path(output).resolve(); output.mkdir(parents=True, exist_ok=True)
     source = confined(root, request["manuscript"])
     meta = json.loads(confined(root, request["metadata"]).read_text(encoding="utf-8"))
@@ -55,7 +64,16 @@ def export(root, request, output, reference_rules=None):
         write_json(output/"document.json", ast)
     write_json(output/"document.json", ast)
     baseline, final = output/"native.docx", output/"manuscript.docx"
-    strict_pandoc(["pandoc", output/"document.json", "-f", "json", "-o", baseline, "--resource-path", root])
+    try:
+        strict_pandoc(["pandoc", output/"document.json", "-f", "json", "-o", baseline, "--resource-path", root])
+    except StudioError as error:
+        bad=[]
+        for index, node in enumerate(n for n in walk(ast) if n.get("t") == "Math"):
+            probe=output/"formula-probe.md"; probe.write_text("$$"+node["c"][1]+"$$",encoding="utf-8")
+            try: strict_pandoc(["pandoc",probe,"-o",output/"formula-probe.docx"])
+            except StudioError:
+                bad.append({"math_index":index+1,"expression":node["c"][1]})
+        raise StudioError(f"{error}\nFORMULA_LOCATIONS: {bad}") from error
     shutil.copy2(baseline, final)
     layout = apply_layout(final, meta, profile, equations)
     texdir = output/"latex"

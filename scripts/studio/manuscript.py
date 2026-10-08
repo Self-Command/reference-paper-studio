@@ -25,6 +25,10 @@ def text_of(value):
             return value["c"]
         if value.get("t") in ("Space", "SoftBreak", "LineBreak"):
             return " "
+        if value.get("t") == "Quoted":
+            left, right = ("“", "”") if value["c"][0]["t"] == "DoubleQuote" else ("‘", "’")
+            return left + text_of(value["c"][1]) + right
+        if value.get("t") == "Code": return value["c"][1]
         return "".join(text_of(v) for v in value.values())
     if isinstance(value, list):
         return "".join(text_of(v) for v in value)
@@ -154,4 +158,7 @@ def model_gate(root, source, evidence, paper=False):
     for claim in record.get("quantitative_claims", []):
         if not claim.get("source") or not claim.get("sha256") or digest(confined(root, claim["source"])) != claim["sha256"]:
             raise StudioError("CLAIM_WITHOUT_EVIDENCE")
+    paper_text=confined(root, source).read_text(encoding="utf-8")
+    if re.search(r"^#{1,6}\s+.*(?:实验结果|仿真结果|实证结果|结果与分析)",paper_text,re.M) and not record.get("quantitative_claims"):
+        raise StudioError("RESULTS_WITHOUT_DATA: empirical results need explicit source-bound claims")
     return {"status": "evidence_bound", "mathematical_validation": "author_supplied_report", "evidence": record}

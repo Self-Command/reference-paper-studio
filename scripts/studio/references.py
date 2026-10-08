@@ -65,6 +65,10 @@ def analyze(root, evidence_path, output):
     for source in evidence["sources"]:
         path = confined(root, source["path"])
         sources[source["id"]] = {**source, "inspection": inspect_pdf(path, source.get("pages"))}
+        if evidence.get("render_previews", False):
+            folder=Path(output)/"previews"/source["id"]; folder.mkdir(parents=True,exist_ok=True)
+            for page in source.get("pages",[]):
+                run(["pdftoppm","-f",str(page),"-l",str(page),"-r","85","-png","-singlefile",path.resolve(),folder.resolve()/f"page-{page}"])
     observations = []
     for item in evidence["observations"]:
         if item["source"] not in sources:
@@ -96,6 +100,13 @@ def analyze(root, evidence_path, output):
     write_json(Path(output) / "reference-report.json", report)
     lines = ["# 参考论文规则档案", "", "| 项目 | 采用值 | 来源状态 |", "|---|---|---|"]
     lines += [f"| {r['property']} | {r['value']} | {r['status']} |" for r in rules]
-    lines += ["", "每项来源、页码、指纹和差异见 reference-report.json。未观察项目保持未确认。"]
+    for row in rules:
+        lines += ["",f"## {row['property']}","",f"采用理由：{row.get('adopted_reason','未确认')}。置信度：{row.get('confidence','未确认')}。"]
+        for observation in row["observations"]:
+            lines += [f"- {observation['source']}，第 {','.join(map(str,observation['pages']))} 页：{observation.get('observation',observation['value'])} 值：{observation['value']}；范围：{observation.get('scope','未说明')}；质量：{observation['quality']}；SHA-256：{observation['source_sha256']}。"]
+        if row.get("official_evidence"):
+            official=row["official_evidence"]
+            lines += [f"- 差异消歧：{official['source']}，第 {','.join(map(str,official['pages']))} 页；{official.get('observation','')}；SHA-256：{official['source_sha256']}。"]
+    lines += ["", "未确认项目："+"、".join(evidence.get("unknown_properties",[])), "", "完整结构化证据见 reference-report.json。"]
     Path(output, "reference-rules.md").write_text("\n".join(lines), encoding="utf-8")
     return report
