@@ -3,7 +3,28 @@ from pathlib import Path
 import json
 import re
 from .runtime import require_actions, run
-from .manuscript import latex_ast
+from .manuscript import latex_ast, walk
+
+
+def portable_table_columns(body, ast):
+    # Pandoc 3.1's calculated p{(...)*\\real{...}} cannot be read back by its
+    # LaTeX reader. Use ordinary p-width columns, retaining the entire table body.
+    tables=[n for n in walk(ast) if n.get("t")=="Table"]
+    offset=0
+    for table in tables:
+        match=re.search(r"\\begin\{longtable\}(?:\[[^\]]*\])?",body[offset:])
+        if not match: raise ValueError("Missing LaTeX table")
+        start=offset+match.end()
+        while body[start].isspace(): start+=1
+        if body[start]!="{": raise ValueError("Missing LaTeX table column specification")
+        depth=1; end=start+1
+        while depth:
+            if body[end]=="{" and body[end-1]!="\\": depth+=1
+            elif body[end]=="}" and body[end-1]!="\\": depth-=1
+            end+=1
+        count=len(table["c"][2]); spec="{@{}"+"".join("p{"+str(round(.94/count,4))+r"\linewidth}" for _ in range(count))+"@{}}"
+        body=body[:start]+spec+body[end:]; offset=start+len(spec)
+    return body
 
 
 def escape(text):
@@ -31,6 +52,7 @@ def write_latex(ast, equations, metadata, profile, output):
     data=latex_ast(ast,equations,profile["equation_numbering"])
     ast_path=output/"source.json";ast_path.write_text(json.dumps(data,ensure_ascii=False),encoding="utf-8")
     body=run(["pandoc",ast_path,"-f","json","-t","latex","--wrap=none"])
+    body=portable_table_columns(body, ast)
     (output/"body.tex").write_text(body, encoding="utf-8")
     # Keep table/figure captions on the agreed sides regardless of Pandoc defaults.
     page=profile["page"]["margin_cm"]
@@ -40,7 +62,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \setCJKmainfont{CJKFONT}
 \usepackage[top=TOPcm,bottom=BOTTOMcm,left=LEFTcm,right=RIGHTcm]{geometry}
 \usepackage{amsmath,amssymb,mathtools,graphicx,booktabs,longtable,array,multirow}
-\usepackage{multicol,caption,hyperref,xcolor,calc,etoolbox,enumitem}
+\usepackage{multicol,caption,hyperref,xurl,xcolor,calc,etoolbox,enumitem}
 \usepackage{unicode-math}
 \setmathfont{Latin Modern Math}
 \setlength{\LTpre}{0pt}
@@ -62,6 +84,8 @@ def write_latex(ast, equations, metadata, profile, output):
 \begin{document}
 """
     preamble=preamble.replace("LATINFONT",profile["fonts"]["latin"]).replace("CJKFONT",profile["fonts"]["cjk"])
+    preamble=preamble.replace("[10pt,a4paper]", f"[{profile['body_size_pt']}pt,a4paper]")
+    preamble=preamble.replace(r"\columnsep}{0.6cm}",r"\columnsep}{"+str(profile["page"].get("column_spacing_cm",0.6))+"cm}")
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
     # Use multicol for prose; displays/tables use full-width breaks for readability.
     pattern=r"(\\\[.*?\\\]|\\begin\{longtable\}.*?\\end\{longtable\}|\\begin\{figure\}.*?\\end\{figure\})"

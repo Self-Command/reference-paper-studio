@@ -81,8 +81,6 @@ def _export(root, request, output, reference_rules=None):
     for node in walk(ast):
         if node.get("t") == "Image":
             relative = node["c"][-1][0]; target = confined(texdir, relative); target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(confined(root, relative), target)
-    content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
-    docx = check_docx(final)
     for _ in range(2):
         run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", "-file-line-error", "main.tex"], cwd=texdir, timeout=300)
     log = (texdir/"main.log").read_text(encoding="utf-8", errors="replace")
@@ -94,6 +92,8 @@ def _export(root, request, output, reference_rules=None):
     if not (output/"manuscript.pdf").exists(): raise StudioError("DOCX_RENDER_FAILED")
     (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
     pdfs = {name: inspect_output_pdf(output/name, output/"previews"/name.removesuffix(".pdf")) for name in ("latex-proof.pdf", "word-compat-proof.pdf")}
+    content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
+    docx = check_docx(final)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
     write_json(output/"reference-map.json", {"equations": mapping, "literature": "shared resolved AST", "objects": object_map})
     report = {"build": "passed", "automatic_acceptance": "passed", "visual_review": "pending", "model_gate": gate,

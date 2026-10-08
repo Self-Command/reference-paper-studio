@@ -127,3 +127,16 @@ def test_crossrefs_share_numbering():
 def test_broken_crossref_fails():
     with pytest.raises(StudioError,match="BROKEN_CROSS_REFERENCE"):
         resolve_crossrefs({"blocks":[{"t":"Str","c":"{{eq:Missing}}"}]},[],"preserve")
+
+
+def test_quoted_prose_is_preserved_in_semantic_check():
+    from studio.manuscript import text_of
+    assert text_of({"t":"Quoted","c":[{"t":"DoubleQuote"},[{"t":"Str","c":"时移0"}]]})=="“时移0”"
+
+
+def test_results_section_needs_source_data(tmp_path):
+    (tmp_path/"paper.md").write_text("# 实验结果\n效率提高97%",encoding="utf-8")
+    (tmp_path/"report.md").write_text("review")
+    evidence={"status":"passed","author_approved":True,"model":"paper.md","report":"report.md","model_sha256":digest(tmp_path/"paper.md"),"report_sha256":digest(tmp_path/"report.md")}
+    (tmp_path/"evidence.json").write_text(json.dumps(evidence))
+    with pytest.raises(StudioError,match="RESULTS_WITHOUT_DATA"): model_gate(tmp_path,"paper.md","evidence.json",True)

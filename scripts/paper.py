@@ -33,7 +33,7 @@ def submit(args):
     root = Path(args.root).resolve()
     spec = json.loads(Path(args.request).read_text(encoding="utf-8-sig"))
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,62}", spec["id"]): raise ValueError("Invalid task id")
-    if spec["stage"] not in ("reference", "review", "export"): raise ValueError("Invalid stage")
+    if spec["stage"] not in ("reference", "review", "export", "visual"): raise ValueError("Invalid stage")
     if not spec.get("files") or len(set(spec["files"])) != len(spec["files"]): raise ValueError("Explicit unique file list required")
     sources = [(name, safe_input(root, name)) for name in spec["files"]]
     info = json.loads(command(["gh", "repo", "view", args.repo, "--json", "isPrivate,defaultBranchRef"]))
@@ -55,7 +55,10 @@ def submit(args):
         command(["git", "-c", "user.name=reference-paper-studio", "-c", "user.email=studio@users.noreply.github.com", "commit", "-m", "Submit document task "+spec["id"]], checkout)
         commit = command(["git", "rev-parse", "HEAD"], checkout)
         command(["git", "push", "origin", "HEAD"], checkout)
-    command(["gh", "workflow", "run", "document-task.yml", "--repo", args.repo, "--ref", info["defaultBranchRef"]["name"], "-f", "task_id="+spec["id"], "-f", "input_commit="+commit, "-f", "request_path=.requests/"+spec["id"]+"/request.json"])
+    dispatch=["gh", "workflow", "run", "document-task.yml", "--repo", args.repo, "--ref", info["defaultBranchRef"]["name"], "-f", "task_id="+spec["id"], "-f", "input_commit="+commit, "-f", "request_path=.requests/"+spec["id"]+"/request.json", "-f", "phase="+spec["stage"]]
+    if spec["stage"] == "visual":
+        dispatch += ["-f","artifact_run="+str(spec["artifact_run"]),"-f","artifact_name="+spec.get("artifact_name","document-task")]
+    command(dispatch)
     return {"task_id": spec["id"], "input_commit": commit, "input_files": spec["files"], "status": "dispatched", "runs_url": "https://github.com/"+args.repo+"/actions/workflows/document-task.yml"}
 
 
