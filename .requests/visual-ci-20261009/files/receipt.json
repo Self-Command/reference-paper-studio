@@ -1,0 +1,151 @@
+{
+  "run_id": "37822072496",
+  "reviewer": "Codex visual inspection",
+  "status": "passed",
+  "artifacts": [
+    {
+      "sha256": "929b86a042ac067e345b21ff4634bb8fced400d95b412241f0d5ed37e2bdc3dd",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/word-compat-proof.pdf"
+    },
+    {
+      "sha256": "fe18e06d00fc27930851414dbb890674ecd3a753b2a75c810699ea6ec3d95ef7",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-01.png"
+    },
+    {
+      "sha256": "e4770728064c209aa40d948358f22c5b65d9ddc96b9f1cc44a4b8b86d4c992d3",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-02.png"
+    },
+    {
+      "sha256": "4a2edea4ca168231d468f5e05dc2f517f5689c7350f554a1b9589df4819a1eca",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-03.png"
+    },
+    {
+      "sha256": "434b54b9b2d742cc7c1dbd82f451e22ec173cb39d58ba6caebb02db0a23212d8",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-04.png"
+    },
+    {
+      "sha256": "27f1cdcd1bf5cf2f941ab9d2d3cbd863046950fe3e0473d3ca984f2ad1ae5556",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-05.png"
+    },
+    {
+      "sha256": "482836e3c510d173f42d57c60356b6333367a9330c9cb47b3962a6ac551ce98e",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-06.png"
+    },
+    {
+      "sha256": "0a9332716d4d7cc4ea34b9dfd8bd11853867b231f1ecf7b3814116c4193f0fc2",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-07.png"
+    },
+    {
+      "sha256": "bdf21a65ea3bed111c9100b19bd5f43f42847f27bfb2cecc5e7b1ef68c06e4dd",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-08.png"
+    },
+    {
+      "sha256": "cedb32ce944ddcd99d3369c6b9440c956f40ba07ab3dbbbe508c6482fd329af7",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-09.png"
+    },
+    {
+      "sha256": "935df1531ee4bdf10b73e34b3f2a2a1104c21e1f99a600cbcd5e0df424062b93",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/word-compat-proof/page-10.png"
+    },
+    {
+      "sha256": "0146c502e59a4e2991e80e0a815d0452b295b0d22940f11c4b98ddae8e511f91",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/latex-proof.pdf"
+    },
+    {
+      "sha256": "20d496818fbafd4ab2da5d31c62001723ea24703617bb6db028833822ba21521",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-1.png"
+    },
+    {
+      "sha256": "f9f3d08e88f859d3263e389f75d822f0f9551cbb3e4b20f6137ef64c71706844",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-2.png"
+    },
+    {
+      "sha256": "006e0f140d3b538c6b1018011cc6ed768c40c08956ff397356369751eb52730b",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-3.png"
+    },
+    {
+      "sha256": "705433eecc836e77fcfbdbec8ac917fefc7d4a016aaba8efc7e0b1faa7ed21e4",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-4.png"
+    },
+    {
+      "sha256": "550f1e8f1e341fe3bd75f2ef6a0a7422244a61fc51d94e17be8819ad6687d054",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-5.png"
+    },
+    {
+      "sha256": "20fae747761ee8f11e382c0183762addafbd481626070bd237ef2092b7b7e264",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-6.png"
+    },
+    {
+      "sha256": "84130a31aec432e91e83abe0af1e1e77a512e20634c317198b7a7c0b38ff6844",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "model/previews/latex-proof/page-7.png"
+    },
+    {
+      "sha256": "968388bda67afe55bd02411ac9f7b43aa56ddea262bbd2137f5a29192302aff8",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "objects-end/word-compat-proof.pdf"
+    },
+    {
+      "sha256": "ff4bda3599413c4fcbb2a85c5d23a48e159996048d3873afa9f16850d563240b",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "objects-end/previews/word-compat-proof/page-1.png"
+    },
+    {
+      "sha256": "962aff8928477e6f3a9b606bf4ccfd2ccbfa62653d23dd4f1345d62653070b3a",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "objects-end/previews/word-compat-proof/page-2.png"
+    },
+    {
+      "sha256": "7fb41657178fd0490fa16f8a44d4ef0eb85c6170644c2e0149fa4352c07c00da",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "objects-end/latex-proof.pdf"
+    },
+    {
+      "sha256": "73f18ca3a9b76589c8fe76e5e67e5989bb4ab6c35d38b8392680667764aa3ec1",
+      "reviewed": true,
+      "unresolved_findings": [],
+      "path": "objects-end/previews/latex-proof/page-1.png"
+    }
+  ]
+}
