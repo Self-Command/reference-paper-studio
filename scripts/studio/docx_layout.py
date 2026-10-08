@@ -10,6 +10,7 @@ from lxml import etree
 from .runtime import StudioError, require_actions
 from .vendor.ptlib.apply import _apply_sectpr, _three_line
 from .vendor.ptlib.ooxml import set_child, set_fonts
+from .vendor.ptlib.units import page_size, cm_to_twips
 
 M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -88,6 +89,7 @@ def move_table_captions(doc):
     """Repair only adjacent, identified caption blocks; never infer from all drawings."""
     moved = 0
     for table in doc.tables:
+        if is_equation_table(table._tbl): continue
         following = table._tbl.getnext()
         if following is not None and following.tag == qn("w:p"):
             text = "".join(following.itertext())
@@ -162,7 +164,9 @@ def apply_layout(path, metadata, profile, equations):
         props=table._tbl.tblPr
         set_child(props,"tblDescription",{"w:val":"RPS_EQUATION_LAYOUT"})
         set_child(props,"tblLayout",{"w:type":"fixed"})
-        width=9300 if complex_formula else 4500
+        margins=profile["page"]["margin_cm"]
+        full_width=page_size(profile["page"].get("size","a4"))[0]-cm_to_twips(margins["left"]+margins["right"])
+        width=full_width if complex_formula else (full_width-cm_to_twips(profile["page"].get("column_spacing_cm",.6)))//2
         set_child(props,"tblW",{"w:w":str(width),"w:type":"dxa"})
         borders=set_child(props,"tblBorders")
         for edge in ("top","bottom","left","right","insideH","insideV"): set_child(borders,edge,{"w:val":"nil"})

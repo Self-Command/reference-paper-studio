@@ -59,6 +59,7 @@ def check_equation_visibility(path, identifiers):
                 glyphs=[c for c in page.chars if c["text"].strip() and 45 < c["x0"] and c["x1"] < word["x0"]-5 and abs((c["top"]+c["bottom"])/2-center)<6]
                 found[identifier]={"page":number,"formula_line_glyphs":len(glyphs)}
     missing=[label for label in identifiers if label not in found or found[label]["formula_line_glyphs"]==0]
+    write_json(Path(path).parent/"equation-visibility.json",{"equations":found,"missing":missing})
     if missing: raise StudioError("WORD_PDF_MATH_NOT_VISIBLE: "+", ".join(missing))
     return found
 
