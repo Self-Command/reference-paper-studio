@@ -64,6 +64,25 @@ def object_math(element):
     return [etree.tostring(m, method="c14n") for m in element.iter(M + "oMath")]
 
 
+def configure_math_font(path, profile):
+    require_actions()
+    doc=Document(path)
+    settings=doc.settings.element
+    math=settings.find(M+"mathPr")
+    if math is None: math=OxmlElement("m:mathPr"); settings.append(math)
+    font=math.find(M+"mathFont")
+    if font is None: font=OxmlElement("m:mathFont"); math.insert(0,font)
+    font.set(qn("m:val"),profile["fonts"].get("math","Latin Modern Math"))
+    for run in doc._element.iter(M+"r"):
+        props=run.find(qn("w:rPr"))
+        if props is None:
+            props=OxmlElement("w:rPr")
+            position=1 if run.find(M+"rPr") is not None else 0
+            run.insert(position,props)
+        set_fonts(props,latin=profile["fonts"].get("math","Latin Modern Math"),cjk=profile["fonts"]["cjk"])
+    doc.save(path)
+
+
 def move_table_captions(doc):
     """Repair only adjacent, identified caption blocks; never infer from all drawings."""
     moved = 0

@@ -34,6 +34,18 @@ def visible_docx(path):
     return {"blocks":[{"t":"Str","c":"".join(t.text or "" for t in xml.iter(W+"t"))}]}
 
 
+def latex_reader_copy(source, output):
+    text=Path(source).read_text(encoding="utf-8")
+    pattern=r"(\\toprule.*?)(\\endfirsthead)(.*?)(\\endhead)"
+    def remove_repeated_header(match):
+        first, second=match.group(1).strip(),match.group(3).strip()
+        if first != second: raise StudioError("UNEXPECTED_REPEATED_TABLE_HEADER")
+        return first+"\n"+match.group(4)
+    text=re.sub(pattern,remove_repeated_header,text,flags=re.S)
+    path=Path(output)/"latex-reader-input.tex";path.write_text(text,encoding="utf-8")
+    return path
+
+
 def check_roundtrips(ast, baseline, final, latex_body, output):
     require_actions()
     baseline_ast = read_ast(baseline, "docx")
@@ -44,7 +56,7 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     assert_text(ast, visible_docx(Path(output)/"body-audit.docx"), "formatted DOCX XML text")
     if math_list(baseline_ast) != math_list(final_ast):
         raise StudioError("MATH_CHANGED: formatted DOCX readback")
-    latex_ast = read_ast(latex_body, "latex")
+    latex_ast = read_ast(latex_reader_copy(latex_body, output), "latex")
     write_json(Path(output)/"latex-readback.json",latex_ast)
     assert_text(ast, latex_ast, "LaTeX readback")
     if math_list(ast) != math_list(latex_ast):
@@ -57,6 +69,7 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
         raise StudioError("FORMULA_CONVERSION_FAILED: native equation count")
     result = {"prose_numbers_tables_references": "exact_visible_text", "latex_math": "source_expression_preserved",
               "docx_math": "native_OMML_unchanged_and_readback_equal", "math_count": expected,
+              "reader_normalization":"Identical longtable repeated-page headers are read once; actual Word XML text is used instead of duplicated reader caption aliases.",
               "limitation": "Preservation checks do not prove mathematical correctness."}
     write_json(Path(output)/"content-report.json", result)
     return result
@@ -97,6 +110,8 @@ def inspect_output_pdf(path, preview_dir):
             if "\ufffd" in text: raise StudioError(f"REPLACEMENT_CHARACTER {path.name}:{index}")
             outside = [c for c in page.chars if c["x0"] < -1 or c["x1"] > page.width+1 or c["top"] < -1 or c["bottom"] > page.height+1]
             if outside: raise StudioError(f"PAGE_CLIPPING {path.name}:{index}: {len(outside)} glyphs")
+            if any(i["x0"] < -1 or i["x1"] > page.width+1 or i["top"] < -1 or i["bottom"] > page.height+1 for i in page.images):
+                raise StudioError(f"IMAGE_CLIPPING {path.name}:{index}")
             pages.append({"page": index, "characters": len(text), "fonts": sorted({c.get("fontname", "") for c in page.chars})})
     run(["pdftoppm", "-r", "100", "-png", path, preview_dir/"page"], timeout=300)
     return {"sha256": digest(path), "pages": pages, "previews": [{"file": p.name, "sha256": digest(p)} for p in sorted(preview_dir.glob("*.png"))]}

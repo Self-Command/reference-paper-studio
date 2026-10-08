@@ -65,6 +65,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \usepackage{multicol,caption,hyperref,xurl,xcolor,calc,etoolbox,enumitem}
 \usepackage{unicode-math}
 \setmathfont{Latin Modern Math}
+\setkeys{Gin}{keepaspectratio}
 \setlength{\LTpre}{0pt}
 \setlength{\LTpost}{0pt}
 \hypersetup{hidelinks}

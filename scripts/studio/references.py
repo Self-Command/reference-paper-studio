@@ -88,6 +88,8 @@ def analyze(root, evidence_path, output):
             folder = Path(output)/"official-conversion"; folder.mkdir(parents=True, exist_ok=True)
             run(["libreoffice", "-env:UserInstallation=file:///tmp/rps-reference-lo", "--headless", "--convert-to", "pdf", "--outdir", folder.resolve(), path.resolve()])
             inspection = inspect_pdf(folder/(path.stem+".pdf"), item["pages"])
+            for page in item["pages"]:
+                run(["pdftoppm","-f",str(page),"-l",str(page),"-r","85","-png","-singlefile",(folder/(path.stem+".pdf")).resolve(),folder.resolve()/f"page-{page}"])
         else: inspection = inspect_pdf(path, item["pages"])
         sources[item["id"]] = {**item, "original_sha256": digest(path), "inspection": inspection, "role": "official_disambiguation_only"}
         for prop, rule in official.items():

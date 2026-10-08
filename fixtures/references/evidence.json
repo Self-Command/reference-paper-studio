@@ -23,7 +23,7 @@
     {"property":"table_caption_position","value":"above","source":"P2","pages":[3],"reviewed":true,"observation":"中英文表题均在表上方。","scope":"数据表"},
     {"property":"table_caption_position","value":"above","source":"P3","pages":[8],"reviewed":true,"observation":"表上题。","scope":"数据表"},
     {"property":"figure_caption_position","value":"below","source":"P1","pages":[3],"reviewed":true,"observation":"图下题。","scope":"图"},
-    {"property":"figure_caption_position","value":"below","source":"P4","pages":[6],"reviewed":true,"observation":"图下题。","scope":"图"},
+    {"property":"figure_caption_position","value":"below","source":"P3","pages":[8],"reviewed":true,"observation":"图9、图10的中英文题注均在图下；本轮云端PNG复核。","scope":"图"},
     {"property":"bilingual_captions","value":true,"source":"P2","pages":[3],"reviewed":true,"observation":"中英文题注。","scope":"图表"},
     {"property":"bilingual_captions","value":false,"source":"P4","pages":[6],"reviewed":true,"observation":"中文题注。","scope":"图表"}
   ],

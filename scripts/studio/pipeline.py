@@ -6,7 +6,7 @@ import shutil
 import os
 from .runtime import StudioError, require_actions, run, write_json, digest, confined
 from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs
-from .docx_layout import apply_layout
+from .docx_layout import apply_layout, configure_math_font
 from .latex_layout import write_latex
 from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf
 
@@ -77,6 +77,7 @@ def _export(root, request, output, reference_rules=None):
             except StudioError:
                 bad.append({"math_index":index+1,"expression":node["c"][1]})
         raise StudioError(f"{error}\nFORMULA_LOCATIONS: {bad}") from error
+    configure_math_font(baseline, profile)
     shutil.copy2(baseline, final)
     layout = apply_layout(final, meta, profile, equations)
     texdir = output/"latex"
@@ -95,6 +96,10 @@ def _export(root, request, output, reference_rules=None):
     if not (output/"manuscript.pdf").exists(): raise StudioError("DOCX_RENDER_FAILED")
     (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
     pdfs = {name: inspect_output_pdf(output/name, output/"previews"/name.removesuffix(".pdf")) for name in ("latex-proof.pdf", "word-compat-proof.pdf")}
+    # This catches the editable-but-invisible OMML regression in LibreOffice.
+    if equations:
+        word_fonts=" ".join(font for page in pdfs["word-compat-proof.pdf"]["pages"] for font in page["fonts"]).replace(" ","").casefold()
+        if "latinmodernmath" not in word_fonts: raise StudioError("WORD_PDF_MATH_NOT_VISIBLE: required native math font absent from PDF")
     content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
     docx = check_docx(final)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
