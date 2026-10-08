@@ -1,0 +1,32 @@
+name: Skill CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      - uses: actions/setup-python@06da6279cdbca41027908073e81a4544dc79c06b
+        with:
+          python-version: '3.12.8'
+      - run: pip install -r requirements.lock
+      - run: python ci/validate_skill.py
+      - run: python -m pytest -q
+      - name: Discover available system package versions
+        run: |
+          sudo apt-get update -qq
+          mkdir -p build
+          apt-cache policy pandoc texlive-xetex texlive-lang-chinese texlive-fonts-recommended libreoffice-writer poppler-utils fonts-noto-cjk fonts-liberation > build/apt-candidates.txt
+          cat build/apt-candidates.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: bootstrap-evidence
+          path: build/
+          retention-days: 30
