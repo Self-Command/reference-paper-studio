@@ -157,29 +157,11 @@ def apply_layout(path, metadata, profile, equations):
     # Keep mathematical size/readability; return to the two-column body after each.
     for index, p in enumerate(displays):
         equation = equations[index]
-        complex_formula = True  # Full-width display region avoids mathematical clipping.
-        # Equation tables are explicit layout objects, never data tables.
-        table=doc.add_table(rows=1,cols=2)
-        props=table._tbl.tblPr
-        set_child(props,"tblDescription",{"w:val":"RPS_EQUATION_LAYOUT"})
-        set_child(props,"tblLayout",{"w:type":"fixed"})
         margins=profile["page"]["margin_cm"]
-        full_width=page_size(profile["page"].get("size","a4"))[0]-cm_to_twips(margins["left"]+margins["right"])
-        width=full_width if complex_formula else (full_width-cm_to_twips(profile["page"].get("column_spacing_cm",.6)))//2
-        set_child(props,"tblW",{"w:w":str(width),"w:type":"dxa"})
-        borders=set_child(props,"tblBorders")
-        for edge in ("top","bottom","left","right","insideH","insideV"): set_child(borders,edge,{"w:val":"nil"})
-        table.autofit=False
-        for cell,column,cell_width in zip(table.rows[0].cells,table.columns,(width-900,900)):
-            column.width=Twips(cell_width);cell.width=Twips(cell_width)
-            set_child(cell._tc.get_or_add_tcPr(),"vAlign",{"w:val":"center"})
-            set_child(cell._tc.get_or_add_tcPr(),"noWrap")
-        left=table.cell(0,0)
-        for paragraph in list(left._tc.findall(qn("w:p"))): left._tc.remove(paragraph)
-        p.addprevious(table._tbl)
-        left._tc.append(p)
-        # LibreOffice ignores oMathPara inside some table cells. Keep the native
-        # oMath unchanged, letting the centered cell paragraph provide layout.
+        width=page_size(profile["page"].get("size","a4"))[0]-cm_to_twips(margins["left"]+margins["right"])
+        p.addprevious(section_break(2,profile));p.addnext(section_break(1,profile))
+        # Native inline OMML in a tabbed full-width paragraph avoids the table
+        # importer regression. Only the display wrapper changes, never oMath.
         for wrapper in list(p.findall(M+"oMathPara")):
             position=p.index(wrapper)
             for omath in list(wrapper):
@@ -187,14 +169,14 @@ def apply_layout(path, metadata, profile, equations):
             p.remove(wrapper)
         ppr=p.find(qn("w:pPr"))
         if ppr is None: ppr=OxmlElement("w:pPr");p.insert(0,ppr)
-        set_child(ppr,"jc",{"w:val":"center"})
+        set_child(ppr,"jc",{"w:val":"left"})
+        set_child(ppr,"ind",{"w:left":"0","w:right":"0","w:firstLine":"0"})
+        tabs=set_child(ppr,"tabs")
+        for val,pos in (("center",width//2),("right",width)):
+            tab=OxmlElement("w:tab");tab.set(qn("w:val"),val);tab.set(qn("w:pos"),str(pos));tabs.append(tab)
+        leading=OxmlElement("w:r");leading.append(OxmlElement("w:tab"));p.insert(1,leading)
         number = equation["id"] if profile["equation_numbering"] == "preserve" else str(index+1)
-        label=table.cell(0,1).paragraphs[0];label.text=f"({number})";label.alignment=2
-        label.runs[0].font.size=Pt(profile["body_size_pt"])
-        set_fonts(label.runs[0]._r.get_or_add_rPr(),latin=profile["fonts"]["latin"],cjk=profile["fonts"]["cjk"])
-        set_child(table.rows[0]._tr.get_or_add_trPr(),"cantSplit")
-        if complex_formula:
-            table._tbl.addprevious(section_break(2,profile));table._tbl.addnext(section_break(1,profile))
+        label=OxmlElement("w:r");label.append(OxmlElement("w:tab"));text=OxmlElement("w:t");text.text=f"({number})";label.append(text);p.append(label)
     moved = move_table_captions(doc)
     for table in doc.tables:
         if is_equation_table(table._tbl): continue

@@ -177,7 +177,7 @@ def test_equation_layout_never_receives_data_table_borders(tmp_path):
     configure_math_font(path,PROFILE)
     apply_layout(path,{},PROFILE,[{"id":"M1","source":r"\frac{x_i}{1+x_i}","ordinal":1}])
     doc=Document(path)
-    assert len(doc.tables)==1 and is_equation_table(doc.tables[0]._tbl)
+    assert len(doc.tables)==0
     assert check_docx(path)["data_tables"]==0
-    assert check_docx(path)["equation_layouts"]==1
-    assert not any(n.get(qn("w:val"))=="single" for n in doc.tables[0]._tbl.iter() if n.tag in {qn("w:"+e) for e in ("top","bottom","left","right","insideH","insideV")})
+    assert check_docx(path)["equation_layouts"]==0
+    assert "(M1)" in "".join(p.text for p in doc.paragraphs)
