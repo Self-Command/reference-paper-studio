@@ -145,6 +145,10 @@ def normalized_text(ast):
             return [clean(v) for v in value]
         return value
     text = text_of(clean(result["blocks"]))
+    # Pandoc/LibreOffice may insert zero-width word-joiner markers around
+    # CJK text when placing native math and tables.  They have no visible
+    # content and must not make an otherwise exact prose round-trip fail.
+    text = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", text)
     return re.sub(r"\s+", "", text)
 
 
