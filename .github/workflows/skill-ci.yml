@@ -32,6 +32,8 @@ jobs:
             build/model/previews/word-compat-proof/page-3.png
             build/model/acceptance.json
             build/model/equation-visibility.json
+            build/model/latex/main.tex
+            build/model/latex/body.tex
             build/libreoffice-version.txt
             build/pandoc-version.txt
           retention-days: 30

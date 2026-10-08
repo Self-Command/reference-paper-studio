@@ -63,7 +63,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \setCJKmainfont{CJKFONT}
 \usepackage[top=TOPcm,bottom=BOTTOMcm,left=LEFTcm,right=RIGHTcm]{geometry}
 \usepackage{amsmath,amssymb,mathtools,graphicx,booktabs,longtable,array,multirow}
-\usepackage{multicol,caption,hyperref,xurl,xcolor,calc,etoolbox,enumitem}
+\usepackage{multicol,caption,hyperref,xurl,xcolor,calc,etoolbox,enumitem,float}
 \usepackage{unicode-math}
 \setmathfont{Latin Modern Math}
 \setkeys{Gin}{keepaspectratio}
@@ -75,6 +75,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \setlength{\emergencystretch}{1em}
 \setlength{\tabcolsep}{3pt}
 \setcounter{secnumdepth}{0}
+\newcounter{none}
 \captionsetup[table]{position=top}
 \captionsetup[figure]{position=bottom}
 \captionsetup{labelformat=empty}
@@ -102,6 +103,7 @@ def write_latex(ast, equations, metadata, profile, output):
     layout["blocks"]=blocks
     layout_path=output/"layout.json";layout_path.write_text(json.dumps(layout,ensure_ascii=False),encoding="utf-8")
     body=portable_table_columns(run(["pandoc",layout_path,"-f","json","-t","latex","--wrap=none"]),ast)
+    body=body.replace(r"\begin{figure}",r"\begin{figure}[H]")
     header=front(metadata)
     if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True)
     end=front(metadata,True) if profile["english_abstract_position"]=="end" else ""
