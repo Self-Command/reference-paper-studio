@@ -80,6 +80,10 @@ def _export(root, request, output, reference_rules=None):
     configure_math_font(baseline, profile)
     shutil.copy2(baseline, final)
     layout = apply_layout(final, meta, profile, equations)
+    import zipfile
+    with zipfile.ZipFile(final) as package:
+        for part in ("document","settings"):
+            (output/("word-"+part+".xml")).write_bytes(package.read("word/"+part+".xml"))
     texdir = output/"latex"
     main = write_latex(ast, equations, meta, profile, texdir)
     for node in walk(ast):
