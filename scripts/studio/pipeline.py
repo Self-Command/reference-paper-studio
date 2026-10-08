@@ -68,6 +68,7 @@ def _export(root, request, output, reference_rules=None):
     if request.get("expected_equations") is not None and len(equations) != request["expected_equations"]:
         raise StudioError("EQUATION_COUNT_CHANGED")
     # Resolve citation keys once for both writers; explicit numerical references also work.
+    write_json(output/"document.json", ast)
     cites = [n for n in walk(ast) if n.get("t") == "Cite"]
     if cites:
         if not request.get("bibliography"): raise StudioError("BIBLIOGRAPHY_REQUIRED")
@@ -98,6 +99,13 @@ def _export(root, request, output, reference_rules=None):
     for node in walk(ast):
         if node.get("t") == "Image":
             relative = node["c"][-1][0]; target = confined(texdir, relative); target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(confined(root, relative), target)
+    run(["libreoffice", "-env:UserInstallation=file:///tmp/rps-lo-"+str(os.getpid()), "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", output, final], timeout=300)
+    if not (output/"manuscript.pdf").exists(): raise StudioError("DOCX_RENDER_FAILED")
+    (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
+    word_pdf=inspect_output_pdf(output/"word-compat-proof.pdf",output/"previews/word-compat-proof")
+    if equations:
+        labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
+        word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
     for _ in range(2):
         run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", "-file-line-error", "main.tex"], cwd=texdir, timeout=300)
     log = (texdir/"main.log").read_text(encoding="utf-8", errors="replace")
@@ -105,14 +113,7 @@ def _export(root, request, output, reference_rules=None):
     overflow = [float(n) for n in re.findall(r"Overfull \\hbox \(([\d.]+)pt too wide\)", log)]
     if any(n > 2 for n in overflow): raise StudioError(f"LATEX_OVERFLOW: {overflow}")
     shutil.copy2(texdir/"main.pdf", output/"latex-proof.pdf")
-    run(["libreoffice", "-env:UserInstallation=file:///tmp/rps-lo-"+str(os.getpid()), "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", output, final], timeout=300)
-    if not (output/"manuscript.pdf").exists(): raise StudioError("DOCX_RENDER_FAILED")
-    (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
-    pdfs = {name: inspect_output_pdf(output/name, output/"previews"/name.removesuffix(".pdf")) for name in ("latex-proof.pdf", "word-compat-proof.pdf")}
-    # This catches the editable-but-invisible OMML regression in LibreOffice.
-    if equations:
-        labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
-        pdfs["word-compat-proof.pdf"]["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
+    pdfs = {"word-compat-proof.pdf":word_pdf,"latex-proof.pdf":inspect_output_pdf(output/"latex-proof.pdf",output/"previews/latex-proof")}
     content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
     docx = check_docx(final)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
