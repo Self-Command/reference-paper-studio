@@ -5,7 +5,7 @@ import re
 import shutil
 import os
 from .runtime import StudioError, require_actions, run, write_json, digest, confined
-from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs
+from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs, text_of
 from .docx_layout import apply_layout, configure_math_font
 from .latex_layout import write_latex
 from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility
@@ -54,6 +54,9 @@ def _export(root, request, output, reference_rules=None):
     check_fonts(profile)
     gate = model_gate(root, request["manuscript"], request.get("model_evidence"), request.get("document_kind") == "paper")
     ast, equations = parse(source, output)
+    promoted_title=None
+    if ast["blocks"] and ast["blocks"][0].get("t")=="Header" and ast["blocks"][0]["c"][0]==1 and text_of(ast["blocks"][0])==meta.get("title_zh"):
+        promoted_title=text_of(ast["blocks"].pop(0))
     object_map = resolve_crossrefs(ast, equations, profile["equation_numbering"])
     validate_assets(ast, root); validate_references(ast)
     if request.get("expected_equations") is not None and len(equations) != request["expected_equations"]:
@@ -112,6 +115,7 @@ def _export(root, request, output, reference_rules=None):
               "input_sha256": digest(source), "layout": layout, "docx": docx, "content": content, "pdfs": pdfs,
               "font_substitution": {"fonts": profile["fonts"], "exact_reference_match": False, "reason": "Open-source portable proof fonts"},
               "renderer": {"word_pdf": "LibreOffice compatibility rendering, not Microsoft Word native", "latex_pdf": "XeLaTeX"}}
+    report["source_title_promoted_to_front_matter"]=promoted_title
     report["implementation_version"] = __import__("studio").__version__
     report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
     write_json(output/"acceptance.json", report)
