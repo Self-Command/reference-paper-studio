@@ -1,5 +1,6 @@
 """XeLaTeX template generated from the same AST as Word."""
 from pathlib import Path
+from copy import deepcopy
 import json
 import re
 from .runtime import require_actions, run
@@ -92,8 +93,15 @@ def write_latex(ast, equations, metadata, profile, output):
     preamble=preamble.replace(r"\columnsep}{0.6cm}",r"\columnsep}{"+str(profile["page"].get("column_spacing_cm",0.6))+"cm}")
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
     # Use multicol for prose; displays/tables use full-width breaks for readability.
-    pattern=r"(\\\[.*?\\\]|\\begin\{longtable\}.*?\\end\{longtable\}|\\begin\{figure\}.*?\\end\{figure\})"
-    body=re.sub(pattern,lambda m:r"\end{multicols}"+"\n"+m.group(0)+"\n"+r"\begin{multicols}{2}",body,flags=re.S)
+    layout=deepcopy(data); blocks=[]
+    for block in layout["blocks"]:
+        full=block.get("t") in ("Table","Figure") or any(n.get("t")=="Math" and n["c"][0]["t"]=="DisplayMath" for n in walk(block))
+        if full: blocks.append({"t":"RawBlock","c":["latex",r"\end{multicols}"]})
+        blocks.append(block)
+        if full: blocks.append({"t":"RawBlock","c":["latex",r"\begin{multicols}{2}"]})
+    layout["blocks"]=blocks
+    layout_path=output/"layout.json";layout_path.write_text(json.dumps(layout,ensure_ascii=False),encoding="utf-8")
+    body=portable_table_columns(run(["pandoc",layout_path,"-f","json","-t","latex","--wrap=none"]),ast)
     header=front(metadata)
     if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True)
     end=front(metadata,True) if profile["english_abstract_position"]=="end" else ""
