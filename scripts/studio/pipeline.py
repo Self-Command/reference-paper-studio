@@ -8,7 +8,7 @@ from .runtime import StudioError, require_actions, run, write_json, digest, conf
 from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs
 from .docx_layout import apply_layout, configure_math_font
 from .latex_layout import write_latex
-from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf
+from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility
 
 
 def strict_pandoc(args, cwd=None):
@@ -102,8 +102,8 @@ def _export(root, request, output, reference_rules=None):
     pdfs = {name: inspect_output_pdf(output/name, output/"previews"/name.removesuffix(".pdf")) for name in ("latex-proof.pdf", "word-compat-proof.pdf")}
     # This catches the editable-but-invisible OMML regression in LibreOffice.
     if equations:
-        word_fonts=" ".join(font for page in pdfs["word-compat-proof.pdf"]["pages"] for font in page["fonts"]).replace(" ","").casefold()
-        if "latinmodernmath" not in word_fonts: raise StudioError("WORD_PDF_MATH_NOT_VISIBLE: required native math font absent from PDF")
+        labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
+        pdfs["word-compat-proof.pdf"]["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
     content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
     docx = check_docx(final)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}

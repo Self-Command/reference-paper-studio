@@ -35,15 +35,32 @@ def visible_docx(path):
 
 
 def latex_reader_copy(source, output):
+    require_actions()
     text=Path(source).read_text(encoding="utf-8")
     pattern=r"(\\toprule.*?)(\\endfirsthead)(.*?)(\\endhead)"
     def remove_repeated_header(match):
         first, second=match.group(1).strip(),match.group(3).strip()
         if first != second: raise StudioError("UNEXPECTED_REPEATED_TABLE_HEADER")
         return first+"\n"+match.group(4)
-    text=re.sub(pattern,remove_repeated_header,text,flags=re.S)
+    text=re.sub(r"\\begin\{longtable\}.*?\\end\{longtable\}",lambda m:re.sub(pattern,remove_repeated_header,m.group(0),flags=re.S),text,flags=re.S)
     path=Path(output)/"latex-reader-input.tex";path.write_text(text,encoding="utf-8")
     return path
+
+
+def check_equation_visibility(path, identifiers):
+    require_actions()
+    found={}
+    with pdfplumber.open(path) as pdf:
+        for number,page in enumerate(pdf.pages,1):
+            for word in page.extract_words():
+                identifier=word["text"].strip("()")
+                if word["text"] != f"({identifier})" or identifier not in identifiers: continue
+                center=(word["top"]+word["bottom"])/2
+                glyphs=[c for c in page.chars if c["text"].strip() and 45 < c["x0"] and c["x1"] < word["x0"]-5 and abs((c["top"]+c["bottom"])/2-center)<6]
+                found[identifier]={"page":number,"formula_line_glyphs":len(glyphs)}
+    missing=[label for label in identifiers if label not in found or found[label]["formula_line_glyphs"]==0]
+    if missing: raise StudioError("WORD_PDF_MATH_NOT_VISIBLE: "+", ".join(missing))
+    return found
 
 
 def check_roundtrips(ast, baseline, final, latex_body, output):
