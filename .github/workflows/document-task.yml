@@ -1,0 +1,47 @@
+name: Document task
+run-name: 'Document task: ${{ inputs.task_id }}'
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        required: true
+        type: string
+      input_commit:
+        required: true
+        type: string
+      request_path:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  process:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        with:
+          ref: '${{ inputs.input_commit }}'
+          path: task-inputs
+          persist-credentials: false
+      - uses: actions/setup-python@06da6279cdbca41027908073e81a4544dc79c06b
+        with:
+          python-version: '3.12.8'
+      - run: pip install -r requirements.lock
+      - run: bash ci/setup.sh
+      - name: Process declared inputs
+        env:
+          REQUEST_PATH: '${{ inputs.request_path }}'
+          INPUT_COMMIT: '${{ inputs.input_commit }}'
+          TASK_ID: '${{ inputs.task_id }}'
+        run: |
+          python scripts/ci_run.py --input-root task-inputs --request "$REQUEST_PATH" --output build/task
+          git rev-parse HEAD > build/skill-commit.txt
+          printf '%s\n' "$INPUT_COMMIT" > build/input-commit.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: document-task
+          path: build/
+          retention-days: 30

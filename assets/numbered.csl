@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0" class="in-text" default-locale="zh-CN">
+  <info><title>Reference Paper Studio numeric baseline</title><id>https://github.com/Self-Command/reference-paper-studio/numbered</id><updated>2026-10-09T00:00:00+08:00</updated></info>
+  <citation collapse="citation-number"><sort><key variable="citation-number"/></sort><layout prefix="[" suffix="]" delimiter=","><text variable="citation-number"/></layout></citation>
+  <bibliography second-field-align="flush"><layout><text variable="citation-number" prefix="[" suffix="] "/><names variable="author" suffix=". "><name initialize-with=". "/></names><text variable="title" suffix=". "/><text variable="container-title" suffix=", "/><date variable="issued" suffix=". "><date-part name="year"/></date><text variable="DOI" prefix="doi:"/></layout></bibliography>
+</style>

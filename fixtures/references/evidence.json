@@ -1,0 +1,36 @@
+{
+  "sources": [
+    {"id":"P1","path":"基于模拟退火遗传算法的编队对地攻击火力分配建模与优化_贺小亮.pdf","pages":[1,2,3,5]},
+    {"id":"P2","path":"基于混合整数规划的配电网检修多目标优化决策及其灵敏度分析_夏添.pdf","pages":[1,3,10]},
+    {"id":"P3","path":"基于混合整数规划的终端区柔性进场航迹优化_赵向领.pdf","pages":[1,3,8,16]},
+    {"id":"P4","path":"基于混合蚁群算法的冷链物流配送路径优化研究_方文婷.pdf","pages":[1,3,6,9]},
+    {"id":"P5","path":"基于改进传染病模型的应急信息流传播建模研究_赵甜甜.pdf","pages":[1,3,12]},
+    {"id":"P6","path":"基于多Agent模型的电动化众包货运系统建模与运营优化_缪鸿志.pdf","pages":[1,2,3,9],"exclude_pages":[1]}
+  ],
+  "observations": [
+    {"property":"body_columns","value":2,"source":"P1","pages":[2,3],"reviewed":true,"observation":"正文分为左右两栏，公式随正文；此前逐页视觉核验。","scope":"正文"},
+    {"property":"body_columns","value":2,"source":"P2","pages":[3],"reviewed":true,"observation":"正文双栏。","scope":"正文"},
+    {"property":"body_columns","value":2,"source":"P3","pages":[3,8],"reviewed":true,"observation":"正文双栏。","scope":"正文"},
+    {"property":"body_columns","value":2,"source":"P4","pages":[3,6],"reviewed":true,"observation":"正文双栏。","scope":"正文"},
+    {"property":"body_columns","value":2,"source":"P5","pages":[3],"reviewed":true,"observation":"正文双栏。","scope":"正文"},
+    {"property":"body_columns","value":2,"source":"P6","pages":[3,9],"reviewed":true,"observation":"封面不作正文依据；文章第3页起正文双栏。","scope":"正文"},
+    {"property":"english_abstract_position","value":"front","source":"P1","pages":[1],"reviewed":true,"observation":"首页中文和英文前置信息。","scope":"摘要位置"},
+    {"property":"english_abstract_position","value":"end","source":"P3","pages":[1,16],"reviewed":true,"observation":"英文摘要在篇末。","scope":"摘要位置"},
+    {"property":"english_abstract_position","value":"end","source":"P4","pages":[1,9],"reviewed":true,"observation":"英文摘要在篇末。","scope":"摘要位置"},
+    {"property":"table_lines","value":"three_line","source":"P2","pages":[3],"reviewed":true,"observation":"表格无竖线，三线结构。","scope":"数据表"},
+    {"property":"table_lines","value":"three_line","source":"P3","pages":[8],"reviewed":true,"observation":"三线数据表。","scope":"数据表"},
+    {"property":"table_caption_position","value":"above","source":"P2","pages":[3],"reviewed":true,"observation":"中英文表题均在表上方。","scope":"数据表"},
+    {"property":"table_caption_position","value":"above","source":"P3","pages":[8],"reviewed":true,"observation":"表上题。","scope":"数据表"},
+    {"property":"figure_caption_position","value":"below","source":"P1","pages":[3],"reviewed":true,"observation":"图下题。","scope":"图"},
+    {"property":"figure_caption_position","value":"below","source":"P4","pages":[6],"reviewed":true,"observation":"图下题。","scope":"图"},
+    {"property":"bilingual_captions","value":true,"source":"P2","pages":[3],"reviewed":true,"observation":"中英文题注。","scope":"图表"},
+    {"property":"bilingual_captions","value":false,"source":"P4","pages":[6],"reviewed":true,"observation":"中文题注。","scope":"图表"}
+  ],
+  "official_document":{"id":"J1","path":"official.doc","pages":[1,2]},
+  "official":{
+    "english_abstract_position":{"value":"front","source":"J1","pages":[1],"reviewed":true,"observation":"官方写作模板首页含英文题名与摘要；仅用于消解参考论文差异。"},
+    "bilingual_captions":{"value":true,"source":"J1","pages":[2],"reviewed":true,"observation":"模板图表中英文题注；仅用于消解差异。"}
+  },
+  "unknown_properties":["原始Word样式定义","精确字号和行距","精确页边距","精确字体版本"],
+  "provenance":"人工页码观察来自实施计划前的参考论文格式核验；云端重新抽取质量、几何和指纹，不能把抽取自动冒充视觉观察。"
+}

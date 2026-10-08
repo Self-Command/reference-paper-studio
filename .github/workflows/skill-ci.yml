@@ -16,17 +16,15 @@ jobs:
         with:
           python-version: '3.12.8'
       - run: pip install -r requirements.lock
+      - run: bash ci/setup.sh
       - run: python ci/validate_skill.py
-      - run: python -m pytest -q
-      - name: Discover available system package versions
-        run: |
-          sudo apt-get update -qq
-          mkdir -p build
-          apt-cache policy pandoc texlive-xetex texlive-lang-chinese texlive-fonts-recommended libreoffice-writer poppler-utils fonts-noto-cjk fonts-liberation > build/apt-candidates.txt
-          cat build/apt-candidates.txt
+      - run: python -m pytest -q --junitxml=build/test-results.xml
+      - run: python ci/regression.py
+      - run: python ci/package.py
+      - run: git rev-parse HEAD > build/skill-commit.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
-          name: bootstrap-evidence
+          name: skill-delivery
           path: build/
           retention-days: 30
