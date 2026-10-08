@@ -157,7 +157,7 @@ def apply_layout(path, metadata, profile, equations):
     # Keep mathematical size/readability; return to the two-column body after each.
     for index, p in enumerate(displays):
         equation = equations[index]
-        complex_formula = len(equation["source"]) > 105 or "\\begin" in equation["source"]
+        complex_formula = True  # Full-width display region avoids mathematical clipping.
         # Equation tables are explicit layout objects, never data tables. Keeping
         # oMathPara intact avoids tab/number wrapping and native display import bugs.
         table=doc.add_table(rows=1,cols=2)
@@ -171,9 +171,10 @@ def apply_layout(path, metadata, profile, equations):
         borders=set_child(props,"tblBorders")
         for edge in ("top","bottom","left","right","insideH","insideV"): set_child(borders,edge,{"w:val":"nil"})
         table.autofit=False
-        for cell,column,cell_width in zip(table.rows[0].cells,table.columns,(width-650,650)):
+        for cell,column,cell_width in zip(table.rows[0].cells,table.columns,(width-900,900)):
             column.width=Twips(cell_width);cell.width=Twips(cell_width)
             set_child(cell._tc.get_or_add_tcPr(),"vAlign",{"w:val":"center"})
+            set_child(cell._tc.get_or_add_tcPr(),"noWrap")
         left=table.cell(0,0)
         for paragraph in list(left._tc.findall(qn("w:p"))): left._tc.remove(paragraph)
         p.addprevious(table._tbl)

@@ -25,6 +25,19 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
+          name: diagnostic-preview
+          path: |
+            build/model/previews/word-compat-proof/page-1.png
+            build/model/previews/word-compat-proof/page-2.png
+            build/model/previews/word-compat-proof/page-3.png
+            build/model/acceptance.json
+            build/model/equation-visibility.json
+            build/libreoffice-version.txt
+            build/pandoc-version.txt
+          retention-days: 30
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
           name: skill-delivery
           path: build/
           retention-days: 30
