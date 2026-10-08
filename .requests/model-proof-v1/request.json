@@ -1,0 +1,19 @@
+{
+  "id": "model-proof-v1",
+  "stage": "export",
+  "document_kind": "model",
+  "manuscript": "model.md",
+  "metadata": "metadata.json",
+  "profile": "profile.json",
+  "expected_equations": 30,
+  "files": [
+    "model.md",
+    "metadata.json",
+    "profile.json"
+  ],
+  "sha256": {
+    "model.md": "3932d5bb1a3f984d826814d69b16e299d6a15de5b9b799a49e992abf5cecdb0a",
+    "metadata.json": "9b8c1cc625837999597ec375172c60e8e5023b039756893b55fcaf28252b78e6",
+    "profile.json": "c066aa13cc5ff120824ddc1ce3c0c31befe4938456c2410de02001ff715c65ce"
+  }
+}

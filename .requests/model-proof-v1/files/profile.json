@@ -1,0 +1,11 @@
+{
+  "name": "published-reference-consensus",
+  "page": {"size": "a4", "margin_cm": {"top": 2.2, "bottom": 2.2, "left": 2.2, "right": 2.2}, "column_spacing_cm": 0.6},
+  "fonts": {"cjk": "Noto Serif CJK SC", "latin": "Liberation Serif"},
+  "body_size_pt": 10,
+  "english_abstract_position": "front",
+  "equation_numbering": "preserve",
+  "tables": {"top_rule_pt": 1.0, "header_rule_pt": 0.5, "bottom_rule_pt": 1.0, "header_rows": 1},
+  "caption_language": "bilingual_if_provided",
+  "source_notes": {"body_columns": "reviewed six-paper consensus", "english_abstract_position": "official template disambiguates conflicting references", "margins_and_sizes": "portable engineering defaults, not measured reference facts", "fonts": "open-source replacements; exact SimSun/Times New Roman matching not asserted"}
+}

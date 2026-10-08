@@ -1,0 +1,7 @@
+{
+  "abstract_zh": "本校样用于检验统一源稿件的可编辑公式与双格式排版能力。模型内容、公式和验证条件取自作者现有数学模型稿；排版验收不构成数学正确性验证。",
+  "keywords_zh": ["周期调度", "时频冲突", "约束规划"],
+  "title_en": "A periodic time-frequency conflict resolution model",
+  "abstract_en": "This proof checks content preservation and editable mathematics in the author's model draft. Typesetting acceptance does not establish mathematical correctness.",
+  "keywords_en": ["periodic scheduling", "time-frequency conflict", "constraint programming"]
+}
