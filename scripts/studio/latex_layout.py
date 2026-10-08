@@ -79,6 +79,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \captionsetup{labelformat=empty}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \newcommand{\passthrough}[1]{#1}
+\newcommand{\pandocbounded}[1]{\sbox0{#1}\ifdim\wd0>\linewidth\resizebox{\linewidth}{!}{\usebox0}\else\usebox0\fi}
 \newenvironment{CSLReferences}[2]{\begin{list}{}{\setlength{\leftmargin}{1em}\setlength{\itemindent}{-1em}}\item[]}{\end{list}}
 \newcommand{\CSLBlock}[1]{#1}
 \newcommand{\CSLLeftMargin}[1]{#1}
