@@ -7,7 +7,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from studio.runtime import StudioError, digest
 from studio.references import resolve_rules, inspect_pdf
-from studio.manuscript import parse, validate_assets, validate_references, model_gate
+from studio.manuscript import parse, validate_assets, validate_references, model_gate, resolve_crossrefs
 from studio.docx_layout import move_table_captions, apply_layout
 from studio.pipeline import strict_pandoc
 from studio.qa import check_fonts, check_docx, assert_text
@@ -116,3 +116,14 @@ def test_missing_font_fails():
 def test_text_drift_fails():
     with pytest.raises(StudioError, match="CONTENT_CHANGED"):
         assert_text({"blocks":[{"t":"Str","c":"123"}]},{"blocks":[{"t":"Str","c":"124"}]},"test")
+
+
+def test_crossrefs_share_numbering():
+    ast={"blocks":[{"t":"Str","c":"{{eq:M1}}"}]}
+    assert resolve_crossrefs(ast,[{"id":"M1","ordinal":1}],"sequential")["eq:M1"]=="(1)"
+    assert ast["blocks"][0]["c"]=="(1)"
+
+
+def test_broken_crossref_fails():
+    with pytest.raises(StudioError,match="BROKEN_CROSS_REFERENCE"):
+        resolve_crossrefs({"blocks":[{"t":"Str","c":"{{eq:Missing}}"}]},[],"preserve")

@@ -5,7 +5,7 @@ import re
 import shutil
 import os
 from .runtime import StudioError, require_actions, run, write_json, digest, confined
-from .manuscript import parse, validate_assets, validate_references, model_gate, walk
+from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs
 from .docx_layout import apply_layout
 from .latex_layout import write_latex
 from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf
@@ -21,17 +21,28 @@ def strict_pandoc(args, cwd=None):
     return p.stdout
 
 
-def export(root, request, output):
+def export(root, request, output, reference_rules=None):
     require_actions()
     root, output = Path(root).resolve(), Path(output).resolve(); output.mkdir(parents=True, exist_ok=True)
     source = confined(root, request["manuscript"])
     meta = json.loads(confined(root, request["metadata"]).read_text(encoding="utf-8"))
     profile = json.loads(confined(root, request["profile"]).read_text(encoding="utf-8"))
+    if request.get("reference_evidence"):
+        from .references import analyze
+        reference_rules = analyze(root, request["reference_evidence"], output/"reference-analysis")["rules"]
+    applied_rules = []
+    for rule in reference_rules or []:
+        if rule["status"] not in ("reference_consensus", "official_disambiguation"): continue
+        if rule["property"] == "body_columns" and rule["value"] != 2: raise StudioError("UNSUPPORTED_BODY_COLUMN_RULE")
+        if rule["property"] == "english_abstract_position": profile["english_abstract_position"] = rule["value"]
+        applied_rules.append(rule)
+    write_json(output/"effective-profile.json", {**profile,"adopted_reference_rules":applied_rules})
     if profile.get("english_abstract_position") not in ("front", "end") or profile.get("equation_numbering") not in ("preserve", "sequential"):
         raise StudioError("INVALID_PROFILE")
     check_fonts(profile)
     gate = model_gate(root, request["manuscript"], request.get("model_evidence"), request.get("document_kind") == "paper")
     ast, equations = parse(source, output)
+    object_map = resolve_crossrefs(ast, equations, profile["equation_numbering"])
     validate_assets(ast, root); validate_references(ast)
     if request.get("expected_equations") is not None and len(equations) != request["expected_equations"]:
         raise StudioError("EQUATION_COUNT_CHANGED")
@@ -42,6 +53,7 @@ def export(root, request, output):
         citation_args = ["pandoc", output/"document.json", "-f", "json", "-t", "json", "--citeproc", "--bibliography", confined(root, request["bibliography"]), "--csl", Path(__file__).resolve().parents[2]/"assets/numbered.csl"]
         ast = json.loads(strict_pandoc(citation_args))
         write_json(output/"document.json", ast)
+    write_json(output/"document.json", ast)
     baseline, final = output/"native.docx", output/"manuscript.docx"
     strict_pandoc(["pandoc", output/"document.json", "-f", "json", "-o", baseline, "--resource-path", root])
     shutil.copy2(baseline, final)
@@ -65,7 +77,7 @@ def export(root, request, output):
     (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
     pdfs = {name: inspect_output_pdf(output/name, output/"previews"/name.removesuffix(".pdf")) for name in ("latex-proof.pdf", "word-compat-proof.pdf")}
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
-    write_json(output/"reference-map.json", {"equations": mapping, "literature": "shared resolved AST", "figures_tables": "source labels preserved"})
+    write_json(output/"reference-map.json", {"equations": mapping, "literature": "shared resolved AST", "objects": object_map})
     report = {"build": "passed", "automatic_acceptance": "passed", "visual_review": "pending", "model_gate": gate,
               "input_sha256": digest(source), "layout": layout, "docx": docx, "content": content, "pdfs": pdfs,
               "font_substitution": {"fonts": profile["fonts"], "exact_reference_match": False, "reason": "Open-source portable proof fonts"},

@@ -15,6 +15,14 @@ M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
+def ensure_style(doc, name):
+    key = name.replace(" ", "").casefold()
+    for style in doc.styles:
+        if style.name.replace(" ", "").casefold() == key or style.style_id.casefold() == key:
+            return style
+    return doc.styles.add_style(name, 1)
+
+
 def _paragraph(text="", style=None):
     p = OxmlElement("w:p")
     if style:
@@ -92,9 +100,7 @@ def apply_layout(path, metadata, profile, equations):
             body.insert(len(body)-1, element)
         _apply_sectpr(base, {**profile["page"], "columns": 1})
     for name in ("Normal", "Body Text", "First Paragraph", "Abstract", "Keywords", "Author", "Title", "Caption", "Table Caption", "Image Caption"):
-        if name not in doc.styles:
-            doc.styles.add_style(name, 1)
-        style = doc.styles[name]
+        style = ensure_style(doc, name)
         style.font.name = profile["fonts"]["latin"]
         style.font.size = Pt(profile["body_size_pt"] if name != "Title" else 16)
         rpr = style.element.get_or_add_rPr()
@@ -104,7 +110,7 @@ def apply_layout(path, metadata, profile, equations):
         style.paragraph_format.space_after = Pt(3)
         style.paragraph_format.line_spacing = 1.08
     for i in range(1, 5):
-        style = doc.styles[f"Heading {i}"]
+        style = ensure_style(doc, f"Heading {i}")
         style.font.name = profile["fonts"]["latin"]
         style.font.size = Pt(12 if i == 1 else 10.5)
         style.font.bold = True
@@ -182,5 +188,5 @@ def body_only_docx(source, target):
         if list(element.iter(M+"oMath")):
             for r in list(element.findall(qn("w:r"))):
                 text="".join(t.text or "" for t in r.iter(qn("w:t")))
-                if re.fullmatch(r"\((?:M\d+|E\d+|\d+)\)", text): element.remove(r)
+                if r.find(qn("w:tab")) is not None and re.fullmatch(r"\([\w.:-]+\)", text): element.remove(r)
     doc.save(target)

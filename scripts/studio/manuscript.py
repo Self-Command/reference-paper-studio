@@ -43,13 +43,14 @@ def parse(source, output):
                 if len(tags) > 1:
                     raise StudioError("MULTIPLE_EQUATION_TAGS")
                 identifier = tags[0] if tags else f"E{len(equations)+1}"
+                if not re.fullmatch(r"[A-Za-z0-9][\w.:-]*", identifier): raise StudioError("INVALID_EQUATION_IDENTIFIER")
                 if identifier in {e["id"] for e in equations}:
                     raise StudioError(f"DUPLICATE_EQUATION: {identifier}")
                 expression = re.sub(r"\\tag\{[^}]+\}", "", expression).strip()
                 equations.append({"id": identifier, "source": expression, "ordinal": len(equations)+1})
                 node["c"][1] = expression
-    if any(n.get("t") in ("RawInline", "RawBlock") and n.get("c", [""])[0] not in ("tex", "latex") for n in walk(ast)):
-        raise StudioError("UNSUPPORTED_RAW_OBJECT: use Markdown objects rather than embedded HTML/Word")
+    if any(n.get("t") in ("RawInline", "RawBlock") for n in walk(ast)):
+        raise StudioError("UNSUPPORTED_RAW_OBJECT: use Markdown objects and math rather than embedded raw commands")
     write_json(Path(output) / "document.json", ast)
     write_json(Path(output) / "equations.json", equations)
     return ast, equations
@@ -73,6 +74,42 @@ def validate_references(ast):
     used = {int(n) for n in re.findall(r"\[(\d+)\]", body)}
     if used - labels:
         raise StudioError(f"BROKEN_REFERENCE: {sorted(used-labels)}")
+
+
+def resolve_crossrefs(ast, equations, numbering):
+    """Shared object identities; explicit markers are identical in both writers."""
+    mapping = {"eq:"+e["id"]: "("+(e["id"] if numbering == "preserve" else str(e["ordinal"]))+")" for e in equations}
+    blocks = ast["blocks"]
+    # Recognize adjacent Chinese/English table captions, including captions below.
+    for block in list(blocks):
+        if block.get("t") != "Table": continue
+        index = blocks.index(block)
+        for neighbor in (index-1,index+1):
+            if 0 <= neighbor < len(blocks) and blocks[neighbor].get("t") == "Para":
+                caption = blocks[neighbor]
+                match = re.match(r"^(?:表\s*|Table\s+)(\d+)", text_of(caption))
+                if match:
+                    block["c"][1] = [None,[caption]]
+                    blocks.remove(caption)
+                    break
+    counters = {"Figure":0,"Table":0}
+    for node in walk(ast):
+        kind = node.get("t")
+        if kind in counters:
+            counters[kind] += 1
+            prefix, label = ("fig:","图") if kind == "Figure" else ("tab:","表")
+            identifier = node["c"][0][0]
+            identifier = identifier if identifier.startswith(prefix) else prefix+("F" if kind=="Figure" else "T")+str(counters[kind])
+            if identifier in mapping: raise StudioError("DUPLICATE_OBJECT_IDENTIFIER: "+identifier)
+            mapping[identifier] = label+str(counters[kind])
+    for node in walk(ast):
+        if node.get("t") == "Str":
+            def substitute(match):
+                key=match.group(1)
+                if key not in mapping: raise StudioError("BROKEN_CROSS_REFERENCE: "+key)
+                return mapping[key]
+            node["c"] = re.sub(r"\{\{((?:eq|fig|tab):[\w.:-]+)\}\}",substitute,node["c"])
+    return mapping
 
 
 def latex_ast(ast, equations, numbering):

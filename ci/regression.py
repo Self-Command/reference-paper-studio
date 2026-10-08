@@ -11,16 +11,16 @@ from studio.review import review
 
 require_actions()
 root=Path(__file__).resolve().parents[1]
-analyze(root/"fixtures/references","evidence.json",root/"build/reference-analysis")
+references=analyze(root/"fixtures/references","evidence.json",root/"build/reference-analysis")
 review(root/"fixtures/model/model.md",root/"build/model-review")
-export(root/"fixtures/model",{"manuscript":"model.md","metadata":"metadata.json","profile":"profile.json","document_kind":"model","expected_equations":30},root/"build/model")
+export(root/"fixtures/model",{"manuscript":"model.md","metadata":"metadata.json","profile":"profile.json","document_kind":"model","expected_equations":30},root/"build/model",references["rules"])
 # Synthetic values are labelled as a format test; never presented as research data.
 fixture=root/"build/synthetic-input"; fixture.mkdir(parents=True,exist_ok=True)
 from PIL import Image, ImageDraw
 image=Image.new("RGB",(600,180),"white"); draw=ImageDraw.Draw(image); draw.rectangle((30,30,570,150),outline="black",width=3); draw.text((50,75),"FORMAT TEST: INPUT -> MODEL -> CHECK",fill="black"); image.save(fixture/"diagram.png")
 (fixture/"model.md").write_text(r"""# 格式回归样例
 
-以下数值仅用于格式测试，并非实验结果。依次检验图、表、公式与引用[1]。
+以下数值仅用于格式测试，并非实验结果。依次检验{{fig:F1}}、{{tab:T1}}、{{eq:S1}}与引用[1]。
 
 表1 格式测试数值 / Table 1 Synthetic values
 
