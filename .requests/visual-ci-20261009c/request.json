@@ -1,0 +1,13 @@
+{
+  "id": "visual-ci-20261009c",
+  "stage": "visual",
+  "visual_receipt": "receipt.json",
+  "artifact_run": "37822072496",
+  "artifact_name": "skill-delivery",
+  "files": [
+    "receipt.json"
+  ],
+  "sha256": {
+    "receipt.json": "8ea7e59969ab06d7c774b358adda1e28ee153e3cf576e45ad61b4ccae423bdad"
+  }
+}
