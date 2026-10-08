@@ -158,8 +158,7 @@ def apply_layout(path, metadata, profile, equations):
     for index, p in enumerate(displays):
         equation = equations[index]
         complex_formula = True  # Full-width display region avoids mathematical clipping.
-        # Equation tables are explicit layout objects, never data tables. Keeping
-        # oMathPara intact avoids tab/number wrapping and native display import bugs.
+        # Equation tables are explicit layout objects, never data tables.
         table=doc.add_table(rows=1,cols=2)
         props=table._tbl.tblPr
         set_child(props,"tblDescription",{"w:val":"RPS_EQUATION_LAYOUT"})
@@ -179,6 +178,13 @@ def apply_layout(path, metadata, profile, equations):
         for paragraph in list(left._tc.findall(qn("w:p"))): left._tc.remove(paragraph)
         p.addprevious(table._tbl)
         left._tc.append(p)
+        # LibreOffice ignores oMathPara inside some table cells. Keep the native
+        # oMath unchanged, letting the centered cell paragraph provide layout.
+        for wrapper in list(p.findall(M+"oMathPara")):
+            position=p.index(wrapper)
+            for omath in list(wrapper):
+                if omath.tag==M+"oMath": p.insert(position,omath);position+=1
+            p.remove(wrapper)
         ppr=p.find(qn("w:pPr"))
         if ppr is None: ppr=OxmlElement("w:pPr");p.insert(0,ppr)
         set_child(ppr,"jc",{"w:val":"center"})
