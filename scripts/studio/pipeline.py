@@ -31,7 +31,14 @@ def export(root, request, output, reference_rules=None):
         existing=directory/"acceptance.json"
         if existing.is_file() and json.loads(existing.read_text(encoding="utf-8")).get("pdfs"): raise
         complete=all((directory/n).is_file() for n in ("manuscript.docx","word-compat-proof.pdf","latex-proof.pdf"))
-        write_json(directory/"acceptance.json", {"build":"passed" if complete else "failed", "automatic_acceptance":"failed", "visual_review":"blocked", "error":str(error), "exception_type":type(error).__name__, "execution":{"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA")},"template_request":{k:request.get(k) for k in ("template_id","template_version","template_variant")},"diagnostic_artifacts_retained":True})
+        binding_file=directory/"execution-binding.json"
+        binding=json.loads(binding_file.read_text(encoding="utf-8")) if binding_file.is_file() else {}
+        proofs={}
+        for name in ("word-compat-proof.pdf","latex-proof.pdf"):
+            record=directory/(name+".json")
+            if record.is_file(): proofs[name]=json.loads(record.read_text(encoding="utf-8"))
+        editable={name:digest(directory/name) for name in ("manuscript.docx","latex/main.tex") if (directory/name).is_file()}
+        write_json(directory/"acceptance.json", {**binding,"build":"passed" if complete else "failed", "automatic_acceptance":"failed", "visual_review":"pending" if proofs else "unavailable", "error":str(error), "exception_type":type(error).__name__, "execution":binding.get("execution",{"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA")}),"template_request":request.get("template",{k:request.get(k) for k in ("template_id","template_version","template_variant")}),"pdfs":proofs,"editable_outputs":editable,"diagnostic_artifacts_retained":True})
         from .reporting import publish
         publish(directory,json.loads((directory/"acceptance.json").read_text(encoding="utf-8")))
         raise
@@ -50,6 +57,7 @@ def _export(root, request, output, reference_rules=None):
         meta.update(legacy_meta)
     ast["meta"]={}
     master, profile, template_identity = resolve_template(request)
+    write_json(output/"execution-binding.json",{"input_sha256":digest(source),"template":template_identity,"execution":{"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_commit":request.get("input_commit"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}})
     if request.get("schema_version")==2:
         from .approvals import check_export
         approval=check_export(root,request,template_identity)
@@ -165,6 +173,7 @@ def _export(root, request, output, reference_rules=None):
     if not (output/"manuscript.pdf").exists(): raise StudioError("DOCX_RENDER_FAILED")
     (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
     word_pdf=inspect_output_pdf(output/"word-compat-proof.pdf",output/"previews/word-compat-proof")
+    write_json(output/"word-compat-proof.pdf.json",word_pdf)
     word_pdf["page_flow"]=check_page_flow(output/"word-compat-proof.pdf",profile)
     word_geometry=check_column_geometry(output/"word-compat-proof.pdf",profile,ast,meta)
     write_json(output/"word-column-geometry.json",word_geometry)
@@ -189,6 +198,7 @@ def _export(root, request, output, reference_rules=None):
     if any(n > 2 for n in overflow): acceptance_errors.append(f"LATEX_OVERFLOW: {overflow}")
     shutil.copy2(texdir/"main.pdf", output/"latex-proof.pdf")
     pdfs = {"word-compat-proof.pdf":word_pdf,"latex-proof.pdf":inspect_output_pdf(output/"latex-proof.pdf",output/"previews/latex-proof")}
+    write_json(output/"latex-proof.pdf.json",pdfs["latex-proof.pdf"])
     latex_geometry=check_column_geometry(output/"latex-proof.pdf",profile,ast,meta)
     write_json(output/"latex-column-geometry.json",latex_geometry)
     if word_geometry["violations"] or latex_geometry["violations"]:
@@ -204,11 +214,13 @@ def _export(root, request, output, reference_rules=None):
               "font_substitution": {"fonts": profile["fonts"], "exact_reference_match": False, "reason": "Open-source portable proof fonts"},
               "renderer": {"word_pdf": "LibreOffice compatibility rendering, not Microsoft Word native", "latex_pdf": "XeLaTeX"}}
     report["source_title_promoted_to_front_matter"]=promoted_title
+    report["font_substitution"]["observed_word_fonts"]=sorted({font for page in word_pdf["pages"] for font in page["fonts"]})
+    report["font_substitution"]["word_compatibility_note"]="LibreOffice may substitute StarMath fonts when importing OMML; observed PDF fonts are reported separately from fonts encoded in the editable Word mother."
     report["template"] = template_identity
     report["content_layout_attributes_removed"] = removed_attributes
     report["implementation_version"] = __import__("studio").__version__
-    report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
-    report["editable_outputs"] = {"manuscript.docx":digest(final)}
+    report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_commit":request.get("input_commit"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
+    report["editable_outputs"] = {"manuscript.docx":digest(final),"latex/main.tex":digest(main)}
     write_json(output/"acceptance.json", report)
     report["errors"]=acceptance_errors
     write_json(output/"acceptance.json", report)

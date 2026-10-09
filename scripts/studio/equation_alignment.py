@@ -19,19 +19,24 @@ def measure(path,equations,profile):
                 for candidate in page.search(re.escape("("+label+")"),regex=True):
                     col=min(cols-1,max(0,int((candidate["x0"]-left)/(width+gap))))
                     col_left=left+col*(width+gap); edge=col_left+width
-                    if abs(candidate["x1"]-edge)>14: continue
+                    # Cloud diagnostics show display labels within 0.08 pt of
+                    # the edge; prose references may be 12 pt away.
+                    if abs(candidate["x1"]-edge)>2: continue
                     center=(candidate["top"]+candidate["bottom"])/2
-                    glyphs=[c for c in page.chars if "math" in c.get("fontname","").lower() and col_left-1<=c["x0"] and c["x1"]<candidate["x0"]-3 and abs((c["top"]+c["bottom"])/2-center)<60]
+                    # LibreOffice imports native OMML through StarMath and may
+                    # emit Liberation/DejaVu/OpenSymbol glyphs. A font-name
+                    # substring is not a reliable way to locate mathematics.
+                    glyphs=[c for c in page.chars if c["text"].strip() and col_left-1<=c["x0"] and c["x1"]<candidate["x0"]-3 and abs((c["top"]+c["bottom"])/2-center)<60]
                     matches.append((number,candidate,glyphs))
             if not matches:
                 failures.append(label); records.append({"id":label,"status":"label_not_located_at_column_edge"}); continue
             number,label_box,glyphs=max(matches,key=lambda item:len(item[2]))
-            record={"id":label,"page":number,"label_bbox":[label_box[k] for k in ("x0","top","x1","bottom")],"math_glyphs":len(glyphs),"anchor":"center" if re.search(r"\\begin\{(?:cases|aligned|array|matrix)|\\\\",equation["source"]) else "baseline","assessment":"visual_required","reason":"PDF font boxes do not always expose a reliable equation baseline; inspect cloud page against declared anchor"}
+            record={"id":label,"page":number,"label_bbox":[label_box[k] for k in ("x0","top","x1","bottom")],"nearby_visible_glyphs":len(glyphs),"observed_fonts":sorted({c.get("fontname","") for c in glyphs}),"anchor":"center" if re.search(r"\\begin\{(?:cases|aligned|array|matrix)|\\\\",equation["source"]) else "baseline","assessment":"visual_required","reason":"Nearby glyphs are geometry evidence, not proof of equation identity or alignment. PDF font boxes do not expose a reliable equation baseline; inspect cloud pages."}
             if glyphs:
                 record["nearby_math_bbox"]=[min(c["x0"] for c in glyphs),min(c["top"] for c in glyphs),max(c["x1"] for c in glyphs),max(c["bottom"] for c in glyphs)]
             else: failures.append(label); record["status"]="math_not_located"
             records.append(record)
-    report={"equations":records,"failed":failures,"automatic_coverage":"label edge and nearby math; actual baseline/center requires visual review","alignment_passed":False}
+    report={"equations":records,"failed":failures,"automatic_coverage":"display-label edge and nearby visible content only; equation identity, baseline/center and alignment require separate checks and visual review","alignment_passed":False}
     write_json(Path(path).parent/"equation-alignment.json",report)
     if failures: raise StudioError("EQUATION_ALIGNMENT_LOCATION_FAILED: "+", ".join(failures))
     return report

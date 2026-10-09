@@ -26,6 +26,10 @@ def text_of(value):
             return text_of(value["c"][1][1])+text_of(value["c"][3:])
         if value.get("t") == "Figure":
             return text_of(value["c"][1][1])
+        if value.get("t") == "Image":
+            # Alternative text is accessible metadata, not printed body prose.
+            # Image identity/bytes are checked independently in object audits.
+            return ""
         if value.get("t") == "Str":
             return value["c"]
         if value.get("t") in ("Space", "SoftBreak", "LineBreak"):

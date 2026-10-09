@@ -27,8 +27,16 @@ def check_export(root, request, identity):
     if request.get("schema_version") != 2:
         raise StudioError("APPROVAL_MISSING: legacy export must migrate to version 2")
     root=Path(root)
-    declared={f["path"]:f["sha256"] for f in request["files"] if f.get("role") not in ("approvals","request")}
-    for name, fingerprint in declared.items():
+    files=request["files"]
+    if len({f["path"] for f in files})!=len(files): raise StudioError("DUPLICATE_INPUT_FILE")
+    by_path={f["path"]:f for f in files}
+    for field,role in (("manuscript","manuscript"),("metadata","metadata"),("bibliography","bibliography"),("approval_file","approvals")):
+        if request.get(field) and (request[field] not in by_path or by_path[request[field]]["role"]!=role):
+            raise StudioError("INPUT_ROLE_MISMATCH: "+field)
+    if any(f["role"]=="approvals" and f["path"]!=request["approval_file"] for f in files):
+        raise StudioError("INPUT_ROLE_MISMATCH: extra approvals file")
+    declared={f["path"]:f["sha256"] for f in files if f["path"]!=request["approval_file"]}
+    for name, fingerprint in {f["path"]:f["sha256"] for f in files}.items():
         if digest(confined(root,name)) != fingerprint: raise StudioError("INPUT_FINGERPRINT_MISMATCH: "+name)
     fingerprint=snapshot(declared)
     events=json.loads(confined(root,request["approval_file"]).read_text(encoding="utf-8"))

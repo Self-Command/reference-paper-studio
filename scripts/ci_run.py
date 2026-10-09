@@ -21,11 +21,14 @@ def execute(input_root, request_path, output, artifact_root=None, artifact_run=N
         from studio.contracts import validate
         from studio.approvals import snapshot
         actual_input=os.environ.get("INPUT_COMMIT")
+        if not actual_input: raise StudioError("INPUT_COMMIT_MISSING")
         if request.get("input_commit") and request["input_commit"]!=actual_input: raise StudioError("INPUT_COMMIT_MISMATCH")
         request["input_commit"]=actual_input
         if request.get("engine_commit") and request["engine_commit"]!=os.environ["GITHUB_SHA"]: raise StudioError("ENGINE_COMMIT_MISMATCH")
         validate(request,"request")
         stage=request["operation"]
+        if os.environ.get("TASK_ID") and os.environ["TASK_ID"]!=request["task_id"]: raise StudioError("TASK_ID_MISMATCH")
+        if os.environ.get("PHASE") and os.environ["PHASE"]!=stage: raise StudioError("TASK_PHASE_MISMATCH")
         declared={f["path"] for f in request["files"]}
         fingerprints={f["path"]:f["sha256"] for f in request["files"]}
         if len(declared)!=len(request["files"]): raise StudioError("DUPLICATE_INPUT_FILE")

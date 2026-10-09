@@ -55,6 +55,7 @@ jobs:
           REQUEST_PATH: '${{ inputs.request_path }}'
           INPUT_COMMIT: '${{ inputs.input_commit }}'
           TASK_ID: '${{ inputs.task_id }}'
+          PHASE: '${{ inputs.phase }}'
           ARTIFACT_RUN: '${{ inputs.artifact_run }}'
         run: |
           python scripts/ci_run.py --input-root task-inputs --request "$REQUEST_PATH" --output build/task --artifact-root visual-artifacts --artifact-run "$ARTIFACT_RUN"

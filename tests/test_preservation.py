@@ -15,6 +15,11 @@ def test_spaces_cannot_mask_latin_word_join():
     with pytest.raises(StudioError,match="word boundaries"):
         assert_text({"blocks":[{"t":"Str","c":"in put"}]},{"blocks":[{"t":"Str","c":"input"}]},"fixture")
 
+def test_graphics_reader_alt_text_is_not_body_prose():
+    figure={"t":"Figure","c":[["fig:f",[],[]],[None,[{"t":"Para","c":[{"t":"Str","c":"Figure 1 Example"}]}]],[]]}
+    image={"t":"Image","c":[["",[],[]],[{"t":"Str","c":"image"}],["figure.png",""]]}
+    assert_text({"blocks":[figure]},{"blocks":[{"t":"Para","c":[{"t":"Str","c":"Figure 1 Example"}]},image]},"fixture")
+
 def test_metadata_inline_math_remains_editable(tmp_path):
     result=prepare({"title_en":"Editable math","abstract_en":"Preserve $x_i^2/(1+x_i)$ and A < B & C."},[1,23,1],tmp_path)
     doc=Document(result["_meta_docx"])
