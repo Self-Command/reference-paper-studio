@@ -201,3 +201,24 @@ def test_blank_interior_page_fails_flow_check(tmp_path):
     assert check_page_flow(path,PROFILE)["pages"]==1
     writer.add_blank_page(width=595,height=842); writer.write(path)
     with pytest.raises(StudioError,match="SPARSE_INTERIOR_PAGE"): check_page_flow(path,PROFILE)
+
+
+@pytest.mark.parametrize("body_overflow",[False,True])
+def test_abstract_repeated_in_body_does_not_change_column_region(monkeypatch,body_overflow):
+    from types import SimpleNamespace
+    from studio import qa
+    def line(text,top,x=63):
+        return [{"text":letter,"x0":x+i*5,"x1":x+(i+1)*5,"top":top,"bottom":top+10} for i,letter in enumerate(text)]
+    chars=line("Repeated text entry",100)+line("metadata-end-anchor",200)+line("Repeated text entry",300)
+    chars += [{"text":"X","x0":296,"x1":302,"top":120,"bottom":130}]
+    if body_overflow: chars += [{"text":"Y","x0":296,"x1":302,"top":350,"bottom":360}]
+    page=SimpleNamespace(width=595.3,height=841.9,chars=chars)
+    class Proof:
+        pages=[page]
+        def __enter__(self): return self
+        def __exit__(self,*args): pass
+    monkeypatch.setattr(qa.pdfplumber,"open",lambda path:Proof())
+    ast={"blocks":[{"t":"Para","c":[{"t":"Str","c":"Repeated text entry"}]}]}
+    result=qa.check_column_geometry("cloud-proof.pdf",PROFILE,ast,{"abstract_zh":"Repeated text entry","keywords_en":["metadata-end-anchor"]})
+    assert result["regions"][0]["body_top"]==299
+    assert [v["text"] for v in result["violations"]]==(["Y"] if body_overflow else [])

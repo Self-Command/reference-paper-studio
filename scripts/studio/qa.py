@@ -197,7 +197,12 @@ def check_column_geometry(path, profile, ast, metadata):
     first = next((text_of(b) for b in ast["blocks"] if text_of(b).strip()), "")
     prefix = re.sub(r"\s+", "", first)[:12]
     end_title = re.sub(r"\s+", "", metadata.get("title_en", ""))[:12]
-    def find_line(page, fragment):
+    front_keys = [key+suffix for suffix in ("_zh", "_en") if suffix=="_zh" or profile["english_abstract_position"]=="front" for key in ("title","authors","affiliation","abstract","keywords")]
+    front_values = [metadata[key] for key in front_keys if metadata.get(key)]
+    final_front = front_values[-1] if front_values else ""
+    if isinstance(final_front,list): final_front = "; ".join(final_front)
+    front_anchor = re.sub(r"\s+", "", str(final_front))[-12:]
+    def find_line(page, fragment, minimum_top=0, bottom=False):
         if not fragment: return None
         lines = {}
         for char in page.chars:
@@ -205,16 +210,21 @@ def check_column_geometry(path, profile, ast, metadata):
             lines.setdefault(key, []).append(char)
         for values in lines.values():
             text = re.sub(r"\s+", "", "".join(c["text"] for c in sorted(values,key=lambda c:c["x0"])))
-            if fragment in text: return min(c["top"] for c in values)
+            if fragment in text and min(c["top"] for c in values)>=minimum_top: return max(c["bottom"] for c in values) if bottom else min(c["top"] for c in values)
         return None
-    violations=[]; regions=[]; started=False
+    violations=[]; regions=[]; started=False; front_finished=not bool(front_anchor)
     with pdfplumber.open(path) as pdf:
         left=profile["page"]["margin_cm"]["left"]*72/2.54
         right=pdf.pages[0].width-profile["page"]["margin_cm"]["right"]*72/2.54
         gap=profile["page"]["column_spacing_cm"]*72/2.54
         midpoint=(left+right)/2; gutter=(midpoint-gap/2,midpoint+gap/2)
         for number,page in enumerate(pdf.pages,1):
-            start=find_line(page,prefix) if not started else None
+            minimum_top=0
+            if not front_finished:
+                front_bottom=find_line(page,front_anchor,bottom=True)
+                if front_bottom is None: continue
+                minimum_top=front_bottom; front_finished=True
+            start=find_line(page,prefix,minimum_top=minimum_top) if not started else None
             if not started and start is None: continue
             top=start-1 if start is not None else profile["page"]["margin_cm"]["top"]*72/2.54
             started=True
