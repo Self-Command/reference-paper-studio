@@ -35,6 +35,8 @@ def prove(path, directory):
         if index:
             par=OxmlElement("w:p"); props=OxmlElement("w:pPr")
             set_child(props,"pageBreakBefore"); par.append(props); body.insert(len(body)-1,par)
+        from .locked_template import paragraph
+        body.insert(len(body)-1,paragraph("Formula", "Equation"))
         body.insert(len(body)-1,table)
     source=directory/"isolated.docx"; doc.save(source)
     run(["libreoffice","-env:UserInstallation=file:///tmp/rps-math-proof","--headless","--convert-to","pdf","--outdir",directory,source],timeout=300)
@@ -42,7 +44,7 @@ def prove(path, directory):
     with pdfplumber.open(directory/"isolated.pdf") as pdf:
         if len(pdf.pages)!=len(expected): raise StudioError("ISOLATED_EQUATION_PAGINATION_CHANGED")
         for page,item in zip(pdf.pages,expected):
-            text=page.extract_text() or ""; observed=glyphs(text.replace(item["label"],""))
+            text=page.extract_text() or ""; observed=glyphs(text.replace(item["label"],"").replace("Formula",""))
             missing=dict(item["glyphs"]-observed)
             report.append({"label":item["label"],"missing":missing,"expected_glyphs":dict(item["glyphs"]),"observed_glyphs":dict(observed)})
     write_json(directory/"glyph-preservation.json",report)

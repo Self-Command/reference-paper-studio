@@ -161,7 +161,7 @@ def check_contract(path, p):
                 props=par.find(W+"pPr")
                 if props is None or props.find(W+"pStyle") is None or props.find(W+"pStyle").get(W+"val") not in {"RPS"+r for r in ROLES}:
                     raise StudioError("CONTENT_STYLE_FORBIDDEN")
-                if any(c.tag not in {W+"pStyle",W+"numPr",W+"jc"} for c in props): raise StudioError("CONTENT_PARAGRAPH_LAYOUT_FORBIDDEN")
+                if any(c.tag not in {W+"pStyle",W+"numPr",W+"jc",W+"keepNext"} for c in props): raise StudioError("CONTENT_PARAGRAPH_LAYOUT_FORBIDDEN")
             for run in item.iter(W+"r"):
                 props=run.find(W+"rPr")
                 if props is not None and any(c.tag not in {W+"b",W+"i",W+"vertAlign"} for c in props): raise StudioError("CONTENT_RUN_LAYOUT_FORBIDDEN")
@@ -293,6 +293,10 @@ def fill(native, metadata, equations, master, p, output):
         maximum = width*635
         if shape.width > maximum:
             ratio = maximum/shape.width; shape.height = round(shape.height*ratio); shape.width = maximum
+    for element in body:
+        if element.tag==W+"p" and list(element.iter(W+"drawing")):
+            pstyle(element,"Equation")
+            set_child(element.find(W+"pPr"),"keepNext",{"w:val":"1"})
     if list(body.iter("{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}anchor")):
         raise StudioError("FLOATING_IMAGE_FORBIDDEN")
     doc.save(output)

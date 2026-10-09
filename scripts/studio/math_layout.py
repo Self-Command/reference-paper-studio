@@ -86,9 +86,11 @@ def wrap(root, width_pt):
             entry = OxmlElement("m:e")
             first = row[0].findtext(M+"t", "") if row[0].tag == M+"r" else ""
             if re.match(r"^[=<>≤≥]",first):
-                # A zero-width operand keeps compatibility renderers from
-                # treating a continuation relation as an incomplete expression.
-                empty=OxmlElement("m:box"); empty.append(OxmlElement("m:e")); entry.append(empty)
+                # A continuation relation is displayed as a literal operator,
+                # avoiding a compatibility parser's missing-operand placeholder.
+                props=row[0].find(M+"rPr")
+                if props is None: props=OxmlElement("m:rPr"); row[0].insert(0,props)
+                normal=OxmlElement("m:nor"); normal.set(M+"val","1"); props.append(normal)
             for child in row: entry.append(child)
             array.append(entry)
         element.append(array)
