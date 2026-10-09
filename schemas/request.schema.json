@@ -58,6 +58,9 @@
         "font_profile": {
           "type": "string"
         },
+        "year": {
+          "type": ["integer", "null"]
+        },
         "manifest_sha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"

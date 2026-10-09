@@ -21,7 +21,7 @@ def build(template_id, version, profile_id="open-serif", font_assets=None):
     manifest=json.loads((target/"manifest.json").read_text(encoding="utf-8"))
     manifest.update(schema_version=2,composition_sha256=p["composition_sha256"],
         font_profile_id=profile_id,font_profile_sha256=hashlib.sha256(json.dumps(fonts,sort_keys=True).encode()).hexdigest(),
-        policy=p,font_assets=font_assets or {},release_state="candidate",automatic_pass=False,visual_review_complete=False)
+        policy=p,font_assets=font_assets or {},template_year=descriptor.get("year"),release_state="candidate",automatic_pass=False,visual_review_complete=False)
     write_json(target/"manifest.json",manifest)
     return target
 
@@ -29,11 +29,15 @@ def resolve(request):
     require_actions()
     identity=request["template"]
     descriptor,p=load_composition(identity["id"],identity["version"])
+    if "year" in identity and identity["year"]!=descriptor.get("year"):
+        raise StudioError("TEMPLATE_YEAR_MISMATCH: "+identity["id"])
     target=asset_root()/identity["id"]/identity["version"]/identity["font_profile"]
     manifest_path=target/"manifest.json"
     if not manifest_path.is_file(): raise StudioError("TEMPLATE_NOT_READY")
     if digest(manifest_path)!=identity["manifest_sha256"]: raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: manifest")
     manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("template_year")!=descriptor.get("year"):
+        raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: year")
     if manifest["composition_sha256"]!=p["composition_sha256"]: raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: composition")
     current_fonts=font_profile(identity["font_profile"])
     current_font_hash=hashlib.sha256(json.dumps(current_fonts,sort_keys=True).encode()).hexdigest()
