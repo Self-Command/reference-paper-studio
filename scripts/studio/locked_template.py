@@ -307,7 +307,7 @@ def fill(native, metadata, equations, master, p, output):
             equation = equations[index]; index += 1
             formulae = list(element.iter(M+"oMath"))
             if len(formulae) != 1: raise StudioError("UNSUPPORTED_DISPLAY_STRUCTURE: "+equation["id"])
-            changes = wrap(formulae[0], (width-550)/20-16)
+            changes = wrap(formulae[0], (width-550)/20-16,p["body_size_pt"])
             ledger.append({"id": equation["id"], "changes": changes})
             table = doc.add_table(rows=1, cols=2); table.autofit = False
             table._tbl.getparent().remove(table._tbl)
@@ -339,7 +339,7 @@ def fill(native, metadata, equations, master, p, output):
                     table = next(a for a in cell.iterancestors() if a.tag == W+"tbl")
                     cells = len(table.find(W+"tr").findall(W+"tc"))
                     cell_budget = width/20/cells-12
-                changes = wrap(formula, cell_budget)
+                changes = wrap(formula, cell_budget,p["body_size_pt"])
                 inline_ledger.append(changes)
             anchor.addprevious(element)
     if index != len(equations): raise StudioError("FORMULA_COUNT_CHANGED")

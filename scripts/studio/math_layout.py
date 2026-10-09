@@ -31,7 +31,7 @@ def restore(root, changes):
     return result
 
 
-def wrap(root, width_pt):
+def wrap(root, width_pt, font_size_pt=10):
     require_actions()
     before = deepcopy(root); changes = []
     # Pandoc represents TeX setminus by ASCII backslash. LibreOffice treats that
@@ -64,7 +64,7 @@ def wrap(root, width_pt):
         name = etree.QName(element).localname
         # Only a piecewise delimiter may stack value/condition cells. A general
         # matrix keeps its columns: changing those would change its meaning.
-        if name == "m" and math_width_pt(element, 10) > budget:
+        if name == "m" and math_width_pt(element, font_size_pt) > budget:
             parent = element.getparent()
             delimiter = parent.getparent() if parent is not None and parent.tag == M+"e" else parent
             props = delimiter.find(M+"dPr") if delimiter is not None and delimiter.tag == M+"d" else None
@@ -82,14 +82,18 @@ def wrap(root, width_pt):
                     changes.append({"path":path,"before":old,"after":etree.tostring(element,encoding="unicode"),"reason":"piecewise value then condition, one column"})
         # Reserve delimiters, fraction rules and matrix neighbours conservatively.
         children = list(element)
+        linear_overflow=name in containers and math_width_pt(element,font_size_pt)>budget
         for index, child in enumerate(children):
             child_budget = budget
             if name in ("d", "borderBox"): child_budget -= 15
             if name in ("mr", "oMath", "e") and child.tag not in (M+"r", M+"rPr", W+"rPr"):
-                other = sum(math_width_pt(c, 10) for c in children if c is not child)
-                child_budget = max(45, budget-other-8)
+                other = sum(math_width_pt(c, font_size_pt) for c in children if c is not child)
+                # The overflowing parent will be split at legal operators.
+                # Reserving ALL unwrapped neighbours here would give a cases
+                # condition only 45 pt even after its parent moves to a new row.
+                child_budget = max(45,budget-8 if linear_overflow else budget-other-8)
             visit(child, path+[index], max(45, child_budget))
-        if name not in containers or math_width_pt(element, 10) <= budget: return
+        if name not in containers or math_width_pt(element, font_size_pt) <= budget: return
         tokens = []
         for child in element:
             if child.tag == M+"r":
@@ -115,7 +119,7 @@ def wrap(root, width_pt):
         if segment: segments.append(segment)
         rows = []; row = []; used = 0
         for segment in segments:
-            size = sum(math_width_pt(t,10) for t in segment)
+            size = sum(math_width_pt(t,font_size_pt) for t in segment)
             if row and used+size > budget:
                 rows.append(row); row=[]; used=0
             row.extend(segment); used+=size
