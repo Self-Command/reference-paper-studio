@@ -185,6 +185,8 @@ def _export(root, request, output, reference_rules=None):
     word_pdf=inspect_output_pdf(output/"word-compat-proof.pdf",output/"previews/word-compat-proof")
     write_json(output/"word-compat-proof.pdf.json",word_pdf)
     word_pdf["page_flow"]=check_page_flow(output/"word-compat-proof.pdf",profile)
+    from .qa import check_rendered_frontmatter
+    word_pdf["frontmatter"]=check_rendered_frontmatter(output/"word-compat-proof.pdf",profile,ast,meta,output/"metadata-source.json")
     word_geometry=check_column_geometry(output/"word-compat-proof.pdf",profile,ast,meta)
     write_json(output/"word-column-geometry.json",word_geometry)
     acceptance_errors=[]
@@ -213,6 +215,7 @@ def _export(root, request, output, reference_rules=None):
     shutil.copy2(texdir/"main.pdf", output/"latex-proof.pdf")
     pdfs = {"word-compat-proof.pdf":word_pdf,"latex-proof.pdf":inspect_output_pdf(output/"latex-proof.pdf",output/"previews/latex-proof")}
     write_json(output/"latex-proof.pdf.json",pdfs["latex-proof.pdf"])
+    pdfs["latex-proof.pdf"]["frontmatter"]=check_rendered_frontmatter(output/"latex-proof.pdf",profile,ast,meta,output/"metadata-source.json")
     latex_geometry=check_column_geometry(output/"latex-proof.pdf",profile,ast,meta)
     write_json(output/"latex-column-geometry.json",latex_geometry)
     if word_geometry["violations"] or latex_geometry["violations"]:

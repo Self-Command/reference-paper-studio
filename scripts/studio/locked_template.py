@@ -121,14 +121,16 @@ def create_templates(directory, policy_override=None):
         if variant == "front": metadata("en")
         body.insert(len(body)-1, section_break(1, p))
         body.insert(len(body)-1, paragraph("{{RPS_BODY}}", "Body"))
-        if p.get("front_separate_page"):
-            boundary=body[-2].getprevious()
-            if boundary is not None and boundary.find(W+"pPr/"+W+"sectPr") is not None:
-                set_child(boundary.find(W+"pPr/"+W+"sectPr"),"type",{"w:val":"nextPage"})
         if variant == "end": body.insert(len(body)-1, section_break(p.get("body_columns",2), p)); metadata("en")
         final = body.find(W+"sectPr")
         _apply_sectpr(final, {**p["page"], "columns": p.get("body_columns",2) if variant == "front" else 1, "doc_grid": False})
         set_child(final, "type", {"w:val": "continuous"})
+        if p.get("front_separate_page"):
+            # sectPr describes how ITS section starts, not how the preceding
+            # section ends. Starting the front section nextPage suppresses
+            # its first line in the compatibility renderer without separating
+            # a same-column body. The body is always section index 1.
+            set_child(doc.sections[1]._sectPr,"type",{"w:val":"nextPage"})
         if p.get("page_numbers"):
             if p["page_numbers"]!={"position":"footer-center","start":1,"scope":"all"}:raise StudioError("PAGE_NUMBER_POLICY_UNSUPPORTED")
             footer=doc.sections[0].footer.paragraphs[0]._p

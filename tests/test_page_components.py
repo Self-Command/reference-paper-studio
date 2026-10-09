@@ -37,3 +37,26 @@ def test_component_removal_does_not_leave_hidden_page_fields(tmp_path):
     p.update(id=descriptor["id"],version=descriptor["version"])
     create_templates(tmp_path,p)
     assert not any(list(section.footer._element.iter(qn("w:fldSimple"))) for section in Document(tmp_path/"master-front.docx").sections)
+
+
+@pytest.mark.parametrize("variant",["front","end"])
+def test_single_column_front_starts_body_on_next_page_and_renders_title(tmp_path,variant):
+    from studio.locked_template import fill
+    from studio.frontmatter import prepare
+    from studio.qa import check_rendered_frontmatter,check_page_flow
+    _,p=load_composition("gmcm","1.0.0")
+    p["english_abstract_position"]=variant
+    create_templates(tmp_path/"master",p)
+    native=tmp_path/"native.docx";doc=Document();doc.add_heading("BodyStart",1);doc.add_paragraph("Actual body content.");doc.save(native)
+    metadata=prepare({"title_zh":"中文题目可见","abstract_zh":"独立摘要页","keywords_zh":["测试"]},[1,23,1],tmp_path)
+    result=tmp_path/"manuscript.docx"
+    fill(native,metadata,[],tmp_path/"master"/("master-"+variant+".docx"),p,result)
+    rendered=Document(result)
+    assert rendered.sections[0]._sectPr.find(qn("w:type")).get(qn("w:val"))=="continuous"
+    assert rendered.sections[1]._sectPr.find(qn("w:type")).get(qn("w:val"))=="nextPage"
+    run(["libreoffice","-env:UserInstallation=file:///tmp/rps-front-test-"+variant,"--headless","--convert-to","pdf","--outdir",tmp_path,result])
+    ast={"blocks":[{"t":"Header","c":[1,["",[],[]],[{"t":"Str","c":"BodyStart"}]]}]}
+    proof=tmp_path/"manuscript.pdf"
+    observed=check_rendered_frontmatter(proof,p,ast,metadata,tmp_path/"metadata-source.json")
+    assert observed["title_visibility"]==[{"role":"title_zh","pages":[1],"math_visibility":"checked separately"}]
+    assert check_page_flow(proof,p)["pages"]==2

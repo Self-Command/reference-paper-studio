@@ -237,10 +237,40 @@ def check_page_flow(path, profile, maximum_pages=None):
             objects=[c for c in page.chars if c["text"].strip() and top-2 <= c["top"] and c["bottom"] <= bottom+2]
             objects+=page.images
             span=(max(o["bottom"] for o in objects)-min(o["top"] for o in objects))/(bottom-top) if objects else 0
-            measurements.append({"page":number,"occupied_vertical_span":round(span,3),"final_page":number==len(pdf.pages)})
-            if number<len(pdf.pages) and span<.35:
+            intentional_front=number==1 and profile.get("front_separate_page",False)
+            measurements.append({"page":number,"occupied_vertical_span":round(span,3),"final_page":number==len(pdf.pages),"registered_front_page":intentional_front})
+            if number<len(pdf.pages) and span<.35 and not intentional_front:
                 raise StudioError(f"SPARSE_INTERIOR_PAGE: {Path(path).name}:{number}: occupied span {span:.1%}")
     return {"pages":len(measurements),"measurements":measurements}
+
+
+def check_rendered_frontmatter(path,profile,ast,metadata,source):
+    """Check actual PDF title visibility and a registered separate body page."""
+    require_actions()
+    from copy import deepcopy
+    from .manuscript import text_of,walk
+    with pdfplumber.open(path) as pdf:
+        pages=[re.sub(r"\s+","",page.extract_text() or "") for page in pdf.pages]
+    data=json.loads(Path(source).read_text(encoding="utf-8"))
+    roles=metadata.get("_meta_roles",[])
+    titles=[]
+    for role,block in zip(roles,data["blocks"]):
+        if not role.startswith("title_"):continue
+        visible=deepcopy(block)
+        for node in walk(visible):
+            if node.get("t")=="Math":node.update(t="Str",c="\u241f")
+        fragments=[re.sub(r"\s+","",piece) for piece in text_of(visible).split("\u241f") if piece.strip()]
+        matches=[index+1 for index,text in enumerate(pages) if all(part in text for part in fragments)]
+        if fragments and not matches:raise StudioError("RENDERED_TITLE_MISSING: "+role)
+        at_front=role.endswith("zh") or profile.get("english_abstract_position")=="front"
+        if fragments and at_front and 1 not in matches:raise StudioError("RENDERED_TITLE_NOT_ON_FRONT: "+role)
+        titles.append({"role":role,"pages":matches,"math_visibility":"checked separately"})
+    first=next((block for block in ast["blocks"] if block.get("t")=="Header"),None)
+    if profile.get("front_separate_page") and first is not None:
+        heading=re.sub(r"\s+","",text_of(first))
+        if heading and heading in pages[0]:raise StudioError("FRONT_BODY_PAGE_SEPARATION_LOST: "+heading)
+        if heading and not any(heading in page for page in pages[1:]):raise StudioError("BODY_START_NOT_RENDERED: "+heading)
+    return {"title_visibility":titles,"separate_front":bool(profile.get("front_separate_page"))}
 
 
 def check_column_geometry(path, profile, ast, metadata):
