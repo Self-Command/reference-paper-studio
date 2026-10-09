@@ -382,6 +382,8 @@ def fill(native, metadata, equations, master, p, output):
                     table = next(a for a in cell.iterancestors() if a.tag == W+"tbl")
                     cells = len(table.find(W+"tr").findall(W+"tc"))
                     cell_budget = width/20/cells-12
+                from .docx_layout import following_punctuation_width
+                cell_budget-=following_punctuation_width(formula,p["body_size_pt"])
                 changes = wrap(formula, cell_budget,p["body_size_pt"])
                 inline_ledger.append(changes)
             anchor.addprevious(element)

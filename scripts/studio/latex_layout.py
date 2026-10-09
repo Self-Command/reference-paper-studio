@@ -135,10 +135,31 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     if "component_versions" in profile:
         preamble=preamble.replace(r"\begin{document}",r"\pagestyle{"+("plain" if profile.get("page_numbers") else "empty")+"}\n"+r"\begin{document}")
     native=profile.get("latex_body_backend")=="native-columns"
+    breaking=profile.get("paragraph_breaking",{})
+    if breaking:
+        preamble=preamble.replace(r"\emergencystretch}{1em}",r"\emergencystretch}{"+str(breaking["emergency_stretch_em"])+"em}")
     if profile.get("latex_table_backend")=="cals":
         preamble=preamble.replace(r"\begin{document}",r"\usepackage{cals}\newcounter{rpsTableSegment}"+"\n"+r"\begin{document}")
     # One registered body region; content cannot switch output routines.
     layout=latex_ast(layout_ast or ast,equations,profile["equation_numbering"]); blocks=[]
+    if breaking.get("bibliographic_slash_breaks"):
+        # A citation delimiter such as networks[C]//Proceedings otherwise
+        # forms one unhyphenatable word. Insert a discretionary break after
+        # // in prose only. Neither URLs/filenames nor math are touched.
+        def break_slashes(value):
+            if isinstance(value,list):
+                result=[]
+                for child in value:
+                    if isinstance(child,dict) and child.get("t")=="Str" and "//" in child["c"]:
+                        chunks=child["c"].split("//")
+                        for index,chunk in enumerate(chunks):
+                            if chunk:result.append({"t":"Str","c":chunk})
+                            if index<len(chunks)-1:result.extend([{"t":"Str","c":"//"},{"t":"RawInline","c":["latex",r"\allowbreak{}"]}])
+                    else:result.append(break_slashes(child))
+                return result
+            if isinstance(value,dict):return {key:break_slashes(item) for key,item in value.items()}
+            return value
+        layout=break_slashes(layout)
     for block in layout["blocks"]:
         if block.get("t") == "Table":
             if profile.get("latex_table_backend")=="cals":

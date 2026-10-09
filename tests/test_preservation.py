@@ -38,3 +38,15 @@ def test_end_abstract_uses_one_fixed_unbreakable_region(tmp_path):
     assert r"\begin{multicols}" not in text
     end_region=text[text.index(r"\onecolumn"):]
     assert end_region.index(r"\begin{minipage}{\textwidth}")<end_region.index("Synthetic abstract")<end_region.index(r"\end{minipage}")
+
+
+def test_latex_bibliographic_delimiter_break_preserves_words_and_link(tmp_path):
+    from studio.qa import read_ast
+    from studio.latex_tables import reader_copy
+    ast={"pandoc-api-version":[1,23,1],"meta":{},"blocks":[{"t":"Para","c":[{"t":"Str","c":"networks[C]//Proceedings"},{"t":"Space"},{"t":"Link","c":[["",[],[]],[{"t":"Str","c":"Source"}],["https://example.org/research","source"]]}]}]}
+    _,profile=load_composition("reference-journal-v1","2.0.0")
+    write_latex(ast,[],{},profile,tmp_path)
+    text=(tmp_path/"layout-body.tex").read_text()
+    assert r"//\allowbreak{}Proceedings" in text
+    assert "https://example.org/research" in text
+    assert_text(ast,read_ast(reader_copy(tmp_path/"layout-body.tex",tmp_path),"latex"),"actual discretionary break")

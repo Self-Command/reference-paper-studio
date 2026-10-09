@@ -86,6 +86,25 @@ def math_width_pt(element, size):
     return sum(values)
 
 
+def following_punctuation_width(formula,size):
+    """Reserve the visible no-break punctuation attached to inline mathematics."""
+    require_actions()
+    current=formula
+    while current is not None and current.tag!=W+"p":
+        sibling=current.getnext()
+        while sibling is not None:
+            value="".join(node.text or "" for node in sibling.iter(W+"t"))
+            if value:
+                first=value[0]
+                if first in "，。；：、！？）》】〕〉”’":return size
+                if first in ",.;:!?)]}":return size*.4
+                return 0
+            if list(sibling.iter(M+"oMath")) or list(sibling.iter(W+"drawing")):return 0
+            sibling=sibling.getnext()
+        current=current.getparent()
+    return 0
+
+
 def metadata_paragraphs(meta, english=False):
     suffix = "_en" if english else "_zh"
     result = []

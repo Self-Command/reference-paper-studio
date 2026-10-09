@@ -170,6 +170,15 @@ def test_nested_math_measurement_visits_each_node_once(monkeypatch):
     assert len(calls)==len(list(formula.iter()))
 
 
+def test_inline_formula_reserves_attached_punctuation_but_not_prose():
+    from studio.docx_layout import following_punctuation_width
+    paragraph=OxmlElement("w:p");formula=OxmlElement("m:oMath");paragraph.append(formula)
+    run=OxmlElement("w:r");text=OxmlElement("w:t");text.text="，后续说明";run.append(text);paragraph.append(run)
+    assert following_punctuation_width(formula,10)==10
+    text.text="。";assert following_punctuation_width(formula,10)==10
+    text.text=" suffix";assert following_punctuation_width(formula,10)==0
+
+
 @pytest.mark.parametrize("expression_right,expected",[(180,False),(202,True)])
 def test_rendered_equation_number_region_rejects_collision(expression_right,expected):
     from studio.math_proof import number_region
