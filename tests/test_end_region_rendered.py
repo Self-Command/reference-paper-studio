@@ -7,9 +7,10 @@ from studio.runtime import run
 from studio.qa import check_column_geometry
 
 
-def test_registered_end_abstract_can_share_last_native_column_page(tmp_path):
+def test_diagnostic_cuted_short_probe_can_share_page_without_proving_real_model(tmp_path):
     _,profile=load_composition("reference-journal-v1","2.0.0")
     profile["english_abstract_position"]="end"
+    profile["latex_end_backend"]="cuted-strip"
     source=tmp_path/"short.md"
     source.write_text("# Registered body\n\n"+"Short body paragraphs retain native column layout and original content. "*18,encoding="utf-8")
     ast,equations=parse(source,tmp_path)

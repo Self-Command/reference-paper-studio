@@ -32,7 +32,10 @@ def compile_components(descriptor):
     # The registered region/table components own the TeX backend. A task
     # cannot select a different output routine or disable continuation.
     p["latex_body_backend"]="native-columns"
-    p["latex_end_backend"]="cuted-strip" if "region.end" in selected else None
+    # The pinned cuted kernel passed a short probe but lost an end region in
+    # the real model (Actions 37961172886). Keep the diagnostic adapter, never
+    # register it for production merely because its minimal test passed.
+    p["latex_end_backend"]="native-newpage" if "region.end" in selected else None
     p["latex_table_backend"]="cals" if "table.three-line" in selected else None
     p["paragraph_breaking"]={"emergency_stretch_em":3,"bibliographic_slash_breaks":True}
     p["math_array_padding_pt"]=10

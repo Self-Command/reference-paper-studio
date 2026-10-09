@@ -27,7 +27,7 @@
     },
     {
       "id": "region.end",
-      "version": "2",
+      "version": "3",
       "kind": "layout",
       "requires": [],
       "source": "Shared studio adapter over Pandoc/python-docx",
