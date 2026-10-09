@@ -72,7 +72,7 @@ def wrap(root, width_pt):
                 if len(texts) == 1:
                     value = texts[0].text or ""
                     # Ordinary mathematical text may wrap between Chinese characters.
-                    pieces = re.split(r"(?=[=<>≤≥+−,;]|[\u3400-\u9fff])", value)
+                    pieces = re.split(r"(?=[=<>≤≥+−×∧∨,;]|[\u3400-\u9fff])", value)
                     for piece in filter(None, pieces):
                         copy = deepcopy(child); copy.find(M+"t").text = piece; tokens.append(copy)
                     continue
@@ -80,7 +80,7 @@ def wrap(root, width_pt):
         segments = []; segment = []; depth = 0; previous = ""
         for token in tokens:
             value = token.findtext(M+"t", "") if token.tag == M+"r" else ""
-            safe = depth == 0 and (token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−,;\u3400-\u9fff]", value)) or previous.endswith(")") and value == "1")
+            safe = depth == 0 and (token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;\u3400-\u9fff]", value)) or previous.endswith(")") and value == "1")
             if safe and segment: segments.append(segment); segment=[]
             segment.append(token)
             for character in value:
@@ -103,7 +103,7 @@ def wrap(root, width_pt):
         for row in rows:
             entry = OxmlElement("m:e")
             first = row[0].findtext(M+"t", "") if row[0].tag == M+"r" else ""
-            if re.match(r"^[=<>≤≥+−]",first):
+            if re.match(r"^[=<>≤≥+−×∧∨]",first):
                 # m:lit must precede inherited m:sty. LibreOffice reads these
                 # properties in schema order; appending m:nor was ignored.
                 props=row[0].find(M+"rPr")
