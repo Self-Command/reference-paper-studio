@@ -42,6 +42,23 @@ def wrap(root, width_pt):
         old = etree.tostring(root,encoding="unicode")
         for node in slash: node.text = "∖"
         changes.append({"path":[],"before":old,"after":etree.tostring(root,encoding="unicode"),"reason":"setminus operator Unicode spelling"})
+    # Subscripts such as Z_{>0} also start with an operator. Guard existing
+    # arguments before wrapping, not just newly introduced continuation rows.
+    old = etree.tostring(root,encoding="unicode")
+    for argument in list(root.iter()):
+        if etree.QName(argument).localname not in {"oMath","e","sub","sup","lim","num","den"}: continue
+        token = next((c for c in argument if not etree.QName(c).localname.endswith("Pr")),None)
+        if token is None or token.tag != M+"r": continue
+        value = token.findtext(M+"t","")
+        if not re.match(r"^[=<>≤≥+−×∧∨]",value): continue
+        symbol=deepcopy(token);symbol.find(M+"t").text=value[0]
+        box=OxmlElement("m:box");entry=OxmlElement("m:e");entry.append(symbol);box.append(entry)
+        if len(value)>1:
+            token.find(M+"t").text=value[1:];token.addprevious(box)
+        else: argument.replace(token,box)
+    current = etree.tostring(root,encoding="unicode")
+    if current != old:
+        changes.append({"path":[],"before":old,"after":current,"reason":"editable leading operators in existing math arguments"})
     containers = {"oMath", "e", "num", "den", "lim"}
     def visit(element, path, budget):
         name = etree.QName(element).localname

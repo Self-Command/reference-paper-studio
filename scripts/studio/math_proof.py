@@ -21,7 +21,19 @@ def prove(path, directory):
     require_actions()
     directory=Path(directory); directory.mkdir(parents=True,exist_ok=True)
     doc=Document(path); body=doc._element.body
-    tables=[deepcopy(t._tbl) for t in doc.tables if is_equation_table(t._tbl)]
+    tables=[]; inline_index=0; active=False
+    for element in body:
+        if element.tag==W+"bookmarkStart" and element.get(W+"name")=="RPS_BODY":active=True;continue
+        if element.tag==W+"bookmarkEnd" and element.get(W+"id")=="9181":active=False
+        if not active:continue
+        if is_equation_table(element):tables.append(deepcopy(element));continue
+        for math in element.iter(M+"oMath"):
+            inline_index+=1
+            table=doc.add_table(rows=1,cols=2);table._tbl.getparent().remove(table._tbl)
+            # Diagnostic isolation keeps the actual editable expression intact.
+            table.cell(0,0).paragraphs[0]._p.append(deepcopy(math))
+            table.cell(0,1).text="(inline-"+str(inline_index)+")"
+            tables.append(table._tbl)
     expected=[]
     for table in tables:
         expression="".join(t.text or "" for t in table.iter(M+"t"))
@@ -49,4 +61,4 @@ def prove(path, directory):
             report.append({"label":item["label"],"missing":missing,"expected_glyphs":dict(item["glyphs"]),"observed_glyphs":dict(observed)})
     write_json(directory/"glyph-preservation.json",report)
     run(["pdftoppm","-r","100","-png",directory/"isolated.pdf",directory/"equation"],timeout=300)
-    return {"equations":len(report),"missing":[r for r in report if r["missing"]],"normalization":"NFKC font alphabets and whitespace only"}
+    return {"equations":len(report),"display_equations":len(report)-inline_index,"inline_equations":inline_index,"missing":[r for r in report if r["missing"]],"normalization":"NFKC font alphabets and whitespace only"}
