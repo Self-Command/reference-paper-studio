@@ -101,7 +101,9 @@ def create_templates(directory):
         normal = doc.styles["Normal"]; normal.font.name = p["fonts"]["latin"]; normal.font.size = Pt(10)
         set_fonts(normal.element.get_or_add_rPr(), latin=p["fonts"]["latin"], cjk=p["fonts"]["cjk"])
         settings = doc.settings.element
+        for inherited in list(settings.findall(M+"mathPr")): settings.remove(inherited)
         math = OxmlElement("m:mathPr"); font = OxmlElement("m:mathFont"); font.set(qn("m:val"), p["fonts"]["math"]); math.append(font); settings.append(math)
+        wrap_indent=OxmlElement("m:wrapIndent"); wrap_indent.set(M+"val","0"); math.append(wrap_indent)
         def metadata(suffix):
             for key, role in (("title", "Title"), ("authors", "Author"), ("affiliation", "Author"), ("abstract", "Abstract"), ("keywords", "Keywords")):
                 body.insert(len(body)-1, paragraph("{{"+key+"_"+suffix+"}}", role))

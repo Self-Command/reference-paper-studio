@@ -23,6 +23,8 @@ def test_master_variants(masters):
         assert check_contract(path, p)["section_columns"] == expected
         assert "{{RPS_BODY}}" in "".join(par.text for par in Document(path).paragraphs)
         assert len(identity["sha256"]) == 64
+        math=Document(path).settings.element.findall(qn("m:mathPr"))
+        assert len(math)==1 and math[0].find(qn("m:mathFont")).get(qn("m:val"))=="Latin Modern Math"
 
 
 @pytest.mark.parametrize("key", ["profile", "fonts", "columns", "page", "styles", "template_path", "sections"])

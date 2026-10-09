@@ -52,9 +52,12 @@ def check_equation_visibility(path, identifiers):
     found={}
     with pdfplumber.open(path) as pdf:
         for number,page in enumerate(pdf.pages,1):
-            for word in page.extract_words():
-                identifier=word["text"].strip("()")
-                if word["text"] != f"({identifier})" or identifier not in identifiers: continue
+            matches=[]
+            for identifier in identifiers:
+                for match in page.search(re.escape("("+identifier+")"),regex=True):
+                    matches.append({**match,"identifier":identifier})
+            for word in matches:
+                identifier=word["identifier"]
                 center=(word["top"]+word["bottom"])/2
                 # A native OMML cases/aligned expression can occupy several
                 # baselines while its right-side number is emitted on only
