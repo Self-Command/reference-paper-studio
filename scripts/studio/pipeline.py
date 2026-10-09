@@ -91,10 +91,8 @@ def _export(root, request, output, reference_rules=None):
     for index,node in enumerate(n for n in walk(word_ast) if n.get("t")=="Math"):
         expression=node["c"][1]
         if r"\begin{aligned}" in expression:
-            if r"\begin{cases}" in expression or r"\begin{matrix}" in expression:
-                raise StudioError("UNSUPPORTED_NESTED_ALIGNMENT: explicit array required")
-            normalized=expression.replace(r"\begin{aligned}",r"\begin{array}{l}").replace(r"\end{aligned}",r"\end{array}")
-            normalized=re.sub(r"(?<!\\)&","",normalized)
+            from .semantic_import import normalize_aligned
+            normalized=normalize_aligned(expression)
             converter_normalizations.append({"math_index":index,"source":expression,"word_input":normalized,"reason":"alignment separators, not literal math symbols"})
             node["c"][1]=normalized
     write_json(output/"word-input.json",word_ast)

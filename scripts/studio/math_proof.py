@@ -17,6 +17,18 @@ def glyphs(text):
     return Counter(c for c in unicodedata.normalize("NFKC",text) if not c.isspace() and c not in "\u200b\u200c\u200d\ufeff")
 
 
+def number_region(page, label):
+    """The actual display expression may never enter the reserved number area."""
+    hits=page.search(re.escape(label),regex=True,return_chars=True)
+    if len(hits)!=1:
+        return {"violations":[{"reason":"NUMBER_REGION_NOT_LOCATED","label":label}]}
+    hit=hits[0]
+    label_chars=hit["chars"]
+    bottom=max((c["bottom"] for c in page.chars if c["text"].strip() and c["text"] not in "Formula"),default=hit["bottom"])
+    offenders=[c for c in page.chars if c not in label_chars and c["text"].strip()
+               and c["top"]>=hit["top"]-2 and c["bottom"]<=bottom+1 and c["x1"]>hit["x0"]-3]
+    return {"label_left":hit["x0"],"minimum_gap_pt":3,"violations":[{"text":c["text"],"x0":c["x0"],"x1":c["x1"],"top":c["top"]} for c in offenders]}
+
 def prove(path, directory):
     require_actions()
     directory=Path(directory); directory.mkdir(parents=True,exist_ok=True)
@@ -38,7 +50,7 @@ def prove(path, directory):
     for table in tables:
         expression="".join(t.text or "" for t in table.iter(M+"t"))
         label="".join(t.text or "" for t in table.iter(W+"t"))
-        expected.append({"label":label,"glyphs":glyphs(expression)})
+        expected.append({"label":label,"glyphs":glyphs(expression),"display":is_equation_table(table)})
     for element in list(body):
         if element.tag!=W+"sectPr": body.remove(element)
     # Fixed table widths remain identical. One isolation page per display.
@@ -58,7 +70,7 @@ def prove(path, directory):
         for page,item in zip(pdf.pages,expected):
             text=page.extract_text() or ""; observed=glyphs(text.replace(item["label"],"").replace("Formula",""))
             missing=dict(item["glyphs"]-observed)
-            report.append({"label":item["label"],"missing":missing,"expected_glyphs":dict(item["glyphs"]),"observed_glyphs":dict(observed)})
+            report.append({"label":item["label"],"missing":missing,"number_region":number_region(page,item["label"]) if item["display"] else {"violations":[]},"expected_glyphs":dict(item["glyphs"]),"observed_glyphs":dict(observed)})
     write_json(directory/"glyph-preservation.json",report)
     run(["pdftoppm","-r","100","-png",directory/"isolated.pdf",directory/"equation"],timeout=300)
-    return {"equations":len(report),"display_equations":len(report)-inline_index,"inline_equations":inline_index,"missing":[r for r in report if r["missing"]],"normalization":"NFKC font alphabets and whitespace only"}
+    return {"equations":len(report),"display_equations":len(report)-inline_index,"inline_equations":inline_index,"missing":[r for r in report if r["missing"] or r["number_region"]["violations"]],"normalization":"NFKC font alphabets and whitespace only"}

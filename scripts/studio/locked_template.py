@@ -248,7 +248,7 @@ def fill(native, metadata, equations, master, p, output):
             equation = equations[index]; index += 1
             formulae = list(element.iter(M+"oMath"))
             if len(formulae) != 1: raise StudioError("UNSUPPORTED_DISPLAY_STRUCTURE: "+equation["id"])
-            changes = wrap(formulae[0], (width-550)/20)
+            changes = wrap(formulae[0], (width-550)/20-16)
             ledger.append({"id": equation["id"], "changes": changes})
             table = doc.add_table(rows=1, cols=2); table.autofit = False
             table._tbl.getparent().remove(table._tbl)

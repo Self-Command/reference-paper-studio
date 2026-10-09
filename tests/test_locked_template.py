@@ -131,3 +131,26 @@ def test_piecewise_stacking_preserves_value_condition_order():
     assert tree(restore(formula,changes))==tree(original)
     assert [t.text for t in formula.iter(qn("m:t"))]==[t.text for t in original.iter(qn("m:t"))]
     assert all(len(row.findall(qn("m:e")))==1 for row in matrix.findall(qn("m:mr")))
+
+
+def test_parenthesized_objective_wraps_without_losing_bracket_scope():
+    from copy import deepcopy
+    from studio.math_layout import wrap,restore,tree
+    formula=OxmlElement("m:oMath")
+    for text in ("min(","aaaaaaaaaaaa(x)",",","bbbbbbbbbbbb(x)",",","cccccccccccc(x)",")"):
+        run=OxmlElement("m:r");token=OxmlElement("m:t");token.text=text;run.append(token);formula.append(run)
+    original=deepcopy(formula);ledger=wrap(formula,150)
+    assert formula.find(qn("m:eqArr")) is not None
+    assert tree(restore(formula,ledger))==tree(original)
+    assert "".join(t.text for t in formula.iter(qn("m:t")))=="min(aaaaaaaaaaaa(x),bbbbbbbbbbbb(x),cccccccccccc(x))"
+
+
+@pytest.mark.parametrize("expression_right,expected",[(180,False),(202,True)])
+def test_rendered_equation_number_region_rejects_collision(expression_right,expected):
+    from studio.math_proof import number_region
+    number={"text":"(M24)","x0":200,"x1":226,"top":100,"bottom":112}
+    expression={"text":"x","x0":170,"x1":expression_right,"top":103,"bottom":112}
+    class Page:
+        chars=[number,expression]
+        def search(self,*args,**kwargs):return [{**number,"chars":[number]}]
+    assert bool(number_region(Page(),"(M24)")["violations"])==expected

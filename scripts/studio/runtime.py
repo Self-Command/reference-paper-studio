@@ -15,11 +15,11 @@ def require_actions():
         raise StudioError("CLOUD_ONLY: tests, conversion, compilation, rendering and validation must run in GitHub Actions.")
 
 
-def run(args, cwd=None, timeout=180):
+def run(args, cwd=None, timeout=180, input_text=None, reject_warnings=False):
     require_actions()
     result = subprocess.run([str(a) for a in args], cwd=cwd, capture_output=True,
-                            text=True, encoding="utf-8", errors="replace", timeout=timeout)
-    if result.returncode:
+                            text=True, encoding="utf-8", errors="replace", timeout=timeout, input=input_text)
+    if result.returncode or (reject_warnings and "[WARNING]" in result.stderr):
         raise StudioError(f"COMMAND_FAILED: {args[0]} ({result.returncode})\n{result.stdout[-5000:]}\n{result.stderr[-5000:]}")
     return result.stdout
 

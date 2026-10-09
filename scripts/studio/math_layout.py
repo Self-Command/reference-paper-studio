@@ -105,7 +105,7 @@ def wrap(root, width_pt):
         segments = []; segment = []; depth = 0; previous = ""
         for token in tokens:
             value = token.findtext(M+"t", "") if token.tag == M+"r" else ""
-            safe = depth == 0 and (token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;\u3400-\u9fff]", value)) or previous.endswith(")") and value == "1")
+            safe = (depth == 0 and (token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;\u3400-\u9fff]", value)) or previous.endswith(")") and value == "1")) or (depth == 1 and token.tag == M+"r" and value.startswith(","))
             if safe and segment: segments.append(segment); segment=[]
             segment.append(token)
             for character in value:

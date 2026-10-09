@@ -43,6 +43,8 @@ def text_of(value):
 def parse(source, output):
     require_actions()
     ast = json.loads(run(["pandoc", source, "-f", MARKDOWN, "-t", "json"]))
+    from .semantic_import import expand_semantic_tex
+    ast = expand_semantic_tex(ast,output)
     equations = []
     for node in walk(ast):
         if node.get("t") == "Header" and node["c"][0] > 4:
