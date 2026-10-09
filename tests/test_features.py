@@ -131,6 +131,20 @@ def test_broken_crossref_fails():
         resolve_crossrefs({"blocks":[{"t":"Str","c":"{{eq:Missing}}"}]},[],"preserve")
 
 
+@pytest.mark.parametrize("language,expected", [("zh", "图1 表1 (M1)"), ("en", "Figure 1 Table 1 (M1)")])
+def test_generated_object_references_follow_registered_language(language, expected):
+    ast={"blocks":[
+        {"t":"Figure","c":[["fig:sample",[],[]],[None,[]],[]]},
+        {"t":"Table","c":[["tab:data",[],[]],[None,[]],[],[],[],[]]},
+        {"t":"Str","c":"{{fig:sample}} {{tab:data}} {{eq:M1}}"},
+        {"t":"Str","c":"Authored 图9 and Table 8 are untouched."}
+    ]}
+    mapping=resolve_crossrefs(ast,[{"id":"M1","ordinal":1}],"preserve",language)
+    assert ast["blocks"][2]["c"] == expected
+    assert ast["blocks"][3]["c"] == "Authored 图9 and Table 8 are untouched."
+    assert mapping["eq:M1"] == "(M1)"
+
+
 def test_quoted_prose_is_preserved_in_semantic_check():
     from studio.manuscript import text_of
     assert text_of({"t":"Quoted","c":[{"t":"DoubleQuote"},[{"t":"Str","c":"时移0"}]]})=="“时移0”"

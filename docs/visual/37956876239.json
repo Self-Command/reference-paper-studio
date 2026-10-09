@@ -1,0 +1,336 @@
+{
+  "schema_version": 2,
+  "run_id": "37956876239",
+  "reviewer": "Codex: direct inspection of cloud-generated page PNGs",
+  "visual_status": "completed",
+  "visual_result": "issues_found",
+  "installation_allowed": false,
+  "artifacts": [
+    {
+      "path": "modular-model-end/manuscript.docx",
+      "sha256": "9e23367d79e5a44f120e7c17a5cd55ee22a29e43123fd5841c61e9580fd7d0ca",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/latex/main.tex",
+      "sha256": "537b91fa8d7fc527357597c3c523cc909acd35960bcdaebef1698b20ed3745cd",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/word-compat-proof.pdf",
+      "sha256": "b1db0f1eeddab1afb4944fa608b13d6ca14011e964c17e5474f05409613fe048",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-1.png",
+      "sha256": "9dce6b56f13259bd17222eeb4e25a59ae009376f99c3faa47c029e3fafb841bf",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-2.png",
+      "sha256": "2846f0abd4034aa3b5e977577e0211f13ed0f3369a0aafa5065dc69b26036c93",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-3.png",
+      "sha256": "aa3f11ea1d76927f23082c595d8c678bc2712374484b9a84a5d9f3a39d90d5ee",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-4.png",
+      "sha256": "94dfd484ddc402d56f6ad6cdd47c1f1cd7eb4d50bc4cb8f52f3bfc1bd7a4f5b2",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-5.png",
+      "sha256": "a2cbad7347aa3514b95c9dd686f5590d6d85eae682ba463e548ca7ad3056645a",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-6.png",
+      "sha256": "6f83719e1c3c8c1ff4ba8ca02a0fe90384480a1f19ae244373b0198e178f78eb",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-7.png",
+      "sha256": "2e236753ba2f333e382c2f30f2465ec63cd4d05ae420801a38458c47a1fd951e",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/latex-proof.pdf",
+      "sha256": "18d4e404786c152aed994a7c42b48e53cbea7591279822af934355ff9b4ed02e",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-1.png",
+      "sha256": "9e22e10943e34dd2857bea9816f889aa70cbbd0cdd752eb8a3b47189db009f9d",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-2.png",
+      "sha256": "d808219de85c73e5f2b2cdfed43a823c673b71b82a17dc9b28d496c8e08746b2",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-3.png",
+      "sha256": "e4614e0e6e6d114dbea7cda6425e3342eedcdf1137b1d07d4be14911ddd87a48",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-4.png",
+      "sha256": "14fe8cc922a2892c41d7d79c2501a801b1a877232770d24e3a20001fdb838942",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-5.png",
+      "sha256": "97e05b9e3ad90b1d4f1b0c87538259d3a30a6168db0036dc6b922944816b0bbb",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-6.png",
+      "sha256": "ce7dd10b458a5d97a55c678d6397bece09387510078b09722493387c5b8a4aa7",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-7.png",
+      "sha256": "9eef2caea4101b869481f01e423159d31157123348e64a1a927263522ece10df",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/manuscript.docx",
+      "sha256": "d187f1ec00bc024e6abb3cb006cc75ae80cf800900a733731e241f98b1da2256",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/latex/main.tex",
+      "sha256": "b6d7eec98f26af978be5ba34522d4122c6ecb40785fa0775756f560c498fbce2",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/word-compat-proof.pdf",
+      "sha256": "ede0d97d08394c50b7881edd8501a0baa751486d0950c9c82a8458d05e35bf6e",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-1.png",
+      "sha256": "45309a1e8dfdc65e8430bfba9a27eeec3c0092a1268dd577ae9168fbb8aa3a07",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-2.png",
+      "sha256": "4040a3b47eda60ba5d7731c916d89c268482ae4a82504a01d3d92bf092d55837",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-3.png",
+      "sha256": "fee30ddcdf13b84a15b9f8d7273b852872c139c94a1a3550b4c26a74a9a8bdd9",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-4.png",
+      "sha256": "16057ca281a419ba2875613a8a471d2e3ad09c8f6fa9d4d3808ba31ecafc2b11",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-5.png",
+      "sha256": "b11ec20698580a2eb1543d53ddd8ba69af74203378ec11c5e48f2013d89ef969",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-6.png",
+      "sha256": "64d8ae7b26775c23527a040e373acce4540f1a21c4d9ade74c113c7405ac452a",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-7.png",
+      "sha256": "c1a4fe39aec68781547cf550bdab9ef77a552b44825bafcd1bba2a1bf5f9899d",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/latex-proof.pdf",
+      "sha256": "30f7471cb1cb2cb0c5ccd3848a69e1ff990431c91ec09127f18df1a233aaaabe",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-1.png",
+      "sha256": "15b7ba6749b614050f23576669a14fdeedb304c05d1b26b8087e45b53ab1afa7",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-2.png",
+      "sha256": "1f08a5174597a3cafc959df93dc08e56df933d94f9d6d0f19f4c6847eb3d9273",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-3.png",
+      "sha256": "8323d64f8038f29a4db3c263d2202f6fa9513f0f3c520f5ce0fdcbc4fd01a58a",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-4.png",
+      "sha256": "f3286459ff4beff157a0704c1a89313571c20e8fbb062a09d6b3aa647a8bee1d",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-5.png",
+      "sha256": "265f094a052d26789933caa4d61aa98712b88ac98e41eb9655bbb4d276c9047f",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-6.png",
+      "sha256": "b681aa79c4ccb4e5139700d35f3048efe82b2536ce211e1e45230046cd947e5e",
+      "reviewed": true
+    }
+  ],
+  "report_bindings": {
+    "modular-model-end/acceptance.json": {
+      "sha256": "03cde5bdcb7134950fb60fed3383e9aeec1f875b08576783c77ae28f0d00a36e",
+      "input_sha256": "38dde9e159556eb4634b33a5ceb02a82a737ca7a1df31f3de140d75c4b1f2e4f",
+      "template_manifest_sha256": "20b025bfbdbdcec10af089ab2abe4a5a2407210d0e5956356ca1e96cbf400c40"
+    },
+    "modular-model-front/acceptance.json": {
+      "sha256": "9ecadc49e08347791b306252fe29d144abf6e68be5a670f6905e110afa266e29",
+      "input_sha256": "38dde9e159556eb4634b33a5ceb02a82a737ca7a1df31f3de140d75c4b1f2e4f",
+      "template_manifest_sha256": "20b025bfbdbdcec10af089ab2abe4a5a2407210d0e5956356ca1e96cbf400c40"
+    }
+  },
+  "checks": [
+    {
+      "check_id": "V01",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V02",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V03",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V04",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V05",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V06",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V07",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V08",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V09",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V10",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V11",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V12",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V13",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "not_applicable"
+    },
+    {
+      "check_id": "V14",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "not_applicable"
+    },
+    {
+      "check_id": "V15",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V16",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V17",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V18",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V19",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "not_applicable"
+    },
+    {
+      "check_id": "V20",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    },
+    {
+      "check_id": "V21",
+      "evidence": "See docs/visual/37956876239.md, same check ID; all cloud preview pages inspected.",
+      "result": "passed"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F01",
+      "object": "M10 and long equations",
+      "check_id": "V12",
+      "description": "Reversible expressions are fragmented into too many short nested lines; Word page 3 and LaTeX page 2."
+    },
+    {
+      "id": "F02",
+      "object": "Word M10",
+      "check_id": "V11",
+      "description": "Number appears above the visual center of the complete cases expression, both variants page 3."
+    },
+    {
+      "id": "F03",
+      "object": "Word Table 1",
+      "check_id": "V17",
+      "description": "Repeated headers exist; continuation segments lack bottom continuation names, pages 1-2."
+    },
+    {
+      "id": "F04",
+      "object": "Technical fixture caption",
+      "check_id": "V16",
+      "description": "Added caption and corresponding body references await author confirmation; original manuscript unchanged."
+    },
+    {
+      "id": "F05",
+      "object": "End-variant LaTeX pages 6-7",
+      "check_id": "V06",
+      "description": "One bibliography entry occupies page 6; full-width end abstract starts page 7, leaving avoidable white space."
+    }
+  ]
+}

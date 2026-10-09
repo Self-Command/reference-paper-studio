@@ -107,7 +107,7 @@ def validate_references(ast):
         raise StudioError(f"BROKEN_REFERENCE: {sorted(used-labels)}")
 
 
-def resolve_crossrefs(ast, equations, numbering):
+def resolve_crossrefs(ast, equations, numbering, language="zh"):
     """Shared object identities; explicit markers are identical in both writers."""
     mapping = {"eq:"+e["id"]: "("+(e["id"] if numbering == "preserve" else str(e["ordinal"]))+")" for e in equations}
     blocks = ast["blocks"]
@@ -128,7 +128,8 @@ def resolve_crossrefs(ast, equations, numbering):
         kind = node.get("t")
         if kind in counters:
             counters[kind] += 1
-            prefix, label = ("fig:","图") if kind == "Figure" else ("tab:","表")
+            prefix = "fig:" if kind == "Figure" else "tab:"
+            label = ("Figure " if kind == "Figure" else "Table ") if language == "en" else ("图" if kind == "Figure" else "表")
             identifier = node["c"][0][0]
             identifier = identifier if identifier.startswith(prefix) else prefix+("F" if kind=="Figure" else "T")+str(counters[kind])
             if identifier in mapping: raise StudioError("DUPLICATE_OBJECT_IDENTIFIER: "+identifier)

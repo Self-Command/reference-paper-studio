@@ -203,7 +203,7 @@
     },
     {
       "id": "cross-reference",
-      "version": "1",
+      "version": "2",
       "kind": "layout",
       "requires": [],
       "source": "Shared studio adapter over Pandoc/python-docx",

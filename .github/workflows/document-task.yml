@@ -22,7 +22,7 @@ on:
       artifact_name:
         type: choice
         default: document-task
-        options: [document-task, skill-delivery]
+        options: [document-task, skill-delivery, review-delivery, template-matrix]
 permissions:
   contents: read
   actions: read

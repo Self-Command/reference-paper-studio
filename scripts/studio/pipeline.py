@@ -93,7 +93,8 @@ def _export(root, request, output, reference_rules=None):
     promoted_title=None
     if ast["blocks"] and ast["blocks"][0].get("t")=="Header" and ast["blocks"][0]["c"][0]==1 and text_of(ast["blocks"][0])==meta.get("title_zh"):
         promoted_title=text_of(ast["blocks"].pop(0))
-    object_map = resolve_crossrefs(ast, equations, profile["equation_numbering"])
+    reference_language = "en" if profile.get("metadata_languages") == ["en"] else "zh"
+    object_map = resolve_crossrefs(ast, equations, profile["equation_numbering"], reference_language)
     if request.get("schema_version")==2:
         from .object_audit import inspect as inspect_objects
         objects=inspect_objects(ast,require_references=request.get("document_kind")=="paper")

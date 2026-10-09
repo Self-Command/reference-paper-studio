@@ -177,7 +177,9 @@
     "artifact_name": {
       "enum": [
         "document-task",
-        "skill-delivery"
+        "skill-delivery",
+        "review-delivery",
+        "template-matrix"
       ]
     }
   },
