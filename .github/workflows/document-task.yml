@@ -46,6 +46,7 @@ jobs:
         with:
           path: .tool-downloads
           key: rps-linux-pinned-tools-${{ hashFiles('ci/setup.sh') }}
+          restore-keys: rps-linux-pinned-tools-
       - run: bash ci/setup.sh
         if: inputs.phase != 'visual' && inputs.phase != 'visual-receipt'
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333

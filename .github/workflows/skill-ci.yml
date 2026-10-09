@@ -34,6 +34,7 @@ jobs:
         with:
           path: .tool-downloads
           key: rps-linux-pinned-tools-${{ hashFiles('ci/setup.sh') }}
+          restore-keys: rps-linux-pinned-tools-
       - run: bash ci/setup.sh
         if: inputs.stage != 'master' && inputs.stage != 'core'
       - run: python ci/suite_check.py
@@ -50,6 +51,8 @@ jobs:
         id: tests
         if: inputs.stage != 'master' && inputs.stage != 'core'
       - run: python ci/modular_regression.py
+        if: inputs.stage == 'modular'
+      - run: python ci/repeat_regression.py
         if: inputs.stage == 'modular'
       - run: python ci/probe_math.py
         if: inputs.stage != 'master' && inputs.stage != 'core'
@@ -98,6 +101,7 @@ jobs:
             build/modular-model-*/fixture-changes.json
             build/modular-input-*/fixture-changes.json
             build/modular-regression.json
+            build/reproducibility.json
             build/test-results.xml
           retention-days: 30
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

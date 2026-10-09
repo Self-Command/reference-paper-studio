@@ -36,4 +36,5 @@ def test_end_abstract_uses_one_fixed_unbreakable_region(tmp_path):
     text=main.read_text()
     assert text.index(r"\twocolumn[")<text.index("Synthetic body.")<text.index(r"\onecolumn")<text.index("Synthetic title")
     assert r"\begin{multicols}" not in text
-    assert text.index("Synthetic abstract")<text.index(r"\end{minipage}")
+    end_region=text[text.index(r"\onecolumn"):]
+    assert end_region.index(r"\begin{minipage}{\textwidth}")<end_region.index("Synthetic abstract")<end_region.index(r"\end{minipage}")

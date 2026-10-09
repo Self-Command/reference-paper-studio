@@ -56,7 +56,7 @@ def test_registered_export_repeats_header_caption_and_preserves_actual_cells(tmp
     from studio.latex_layout import write_latex
     from studio.latex_tables import reader_copy
     from studio.qa import read_ast,assert_text
-    ast=table_ast(); _,profile=load_composition("reference-journal-v1","2.0.0")
+    ast=table_ast(160); _,profile=load_composition("reference-journal-v1","2.0.0")
     write_latex(ast,[],{},profile,tmp_path)
     run(["xelatex","-interaction=nonstopmode","-halt-on-error","main.tex"],cwd=tmp_path)
     from pathlib import Path
@@ -71,7 +71,11 @@ def test_registered_export_repeats_header_caption_and_preserves_actual_cells(tmp
         segments=[]; entries=[]
         for page in pdf.pages:
             for left,right in ((0,page.width/2),(page.width/2,page.width)):
-                words=[word for word in page.extract_words() if left<=word["x0"]<right]
+                # Fixed 10 pt serif spaces are narrower than pdfplumber's
+                # default 3 pt joining tolerance. Do not merge the caption's
+                # separate words merely because its font is smaller than the
+                # feasibility probe's 12 pt Computer Modern.
+                words=[word for word in page.extract_words(x_tolerance=1) if left<=word["x0"]<right]
                 data=[word for word in words if re.fullmatch(r"Entry\d+",word["text"])]
                 if not data:continue
                 entries += [int(word["text"][5:]) for word in data]
@@ -80,7 +84,7 @@ def test_registered_export_repeats_header_caption_and_preserves_actual_cells(tmp
                 assert len(caption)==1 and caption[0]["top"]>max(word["top"] for word in data)
                 assert sum(word["text"]=="(continued)" for word in words)==bool(segments)
                 segments.append(words)
-        assert len(segments)>=3 and sorted(entries)==list(range(90))
+        assert len(segments)>=3 and sorted(entries)==list(range(160))
     source=tmp_path/"layout-body.tex"
     actual=read_ast(reader_copy(source,tmp_path),"latex")
     assert_text(ast,actual,"CALS actual source")
@@ -101,3 +105,11 @@ def test_cals_reader_rejects_hidden_text_or_unrendered_caption(tmp_path):
         reader_text(source.replace(r"\end{calstable}",r"\end{calstable} Hidden changed content"))
     with pytest.raises(StudioError,match="CAPTION_CALL_CHANGED"):
         reader_text(source.replace(r"\noindent\RPSCaption",r"\noindent Missing title"))
+
+
+def test_new_table_entrypoints_reject_local_processing(monkeypatch,tmp_path):
+    from studio.latex_tables import render,reader_text,reader_copy
+    from studio.runtime import StudioError
+    monkeypatch.delenv("GITHUB_ACTIONS",raising=False)
+    for function in (lambda:render({},[],tmp_path),lambda:reader_text(""),lambda:reader_copy("missing",tmp_path)):
+        with pytest.raises(StudioError,match="CLOUD_ONLY"):function()

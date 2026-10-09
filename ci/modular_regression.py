@@ -11,6 +11,10 @@ root=Path(__file__).resolve().parents[1]
 os.environ["RPS_REGISTRY_ROOT"]=str(root/"build/templates")
 os.environ["RPS_CANDIDATE_BUILD"]="true"
 results=[]
+# Freeze one candidate asset before both fills. A manuscript/variant does not
+# rebuild the mother; both authorization records bind the same manifest.
+master=build("reference-journal-v1","2.0.0")
+manifest=json.loads((master/"manifest.json").read_text(encoding="utf-8"))
 for variant in ("front","end"):
     work=root/"build"/("modular-input-"+variant); work.mkdir(parents=True,exist_ok=True)
     for name in ("model.md","metadata.json"):
@@ -22,8 +26,6 @@ for variant in ("front","end"):
     source_text=source_text.replace("| 符号 | 含义与条件 |","表1 输入参数（格式回归新增题注，待作者确认）\n\n| 符号 | 含义与条件 |",1)
     (work/"model.md").write_text(source_text,encoding="utf-8")
     write_json(work/"fixture-changes.json",{"original_sha256":digest(root/"fixtures/model/model.md"),"changes":["Add explicit test-only caption to unnamed parameter table"],"original_modified":False,"formal_user_paper":False})
-    master=build("reference-journal-v1","2.0.0")
-    manifest=json.loads((master/"manifest.json").read_text(encoding="utf-8"))
     files=[{"path":name,"sha256":digest(work/name),"role":"manuscript" if name=="model.md" else "metadata"} for name in ("model.md","metadata.json")]
     fingerprint=snapshot({f["path"]:f["sha256"] for f in files})
     events=[]

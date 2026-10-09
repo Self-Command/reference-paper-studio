@@ -21,6 +21,7 @@ jobs:
         with:
           path: .tool-downloads
           key: rps-linux-pinned-tools-${{ hashFiles('ci/setup.sh') }}
+          restore-keys: rps-linux-pinned-tools-
       - run: bash ci/setup.sh
       - run: python ci/suite_check.py
       - run: python ci/lock_dependencies.py
