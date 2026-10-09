@@ -63,4 +63,8 @@ for path in sorted(root.rglob("word-compat-proof.pdf")):
             item["pages"].append({"page":number,"fonts":sorted({c.get("fontname","") for c in page.chars}),"labels":labels})
     records.append(item)
     print(json.dumps(item,ensure_ascii=False),flush=True)
+for path in sorted(root.rglob("latex-proof.pdf")):
+    with pdfplumber.open(path) as pdf:
+        item={"file":path.as_posix(),"last_pages":[{"page":index+1,"text":page.extract_text() or ""} for index,page in enumerate(pdf.pages) if index>=len(pdf.pages)-2]}
+    records.append(item);print(json.dumps(item,ensure_ascii=False),flush=True)
 write_json("build/proof-diagnostics.json",records)

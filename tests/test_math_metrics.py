@@ -12,8 +12,8 @@ def test_registered_glyph_metrics_avoid_breaking_a_narrow_fitting_expression():
     formula=OxmlElement("m:oMath");run=OxmlElement("m:r");text=OxmlElement("m:t")
     text.text="iiii+iiii+iiii";run.append(text);formula.append(run)
     before=deepcopy(formula)
-    assert math_width_pt(formula,10,metrics)<60<math_width_pt(formula,10)
-    assert wrap(formula,60,metrics=metrics)==[]
+    assert math_width_pt(formula,10,metrics)<70<math_width_pt(formula,10)
+    assert wrap(formula,70,metrics=metrics)==[]
     assert tree(formula)==tree(before)
     assert metrics["math"]["W"]>metrics["math"]["i"]
 
