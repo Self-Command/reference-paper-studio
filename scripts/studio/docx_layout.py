@@ -69,6 +69,16 @@ def math_width_pt(element, size):
     measured = [(etree.QName(c).localname, math_width_pt(c, size)) for c in children]
     widths = dict(measured)
     values = [width for _,width in measured]
+    if local == "r":
+        # TeX/OMML place real glue around relation and binary operators.
+        # Glyph advances alone miss e.g. both sides of >= and membership.
+        # Reserve normal math-style glue (5/4 mu on each side, 3 mu after
+        # punctuation); leading/unary operators may use less in a renderer.
+        text="".join(c.text or "" for c in element.findall(M+"t"))
+        relation=set("=<>≤≥≠≈≃≡∈∉⊂⊃⊆⊇→↔⇒⇔∝")
+        binary=set("+−×÷∧∨∪∩")
+        glue=sum(10/18 if char in relation else 8/18 if char in binary else 3/18 if char in ",;" else 0 for char in text)
+        return sum(values)+size*glue
     if local == "f":
         return max(widths.get("num", 0), widths.get("den", 0)) + size * .4
     if local in ("sSub", "sSup", "sSubSup"):

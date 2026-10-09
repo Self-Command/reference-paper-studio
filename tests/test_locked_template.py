@@ -191,6 +191,35 @@ def test_only_new_inline_arrays_reserve_actual_tex_padding():
     assert tree(restore(formula,changes))==tree(before)
 
 
+def test_relation_glue_and_punctuation_fit_an_actual_narrow_tex_cell(tmp_path):
+    from copy import deepcopy
+    import re
+    from docx import Document
+    from studio.runtime import run
+    from studio.docx_layout import M
+    from studio.math_layout import wrap,restore,tree
+    from studio.fonts import resolve_faces,fontspec_declaration
+    source=tmp_path/"source.md"
+    source.write_text(r"优先级数量与任务等级，$L\ge1,\ell_i\in\{1,\ldots,L\}$，1 为最高等级",encoding="utf-8")
+    native=tmp_path/"native.docx"
+    run(["pandoc",source,"-o",native])
+    doc=Document(native);formula=next(doc._element.iter(M+"oMath"));before=deepcopy(formula)
+    ledger=wrap(formula,91.375,10,10)
+    assert ledger and tree(restore(formula,ledger))==tree(before)
+    doc.save(native)
+    body=run(["pandoc",native,"-t","latex","--wrap=none"])
+    faces=resolve_faces({"cjk":"Noto Serif CJK SC"})
+    tex=(r"\documentclass[10pt]{article}\usepackage{fontspec,xeCJK,amsmath,unicode-math}"
+         +fontspec_declaration(r"\setCJKmainfont","Noto Serif CJK SC",faces["cjk"])
+         +r"\setmathfont{Latin Modern Math}\xeCJKsetup{PunctStyle=plain}"
+         +r"\begin{document}\parindent=0pt\begin{minipage}{107.375pt}"+body
+         +r"\end{minipage}\end{document}")
+    (tmp_path/"cell.tex").write_text(tex,encoding="utf-8")
+    run(["xelatex","-interaction=nonstopmode","-halt-on-error","cell.tex"],cwd=tmp_path)
+    overflow=[float(value) for value in re.findall(r"Overfull \\hbox \(([\d.]+)pt too wide\)",(tmp_path/"cell.log").read_text())]
+    assert not any(value>2 for value in overflow),overflow
+
+
 @pytest.mark.parametrize("expression_right,expected",[(180,False),(202,True)])
 def test_rendered_equation_number_region_rejects_collision(expression_right,expected):
     from studio.math_proof import number_region
