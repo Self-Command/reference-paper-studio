@@ -52,6 +52,13 @@ def expand_semantic_tex(ast,output):
         if isinstance(value,list):
             result=[]
             for item in value:
+                if isinstance(item,dict) and item.get("t") in ("Para","Plain"):
+                    content=[n for n in item["c"] if n.get("t") not in ("Space","SoftBreak","LineBreak")]
+                    if len(content)==1 and content[0].get("t")=="RawInline":
+                        # Markdown often wraps an isolated structural command in a Para.
+                        promoted={"t":"RawBlock","c":content[0]["c"]}
+                        result.extend(visit(expand(promoted)))
+                        continue
                 if isinstance(item,dict) and item.get("t") in ("RawInline","RawBlock"):
                     result.extend(visit(expand(item)))
                 else:result.append(visit(item))

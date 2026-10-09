@@ -3,6 +3,7 @@
 No document processing, test execution, conversion or rendering is imported here.
 """
 import argparse
+import base64
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -14,8 +15,8 @@ import tempfile
 DEFAULT_REPO = "Self-Command/reference-paper-studio"
 
 
-def command(args, cwd=None):
-    result = subprocess.run([str(a) for a in args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+def command(args, cwd=None, input_text=None):
+    result = subprocess.run([str(a) for a in args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", input=input_text)
     if result.returncode: raise RuntimeError(result.stderr or result.stdout)
     return result.stdout.strip()
 
@@ -38,35 +39,40 @@ def submit(args):
     sources = [(name, safe_input(root, name)) for name in spec["files"]]
     info = json.loads(command(["gh", "repo", "view", args.repo, "--json", "isPrivate,defaultBranchRef"]))
     if not info["isPrivate"]: raise ValueError("Task submission requires a private repository")
-    with tempfile.TemporaryDirectory(prefix="rps-submit-") as temp:
-        checkout = Path(temp)/"checkout"
-        command(["gh", "repo", "clone", args.repo, checkout, "--", "--depth", "1"])
-        branch = "request/"+spec["id"]
-        command(["git", "checkout", "-b", branch], checkout)
-        task = checkout/".requests"/spec["id"]
-        hashes = {}
-        for name, source in sources:
-            target = task/"files"/name; target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
-            hashes[name] = hashlib.sha256(source.read_bytes()).hexdigest()
-        spec["sha256"] = hashes
-        (task/"request.json").write_text(json.dumps(spec, ensure_ascii=False, indent=2), encoding="utf-8")
-        command(["git", "add", "-f", "--", str(task.relative_to(checkout))], checkout)
-        command(["git", "-c", "user.name=reference-paper-studio", "-c", "user.email=studio@users.noreply.github.com", "commit", "-m", "Submit document task "+spec["id"]], checkout)
-        commit = command(["git", "rev-parse", "HEAD"], checkout)
-        command(["git", "push", "origin", "HEAD"], checkout)
-    dispatch=["gh", "workflow", "run", "document-task.yml", "--repo", args.repo, "--ref", info["defaultBranchRef"]["name"], "-f", "task_id="+spec["id"], "-f", "input_commit="+commit, "-f", "request_path=.requests/"+spec["id"]+"/request.json", "-f", "phase="+spec["stage"]]
+    # REST transfers exactly the listed blobs; avoids cloning private fixtures or
+    # depending on native Git connectivity. It performs no document processing.
+    def api(path,payload=None):
+        args=["gh","api","repos/"+args_repo+"/"+path]
+        if payload is not None:args += ["--method","POST","--input","-"]
+        return json.loads(command(args,input_text=json.dumps(payload) if payload is not None else None))
+    args_repo=args.repo
+    default_ref=info["defaultBranchRef"]["name"]
+    parent=api("git/ref/heads/"+default_ref)["object"]["sha"]
+    base_tree=api("git/commits/"+parent)["tree"]["sha"]
+    tree=[];hashes={};prefix=".requests/"+spec["id"]
+    for name,source in sources:
+        content=source.read_bytes();hashes[name]=hashlib.sha256(content).hexdigest()
+        blob=api("git/blobs",{"content":base64.b64encode(content).decode("ascii"),"encoding":"base64"})
+        tree.append({"path":prefix+"/files/"+name,"mode":"100644","type":"blob","sha":blob["sha"]})
+    spec["sha256"]=hashes
+    blob=api("git/blobs",{"content":json.dumps(spec,ensure_ascii=False,indent=2),"encoding":"utf-8"})
+    tree.append({"path":prefix+"/request.json","mode":"100644","type":"blob","sha":blob["sha"]})
+    new_tree=api("git/trees",{"base_tree":base_tree,"tree":tree})
+    commit=api("git/commits",{"message":"Submit document task "+spec["id"],"tree":new_tree["sha"],"parents":[parent]})["sha"]
+    api("git/refs",{"ref":"refs/heads/request/"+spec["id"],"sha":commit})
+    workflow_ref=args.workflow_ref or default_ref
+    dispatch=["gh", "workflow", "run", "document-task.yml", "--repo", args.repo, "--ref", workflow_ref, "-f", "task_id="+spec["id"], "-f", "input_commit="+commit, "-f", "request_path="+prefix+"/request.json", "-f", "phase="+spec["stage"]]
     if spec["stage"] == "visual":
         dispatch += ["-f","artifact_run="+str(spec["artifact_run"]),"-f","artifact_name="+spec.get("artifact_name","document-task")]
     command(dispatch)
-    return {"task_id": spec["id"], "input_commit": commit, "input_files": spec["files"], "status": "dispatched", "runs_url": "https://github.com/"+args.repo+"/actions/workflows/document-task.yml"}
+    return {"task_id": spec["id"], "input_commit": commit, "input_files": spec["files"], "workflow_ref": workflow_ref, "status": "dispatched", "runs_url": "https://github.com/"+args.repo+"/actions/workflows/document-task.yml"}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default=DEFAULT_REPO)
     commands = parser.add_subparsers(dest="operation", required=True)
-    p = commands.add_parser("submit"); p.add_argument("--root", required=True); p.add_argument("--request", required=True)
+    p = commands.add_parser("submit"); p.add_argument("--root", required=True); p.add_argument("--request", required=True); p.add_argument("--workflow-ref", help="Development workflow ref; defaults to repository default branch")
     p = commands.add_parser("status"); p.add_argument("--run"); p.add_argument("--task")
     p = commands.add_parser("fetch"); p.add_argument("--run", required=True); p.add_argument("--output", required=True)
     args = parser.parse_args()

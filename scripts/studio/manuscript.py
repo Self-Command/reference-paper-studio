@@ -6,7 +6,7 @@ import json
 import re
 from .runtime import StudioError, require_actions, run, write_json
 
-MARKDOWN = "markdown+tex_math_single_backslash+tex_math_dollars+pipe_tables+table_captions+citations+raw_attribute"
+MARKDOWN = "markdown+tex_math_single_backslash+tex_math_dollars+pipe_tables+table_captions+citations+raw_attribute-native_divs-native_spans"
 
 
 def walk(value):
