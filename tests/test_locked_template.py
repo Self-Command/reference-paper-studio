@@ -120,7 +120,8 @@ def test_piecewise_stacking_preserves_value_condition_order():
     props = OxmlElement("m:dPr")
     for name,value in (("begChr","{"),("endChr","")):
         node = OxmlElement("m:"+name); node.set(qn("m:val"),value); props.append(node)
-    delimiter.append(props); matrix=OxmlElement("m:m"); delimiter.append(matrix); formula.append(delimiter)
+    delimiter.append(props); argument=OxmlElement("m:e"); delimiter.append(argument)
+    matrix=OxmlElement("m:m"); argument.append(matrix); formula.append(delimiter)
     for values in (("expressionexpression","conditioncondition"),("otherexpression","otherwise")):
         row=OxmlElement("m:mr"); matrix.append(row)
         for value in values:

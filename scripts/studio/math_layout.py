@@ -40,7 +40,8 @@ def wrap(root, width_pt):
         # Only a piecewise delimiter may stack value/condition cells. A general
         # matrix keeps its columns: changing those would change its meaning.
         if name == "m" and math_width_pt(element, 10) > budget:
-            delimiter = element.getparent()
+            parent = element.getparent()
+            delimiter = parent.getparent() if parent is not None and parent.tag == M+"e" else parent
             props = delimiter.find(M+"dPr") if delimiter is not None and delimiter.tag == M+"d" else None
             if props is not None and props.find(M+"begChr") is not None and props.find(M+"begChr").get(M+"val") == "{" and props.find(M+"endChr") is not None and props.find(M+"endChr").get(M+"val") == "":
                 rows = element.findall(M+"mr")
