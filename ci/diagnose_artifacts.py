@@ -20,6 +20,29 @@ for path in sorted(root.rglob("main.log")):
         item={"file":path.as_posix(),"first_line":first,"last_line":last,"source":"\n".join(source[max(0,first-2):min(len(source),last+2)])}
         print(json.dumps(item,ensure_ascii=False),flush=True)
         records.append(item)
+for path in sorted(root.rglob("manuscript.docx")):
+    profile_path=path.parent/"effective-profile.json"
+    if not profile_path.is_file():continue
+    from docx import Document
+    from studio.docx_layout import M,W,math_width_pt,following_punctuation_width,is_equation_table
+    from studio.locked_template import column_width
+    from lxml import etree
+    p=json.loads(profile_path.read_text(encoding="utf-8"))
+    for table_index,table in enumerate(Document(path).tables):
+        if is_equation_table(table._tbl):continue
+        for row_index,row in enumerate(table.rows):
+            for cell_index,cell in enumerate(row.cells):
+                formulae=list(cell._tc.iter(M+"oMath"))
+                if not formulae:continue
+                item={"file":path.as_posix(),"table":table_index,"row":row_index,"cell":cell_index,
+                      "text":cell.text,"formulas":[]}
+                for formula in formulae:
+                    punctuation=following_punctuation_width(formula,p["body_size_pt"])
+                    item["formulas"].append({"xml":etree.tostring(formula,encoding="unicode"),
+                        "estimated_width_pt":math_width_pt(formula,p["body_size_pt"]),
+                        "punctuation_reserve_pt":punctuation,
+                        "cell_budget_pt":column_width(p)/20/len(row.cells)-12-punctuation})
+                print(json.dumps(item,ensure_ascii=False),flush=True);records.append(item)
 for path in sorted(root.rglob("*-summary.json"))+sorted(root.glob("*regression.json")):
     print(path.as_posix()+": "+path.read_text(encoding="utf-8"),flush=True)
 for path in sorted(root.rglob("word-compat-proof.pdf")):
