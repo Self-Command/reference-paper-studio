@@ -1,0 +1,21 @@
+{
+  "source_modified": false,
+  "purpose": "First-use format-only test; no model validation or authorship claimed",
+  "official_page": "https://proceedings.mlr.press/v235/sharrock24a.html",
+  "markdown_commit": "51052cede8cc608f95bb00346635e03759013e5a",
+  "conversion_note": "OCR/conversion artifacts in upstream source remain intact and must be distinguished from formatter failures",
+  "title": "Sequential Neural Score Estimation: Likelihood-Free Inference with Conditional Score Based Diffusion Models",
+  "image_count": 9,
+  "source_type": "PaperBench PDF-derived Markdown, not an author-native Markdown manuscript",
+  "markdown_repository": "openai/frontier-evals",
+  "authors": [
+    "Louis Sharrock",
+    "Jack Simons",
+    "Song Liu",
+    "Mark Beaumont"
+  ],
+  "first_export_policy": "Freeze implementation before export; retain first DOCX without manuscript-specific edits, reruns, or template changes",
+  "source_sha256": "e815e5427bced40d1046c54fc14de8fd7e694a0071e52a2785f16a822baf4c43",
+  "publication": "International Conference on Machine Learning, PMLR 235 (2024), 44565–44602",
+  "markdown_path": "project/paperbench/data/papers/sequential-neural-score-estimation/paper.md"
+}
