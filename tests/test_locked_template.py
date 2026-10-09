@@ -50,3 +50,31 @@ def test_content_format_is_removed():
 
 def test_unknown_version_rejected(masters):
     with pytest.raises(StudioError, match="UNKNOWN_TEMPLATE_VERSION"): resolve_template({**request(), "template_version": 9})
+
+
+def test_math_row_wrap_is_reversible():
+    from lxml import etree
+    from copy import deepcopy
+    from studio.math_layout import wrap, restore, tree
+    formula = OxmlElement("m:oMath")
+    for text in ("a", "+bbbbbbbbbbbb", "+cccccccccccc", "=d"):
+        run = OxmlElement("m:r"); token = OxmlElement("m:t"); token.text = text; run.append(token); formula.append(run)
+    before = deepcopy(formula)
+    ledger = wrap(formula, 80)
+    assert ledger and tree(restore(formula,ledger)) == tree(before)
+    formula.find(".//"+qn("m:t")).text = "changed"
+    with pytest.raises(StudioError, match="MATH_LAYOUT_TRANSFORM_MISMATCH"): restore(formula,ledger)
+
+
+def test_fill_imports_content_without_source_styles(masters, tmp_path):
+    from studio.locked_template import fill
+    doc = Document(); doc.add_paragraph("模型正文", style="Heading 1")
+    doc.add_paragraph("列表正文")
+    source = tmp_path/"source.docx"; doc.save(source)
+    master, p, identity = resolve_template(request())
+    final = tmp_path/"final.docx"
+    report = fill(source,{"title_zh":"题名"},[],master,p,final)
+    assert report["section_columns"] == [1,2]
+    result = Document(final)
+    assert "模型正文" in "".join(par.text for par in result.paragraphs)
+    assert result.styles["RPSBody"].font.size.pt == 10

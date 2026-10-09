@@ -47,7 +47,33 @@ def front(meta, english=False):
     return "\n".join(output)
 
 
-def write_latex(ast, equations, metadata, profile, output):
+def column_table(table, api, output):
+    """Independent rows can break between columns, never across the gutter."""
+    from .runtime import StudioError
+    count = len(table["c"][2])
+    rows = list(table["c"][3][1])
+    for body in table["c"][4]: rows += body[2]+body[3]
+    rows += table["c"][5][1]
+    caption = table["c"][1][1]
+    pieces = []
+    def tex(blocks):
+        path = Path(output)/"cell.json"
+        path.write_text(json.dumps({"pandoc-api-version":api,"meta":{},"blocks":blocks},ensure_ascii=False),encoding="utf-8")
+        return run(["pandoc",path,"-f","json","-t","latex","--wrap=none"]).strip()
+    if caption: pieces.append(r"\begin{center}"+tex(caption)+r"\end{center}")
+    spec = "@{}"+"".join("p{\\dimexpr\\linewidth/"+str(count)+"-6pt\\relax}" for _ in range(count))+"@{}"
+    for number, row in enumerate(rows):
+        cells = row[1]
+        if len(cells) != count or any(c[2] != 1 or c[3] != 1 for c in cells):
+            raise StudioError("UNSUPPORTED_MERGED_TABLE: use a regular content table")
+        values = [tex(cell[4]) for cell in cells]
+        rule = r"\toprule" if number == 0 else ""
+        end = r"\midrule" if number == len(table["c"][3][1])-1 else r"\bottomrule" if number == len(rows)-1 else ""
+        pieces.append("\\noindent\\begin{tabular}{"+spec+"}"+rule+"\n"+" & ".join(values)+r"\\"+end+"\n\\end{tabular}\\par\n")
+    return "".join(pieces)
+
+
+def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     require_actions()
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
     data=latex_ast(ast,equations,profile["equation_numbering"])
@@ -81,7 +107,7 @@ def write_latex(ast, equations, metadata, profile, output):
 \captionsetup{labelformat=empty}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \newcommand{\passthrough}[1]{#1}
-\newcommand{\pandocbounded}[1]{\sbox0{#1}\ifdim\wd0>\linewidth\resizebox{\linewidth}{!}{\usebox0}\else\usebox0\fi}
+\newcommand{\pandocbounded}[1]{#1}
 \newenvironment{CSLReferences}[2]{\begin{list}{}{\setlength{\leftmargin}{1em}\setlength{\itemindent}{-1em}}\item[]}{\end{list}}
 \newcommand{\CSLBlock}[1]{#1}
 \newcommand{\CSLLeftMargin}[1]{#1}
@@ -93,17 +119,19 @@ def write_latex(ast, equations, metadata, profile, output):
     preamble=preamble.replace("[10pt,a4paper]", f"[{profile['body_size_pt']}pt,a4paper]")
     preamble=preamble.replace(r"\columnsep}{0.6cm}",r"\columnsep}{"+str(profile["page"].get("column_spacing_cm",0.6))+"cm}")
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
-    # Use multicol for prose; displays/tables use full-width breaks for readability.
-    layout=deepcopy(data); blocks=[]
+    # A single body multicols region. Content has no section/column authority.
+    layout=latex_ast(layout_ast or ast,equations,profile["equation_numbering"]); blocks=[]
     for block in layout["blocks"]:
-        full=block.get("t") in ("Table","Figure") or any(n.get("t")=="Math" and n["c"][0]["t"]=="DisplayMath" for n in walk(block))
-        if full: blocks.append({"t":"RawBlock","c":["latex",r"\end{multicols}"]})
-        blocks.append(block)
-        if full: blocks.append({"t":"RawBlock","c":["latex",r"\begin{multicols}{2}"]})
+        if block.get("t") == "Table":
+            blocks.append({"t":"RawBlock","c":["latex",column_table(block,ast["pandoc-api-version"],output)]})
+        else: blocks.append(block)
     layout["blocks"]=blocks
     layout_path=output/"layout.json";layout_path.write_text(json.dumps(layout,ensure_ascii=False),encoding="utf-8")
-    body=portable_table_columns(run(["pandoc",layout_path,"-f","json","-t","latex","--wrap=none"]),ast)
+    body=run(["pandoc",layout_path,"-f","json","-t","latex","--wrap=none"])
     body=body.replace(r"\begin{figure}",r"\begin{figure}[H]")
+    # Fixed width for every illustration, regardless of its source attributes.
+    body=re.sub(r"\\includegraphics(?:\[[^\]]*\])?",lambda m:r"\includegraphics[width=\linewidth,keepaspectratio]",body)
+    (output/"layout-body.tex").write_text(body,encoding="utf-8")
     header=front(metadata)
     if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True)
     end=front(metadata,True) if profile["english_abstract_position"]=="end" else ""

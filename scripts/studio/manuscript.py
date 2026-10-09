@@ -47,6 +47,8 @@ def parse(source, output):
     for node in walk(ast):
         if node.get("t") == "Math":
             expression = node["c"][1]
+            if re.search(r"\\(?:tiny|scriptsize|footnotesize|small|large|Large|LARGE|huge|Huge|fontsize|color|pagebreak|newpage|onecolumn|twocolumn)\b", expression):
+                raise StudioError("CONTENT_LAYOUT_COMMAND_FORBIDDEN: " + expression[:100])
             if node["c"][0]["t"] == "DisplayMath":
                 tags = re.findall(r"\\tag\{([^}]+)\}", expression)
                 if len(tags) > 1:
@@ -63,6 +65,18 @@ def parse(source, output):
     write_json(Path(output) / "document.json", ast)
     write_json(Path(output) / "equations.json", equations)
     return ast, equations
+
+
+def strip_layout_attributes(ast):
+    """Keep identity and content; do not pass Markdown geometry to either writer."""
+    removed = []
+    for node in walk(ast):
+        kind = node.get("t")
+        attribute = node["c"][1] if kind == "Header" else node["c"][0] if kind in ("Image", "Figure", "Table", "Span", "Div", "Link", "Code", "CodeBlock") else None
+        if isinstance(attribute, list) and len(attribute) == 3 and isinstance(attribute[0], str):
+            if attribute[1] or attribute[2]: removed.append({"kind": kind, "id": attribute[0], "classes": attribute[1], "attributes": attribute[2]})
+            attribute[1] = []; attribute[2] = []
+    return removed
 
 
 def validate_assets(ast, root):

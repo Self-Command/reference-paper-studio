@@ -5,8 +5,9 @@ import re
 import shutil
 import os
 from .runtime import StudioError, require_actions, run, write_json, digest, confined
-from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs, text_of
-from .docx_layout import apply_layout, configure_math_font
+from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs, text_of, strip_layout_attributes
+from .docx_layout import configure_math_font
+from .locked_template import resolve_template, fill, check_contract
 from .latex_layout import write_latex
 from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility, check_page_flow
 
@@ -35,7 +36,7 @@ def _export(root, request, output, reference_rules=None):
     root, output = Path(root).resolve(), Path(output).resolve(); output.mkdir(parents=True, exist_ok=True)
     source = confined(root, request["manuscript"])
     meta = json.loads(confined(root, request["metadata"]).read_text(encoding="utf-8"))
-    profile = json.loads(confined(root, request["profile"]).read_text(encoding="utf-8"))
+    master, profile, template_identity = resolve_template(request)
     if request.get("reference_evidence"):
         from .references import analyze
         reference_rules = analyze(root, request["reference_evidence"], output/"reference-analysis")["rules"]
@@ -46,7 +47,8 @@ def _export(root, request, output, reference_rules=None):
         supported={"table_lines":"three_line","table_caption_position":"above","figure_caption_position":"below"}
         if rule["property"] in supported and rule["value"] != supported[rule["property"]]:
             raise StudioError("UNSUPPORTED_REFERENCE_RULE: "+rule["property"])
-        if rule["property"] == "english_abstract_position": profile["english_abstract_position"] = rule["value"]
+        if rule["property"] == "english_abstract_position" and profile["english_abstract_position"] != rule["value"]:
+            raise StudioError("TEMPLATE_REFERENCE_CONFLICT: English abstract position")
         applied_rules.append(rule)
     write_json(output/"effective-profile.json", {**profile,"adopted_reference_rules":applied_rules})
     if profile.get("english_abstract_position") not in ("front", "end") or profile.get("equation_numbering") not in ("preserve", "sequential"):
@@ -54,6 +56,7 @@ def _export(root, request, output, reference_rules=None):
     check_fonts(profile)
     gate = model_gate(root, request["manuscript"], request.get("model_evidence"), request.get("document_kind") == "paper")
     ast, equations = parse(source, output)
+    removed_attributes = strip_layout_attributes(ast)
     promoted_title=None
     if ast["blocks"] and ast["blocks"][0].get("t")=="Header" and ast["blocks"][0]["c"][0]==1 and text_of(ast["blocks"][0])==meta.get("title_zh"):
         promoted_title=text_of(ast["blocks"].pop(0))
@@ -88,14 +91,33 @@ def _export(root, request, output, reference_rules=None):
                 bad.append({"math_index":index+1,"expression":node["c"][1]})
         raise StudioError(f"{error}\nFORMULA_LOCATIONS: {bad}") from error
     configure_math_font(baseline, profile)
-    shutil.copy2(baseline, final)
-    layout = apply_layout(final, meta, profile, equations)
+    shutil.copy2(master, output/"used-master.docx")
+    layout = fill(baseline, meta, equations, master, profile, final)
     import zipfile
     with zipfile.ZipFile(final) as package:
         for part in ("document","settings"):
             (output/("word-"+part+".xml")).write_bytes(package.read("word/"+part+".xml"))
     texdir = output/"latex"
-    main = write_latex(ast, equations, meta, profile, texdir)
+    # Both writers use the same reversible native layout decisions for displays.
+    from copy import deepcopy
+    from .docx_layout import body_only_docx
+    from .qa import read_ast
+    body_only_docx(final, output/"layout-bridge.docx")
+    bridge = read_ast(output/"layout-bridge.docx", "docx")
+    bridge_math = [n for n in walk(bridge) if n.get("t") == "Math"]
+    layout_ast = deepcopy(ast)
+    all_math = [n for n in walk(layout_ast) if n.get("t") == "Math"]
+    if len(bridge_math) != len(all_math): raise StudioError("LAYOUT_BRIDGE_MATH_COUNT_CHANGED")
+    ledger = json.loads((output/"math-layout-ledger.json").read_text(encoding="utf-8"))
+    display_index = 0; bridge_map = []
+    for index, (node, rendered) in enumerate(zip(all_math, bridge_math)):
+        if node["c"][0]["t"] == "DisplayMath":
+            if ledger[display_index]["changes"]:
+                bridge_map.append({"math_index":index,"id":equations[display_index]["id"],"original":node["c"][1],"layout":rendered["c"][1]})
+                node["c"][1] = rendered["c"][1]
+            display_index += 1
+    write_json(output/"shared-layout-map.json",bridge_map)
+    main = write_latex(ast, equations, meta, profile, texdir, layout_ast)
     for node in walk(ast):
         if node.get("t") == "Image":
             relative = node["c"][-1][0]; target = confined(texdir, relative); target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(confined(root, relative), target)
@@ -124,6 +146,8 @@ def _export(root, request, output, reference_rules=None):
               "font_substitution": {"fonts": profile["fonts"], "exact_reference_match": False, "reason": "Open-source portable proof fonts"},
               "renderer": {"word_pdf": "LibreOffice compatibility rendering, not Microsoft Word native", "latex_pdf": "XeLaTeX"}}
     report["source_title_promoted_to_front_matter"]=promoted_title
+    report["template"] = template_identity
+    report["content_layout_attributes_removed"] = removed_attributes
     report["implementation_version"] = __import__("studio").__version__
     report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
     write_json(output/"acceptance.json", report)

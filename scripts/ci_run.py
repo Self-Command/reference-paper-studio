@@ -21,7 +21,7 @@ def execute(input_root, request_path, output, artifact_root=None, artifact_run=N
         path = confined(root, name)
         if not path.is_file() or digest(path) != request["sha256"][name]:
             raise StudioError(f"INPUT_FINGERPRINT_MISMATCH: {name}")
-    for field in ("manuscript", "metadata", "profile", "reference_evidence", "model_evidence", "bibliography", "visual_receipt"):
+    for field in ("manuscript", "metadata", "reference_evidence", "model_evidence", "bibliography", "visual_receipt"):
         if request.get(field) and request[field] not in declared:
             raise StudioError(f"UNDECLARED_INPUT: {field}")
     actual = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}

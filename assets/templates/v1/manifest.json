@@ -1,0 +1,15 @@
+{
+  "id": "reference-journal-v1",
+  "version": 1,
+  "policy_sha256": "66fb30143114189f01374407e27875e2f21c4107aae33f800e992802525be63b",
+  "variants": {
+    "front": {
+      "file": "master-front.docx",
+      "sha256": "1e6779e17a7fd748056a5026111736f5418fb80e4c253c932c36f94126532eda"
+    },
+    "end": {
+      "file": "master-end.docx",
+      "sha256": "ba62b9e99ea505fbbf0493bf2c9a31c6c88acaa7594842fe1614dd877a433b18"
+    }
+  }
+}

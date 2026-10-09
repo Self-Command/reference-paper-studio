@@ -80,6 +80,20 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     write_json(Path(output)/"docx-readback.json",baseline_ast)
     assert_text(ast, visible_docx(baseline), "source -> native DOCX XML text")
     body_only_docx(final, Path(output)/"body-audit.docx")
+    # Reverse only recorded layout transforms and verify their exact forward trees.
+    from .math_layout import restore, tree
+    audit_path = Path(output)/"body-audit.docx"
+    audit = Document(audit_path)
+    ledger = json.loads((Path(output)/"math-layout-ledger.json").read_text(encoding="utf-8"))
+    displays = list(audit._element.iter(M+"oMathPara"))
+    if len(displays) != len(ledger): raise StudioError("DISPLAY_LEDGER_COUNT_CHANGED")
+    for wrapper, record in zip(displays, ledger):
+        formula = wrapper.find(M+"oMath")
+        wrapper.replace(formula, restore(formula, record["changes"]))
+    base_math = list(Document(baseline)._element.iter(M+"oMath"))
+    audit_math = list(audit._element.iter(M+"oMath"))
+    if [tree(m) for m in base_math] != [tree(m) for m in audit_math]: raise StudioError("MATH_STRUCTURE_CHANGED")
+    audit.save(audit_path)
     final_ast = read_ast(Path(output)/"body-audit.docx", "docx")
     assert_text(ast, visible_docx(Path(output)/"body-audit.docx"), "formatted DOCX XML text")
     if math_list(baseline_ast) != math_list(final_ast):
@@ -96,7 +110,7 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     if len(list(xml.iter(M+"oMath"))) != expected:
         raise StudioError("FORMULA_CONVERSION_FAILED: native equation count")
     result = {"prose_numbers_tables_references": "exact_visible_text", "latex_math": "source_expression_preserved",
-              "docx_math": "native_OMML_unchanged_and_readback_equal", "math_count": expected,
+              "docx_math": "recorded_layout_reversed_exact_math_tree_and_readback_equal", "math_count": expected,
               "reader_normalization":"Identical longtable repeated-page headers are read once; actual Word XML text is used instead of duplicated reader caption aliases.",
               "limitation": "Preservation checks do not prove mathematical correctness."}
     write_json(Path(output)/"content-report.json", result)

@@ -33,6 +33,8 @@ def resolve_template(request):
     forbidden = {"profile", "fonts", "font", "font_size", "body_size_pt", "page", "margins", "columns", "sections", "template_path", "styles", "layout"}
     extra = forbidden.intersection(request)
     if extra: raise StudioError("TEMPLATE_OVERRIDE_FORBIDDEN: " + ", ".join(sorted(extra)))
+    allowed = {"id", "stage", "files", "sha256", "manuscript", "metadata", "bibliography", "reference_evidence", "model_evidence", "document_kind", "expected_equations", "template_id", "template_version", "template_variant"}
+    if set(request)-allowed: raise StudioError("UNKNOWN_REQUEST_FIELDS: "+str(sorted(set(request)-allowed)))
     p = policy()
     if request.get("template_id") != p["id"] or request.get("template_version") != p["version"]:
         raise StudioError("UNKNOWN_TEMPLATE_VERSION: require reference-journal-v1 version 1")
@@ -133,7 +135,7 @@ def clean_content(element, p):
     for run in element.iter(M+"r"):
         props = run.find(W+"rPr")
         if props is not None: run.remove(props)
-        props = OxmlElement("w:rPr"); run.append(props)
+        props = OxmlElement("w:rPr"); run.insert(1 if run.find(M+"rPr") is not None else 0, props)
         set_fonts(props, latin=p["fonts"]["math"], cjk=p["fonts"]["cjk"])
         set_child(props, "sz", {"w:val": "20"})
     return element
@@ -151,4 +153,136 @@ def check_contract(path, p):
             active = True; bookmark = item.get(W+"id"); continue
         if item.tag == W+"bookmarkEnd" and item.get(W+"id") == bookmark: active = False
         if active and list(item.iter(W+"sectPr")): raise StudioError("BODY_SECTION_FORBIDDEN")
+    for section in doc.sections:
+        expected_margin = round(2.2*1440/2.54)
+        margins = section._sectPr.find(W+"pgMar")
+        if any(abs(int(margins.get(W+side))-expected_margin)>1 for side in ("top", "bottom", "left", "right")):
+            raise StudioError("TEMPLATE_MARGINS_CHANGED")
     return {"section_columns": columns, "body_columns": 2, "body_section_changes": 0, "content_layout_overrides": False}
+
+
+def import_resources(source, target, elements):
+    """Only images and hyperlinks enter the mother; no styles/themes/headers."""
+    mapping = {}
+    for element in elements:
+        for node in element.iter():
+            for key, identifier in list(node.attrib.items()):
+                if not key.startswith(R): continue
+                if identifier not in mapping:
+                    relation = source.part.rels[identifier]
+                    if relation.reltype == RT.IMAGE and not relation.is_external:
+                        mapping[identifier] = target.part.get_or_add_image(BytesIO(relation.target_part.blob))[0]
+                    elif relation.reltype == RT.HYPERLINK and relation.is_external:
+                        mapping[identifier] = target.part.relate_to(relation.target_ref, RT.HYPERLINK, is_external=True)
+                    else: raise StudioError("UNSUPPORTED_CONTENT_RELATION: "+relation.reltype)
+                node.set(key, mapping[identifier])
+
+
+def import_lists(source, target, elements):
+    """Copy list semantics and restart values, replacing every indent/font."""
+    numbering = target.part.numbering_part.element
+    originals = source.part.numbering_part.element
+    mapping = {}
+    for element in elements:
+        for reference in element.iter(W+"numId"):
+            old = reference.get(W+"val")
+            if old not in mapping:
+                num = next((n for n in originals.findall(W+"num") if n.get(W+"numId") == old), None)
+                if num is None: raise StudioError("INVALID_LIST_NUMBERING")
+                abstract_id = num.find(W+"abstractNumId").get(W+"val")
+                abstract = next(n for n in originals.findall(W+"abstractNum") if n.get(W+"abstractNumId") == abstract_id)
+                aid = max([int(n.get(W+"abstractNumId")) for n in numbering.findall(W+"abstractNum")]+[0])+1
+                nid = max([int(n.get(W+"numId")) for n in numbering.findall(W+"num")]+[0])+1
+                clean = OxmlElement("w:abstractNum"); clean.set(W+"abstractNumId", str(aid))
+                for level in abstract.findall(W+"lvl"):
+                    item = OxmlElement("w:lvl"); item.set(W+"ilvl", level.get(W+"ilvl"))
+                    for tag in ("start", "numFmt", "lvlText"):
+                        value = level.find(W+tag)
+                        if value is not None: item.append(deepcopy(value))
+                    props = OxmlElement("w:pPr")
+                    set_child(props, "ind", {"w:left": str(400*(int(level.get(W+"ilvl"))+1)), "w:hanging": "400"})
+                    item.append(props); clean.append(item)
+                numbering.append(clean)
+                copy = deepcopy(num); copy.set(W+"numId", str(nid)); copy.find(W+"abstractNumId").set(W+"val", str(aid))
+                for child in list(copy):
+                    if child.tag not in {W+"abstractNumId", W+"lvlOverride"}: copy.remove(child)
+                numbering.append(copy); mapping[old] = str(nid)
+            reference.set(W+"val", mapping[old])
+
+
+def fill(native, metadata, equations, master, p, output):
+    require_actions()
+    from .math_layout import wrap, tree
+    from .docx_layout import move_table_captions
+    source = Document(native); doc = Document(master); body = doc._element.body
+    original = [clean_content(deepcopy(e), p) for e in source._element.body if e.tag != W+"sectPr"]
+    import_resources(source, doc, original); import_lists(source, doc, original)
+    for element in list(body):
+        text = "".join(t.text or "" for t in element.iter(W+"t"))
+        match = re.fullmatch(r"\{\{(\w+)\}\}", text)
+        if not match or match[1] == "RPS_BODY": continue
+        key = match[1]; value = metadata.get(key, "")
+        if isinstance(value, list): value = "; ".join(value)
+        if not value: body.remove(element); continue
+        if key.startswith("abstract_"): value = ("摘要：" if key.endswith("zh") else "Abstract: ")+str(value)
+        if key.startswith("keywords_"): value = ("关键词：" if key.endswith("zh") else "Keywords: ")+str(value)
+        element.find(W+"r/"+W+"t").text = str(value)
+    anchor = next(e for e in body if "".join(t.text or "" for t in e.iter(W+"t")) == "{{RPS_BODY}}")
+    start = OxmlElement("w:bookmarkStart"); start.set(W+"id", "9181"); start.set(W+"name", "RPS_BODY"); anchor.addprevious(start)
+    width = column_width(p); ledger = []; index = 0
+    for element in original:
+        if element.tag == W+"p" and list(element.iter(M+"oMathPara")):
+            if index >= len(equations): raise StudioError("FORMULA_COUNT_CHANGED")
+            equation = equations[index]; index += 1
+            formulae = list(element.iter(M+"oMath"))
+            if len(formulae) != 1: raise StudioError("UNSUPPORTED_DISPLAY_STRUCTURE: "+equation["id"])
+            changes = wrap(formulae[0], (width-550)/20)
+            ledger.append({"id": equation["id"], "changes": changes})
+            table = doc.add_table(rows=1, cols=2); table.autofit = False
+            table._tbl.getparent().remove(table._tbl)
+            set_child(table._tbl.tblPr, "tblW", {"w:w": str(width), "w:type": "dxa"})
+            set_child(table._tbl.tblPr, "tblDescription", {"w:val": "RPS_EQUATION_LAYOUT"})
+            borders = set_child(table._tbl.tblPr, "tblBorders")
+            for edge in ("top", "bottom", "left", "right", "insideH", "insideV"): set_child(borders, edge, {"w:val": "nil"})
+            margins = set_child(table._tbl.tblPr, "tblCellMar")
+            for edge in ("top", "bottom", "left", "right"): set_child(margins, edge, {"w:w": "0", "w:type": "dxa"})
+            for cell, column, cell_width in zip(table.rows[0].cells, table.columns, (width-550, 550)):
+                cell.width = Twips(cell_width); column.width = Twips(cell_width)
+            formula = table.cell(0, 0).paragraphs[0]._p; pstyle(formula, "Equation")
+            # The native display wrapper stays editable, including original cases.
+            for child in list(element):
+                if child.tag == M+"oMathPara": formula.append(child)
+            label = equation["id"] if p["equation_numbering"] == "preserve" else str(index)
+            right = table.cell(0, 1).paragraphs[0]._p; pstyle(right, "Equation")
+            right.append(paragraph("("+label+")", "Equation").find(W+"r"))
+            set_child(right.find(W+"pPr"), "jc", {"w:val": "right"})
+            set_child(table._tbl.find(W+"tr").get_or_add_trPr(), "cantSplit")
+            anchor.addprevious(table._tbl)
+        else: anchor.addprevious(element)
+    if index != len(equations): raise StudioError("FORMULA_COUNT_CHANGED")
+    end = OxmlElement("w:bookmarkEnd"); end.set(W+"id", "9181"); anchor.addprevious(end); body.remove(anchor)
+    moved = move_table_captions(doc)
+    for table in doc.tables:
+        if is_equation_table(table._tbl): continue
+        if len(table.columns) == 0: raise StudioError("EMPTY_TABLE")
+        props = table._tbl.tblPr
+        for child in list(props): props.remove(child)
+        table.autofit = False
+        set_child(props, "tblW", {"w:w": str(width), "w:type": "dxa"})
+        for column in table.columns: column.width = Twips(width//len(table.columns))
+        for row in table.rows:
+            for cell in row.cells:
+                cell.width = Twips(width//len(table.columns))
+                for child in list(cell._tc.get_or_add_tcPr()):
+                    if child.tag not in {W+"tcW", W+"gridSpan", W+"vMerge"}: cell._tc.tcPr.remove(child)
+                for par in cell.paragraphs: pstyle(par._p, "TableText")
+        _three_line(table, p["tables"], None)
+    for shape in doc.inline_shapes:
+        maximum = width*635
+        if shape.width > maximum:
+            ratio = maximum/shape.width; shape.height = round(shape.height*ratio); shape.width = maximum
+    if list(body.iter("{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}anchor")):
+        raise StudioError("FLOATING_IMAGE_FORBIDDEN")
+    doc.save(output)
+    write_json(Path(output).parent/"math-layout-ledger.json", ledger)
+    return {**check_contract(output, p), "display_count": index, "table_captions_moved": moved, "math_layout_changes": sum(len(e["changes"]) for e in ledger), "native_math_count": len(list(body.iter(M+"oMath")))}
