@@ -138,6 +138,7 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     breaking=profile.get("paragraph_breaking",{})
     if breaking:
         preamble=preamble.replace(r"\emergencystretch}{1em}",r"\emergencystretch}{"+str(breaking["emergency_stretch_em"])+"em}")
+        preamble=preamble.replace(r"\begin{document}",r"\setlength{\arraycolsep}{"+str(profile["math_array_padding_pt"]/2)+"pt}\n"+r"\begin{document}")
     if profile.get("latex_table_backend")=="cals":
         preamble=preamble.replace(r"\begin{document}",r"\usepackage{cals}\newcounter{rpsTableSegment}"+"\n"+r"\begin{document}")
     # One registered body region; content cannot switch output routines.

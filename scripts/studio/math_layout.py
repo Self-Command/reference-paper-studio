@@ -31,7 +31,7 @@ def restore(root, changes):
     return result
 
 
-def wrap(root, width_pt, font_size_pt=10):
+def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
     require_actions()
     before = deepcopy(root); changes = []
     # Pandoc represents TeX setminus by ASCII backslash. LibreOffice treats that
@@ -120,10 +120,14 @@ def wrap(root, width_pt, font_size_pt=10):
             visit(child, path+[index], max(45, child_budget))
         if name not in containers or math_width_pt(element, font_size_pt) <= budget: return
         segments=segments_of(element)
+        # Pandoc renders a newly stacked OMML row as a one-column TeX array.
+        # Its two outer arraycolsep spaces occupy real width. Reserve them
+        # only when creating that array, never at transparent nesting levels.
+        row_budget=max(45,budget-array_padding_pt)
         rows = []; row = []; used = 0
         for segment in segments:
             size = sum(math_width_pt(t,font_size_pt) for t in segment)
-            if row and used+size > budget:
+            if row and used+size > row_budget:
                 rows.append(row); row=[]; used=0
             row.extend(segment); used+=size
         if row: rows.append(row)
@@ -148,7 +152,7 @@ def wrap(root, width_pt, font_size_pt=10):
             for child in row: entry.append(child)
             array.append(entry)
         element.append(array)
-        changes.append({"path": path, "before": old, "after": etree.tostring(element, encoding="unicode"), "rows": len(rows)})
+        changes.append({"path": path, "before": old, "after": etree.tostring(element, encoding="unicode"), "rows": len(rows),"array_padding_pt":array_padding_pt})
     visit(root, [], width_pt)
     recovered = restore(root, changes)
     if tree(recovered) != tree(before): raise StudioError("MATH_LAYOUT_NOT_REVERSIBLE")

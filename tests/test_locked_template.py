@@ -179,6 +179,18 @@ def test_inline_formula_reserves_attached_punctuation_but_not_prose():
     text.text=" suffix";assert following_punctuation_width(formula,10)==0
 
 
+def test_only_new_inline_arrays_reserve_actual_tex_padding():
+    from copy import deepcopy
+    from studio.math_layout import wrap,restore,tree
+    formula=OxmlElement("m:oMath");run=OxmlElement("m:r");text=OxmlElement("m:t");text.text="aaaa,bbb,ccc";run.append(text);formula.append(run)
+    before=deepcopy(formula)
+    normal=deepcopy(formula);wrap(normal,60)
+    assert len(normal.find(qn("m:eqArr")).findall(qn("m:e")))==2
+    changes=wrap(formula,60,array_padding_pt=10)
+    assert len(formula.find(qn("m:eqArr")).findall(qn("m:e")))==3
+    assert tree(restore(formula,changes))==tree(before)
+
+
 @pytest.mark.parametrize("expression_right,expected",[(180,False),(202,True)])
 def test_rendered_equation_number_region_rejects_collision(expression_right,expected):
     from studio.math_proof import number_region
