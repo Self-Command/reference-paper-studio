@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "role": "visual_receipt",
+      "sha256": "c7eea166410154ff2b1c75ce17796a2cc6050f383ba90f04da0b8e7f5c1329bb",
+      "path": "receipt.json"
+    }
+  ],
+  "schema_version": 2,
+  "operation": "visual-receipt",
+  "task_id": "visual-matrix-37955184906-v1",
+  "artifact_run": "37955184906",
+  "visual_receipt": "receipt.json",
+  "artifact_name": "template-matrix",
+  "engine_commit": "9a4979e4cc4cb6e181758169e23da9a3912854fd"
+}
