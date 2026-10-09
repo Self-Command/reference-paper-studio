@@ -13,7 +13,12 @@ def inspect(root,request,output):
     issues=[]
     if not metadata.get("title_zh") and not metadata.get("title_en") and not any(n.get("t")=="Header" and n["c"][0]==1 for n in ast["blocks"]): issues.append({"id":"MD_TITLE_MISSING","severity":"blocker"})
     if not metadata.get("abstract_zh") and not metadata.get("abstract_en"): issues.append({"id":"MD_ABSTRACT_MISSING","severity":"major"})
-    mapping=resolve_crossrefs(ast,equations,"preserve")
+    reference_language="en" if any(key.endswith("_en") for key in metadata) and not any(key.endswith("_zh") for key in metadata) else "zh"
+    if request.get("template"):
+        from .composition import load_composition
+        _,policy=load_composition(request["template"]["id"],request["template"]["version"])
+        reference_language="en" if policy.get("metadata_languages")==["en"] else "zh"
+    mapping=resolve_crossrefs(ast,equations,"preserve",reference_language)
     from .object_audit import inspect as inspect_objects
     object_report=inspect_objects(ast)
     issues.extend({**issue,"severity":"major"} for issue in object_report["issues"])

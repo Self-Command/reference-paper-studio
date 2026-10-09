@@ -39,6 +39,7 @@ def compile_components(descriptor):
     p["latex_table_backend"]="cals" if "table.three-line" in selected else None
     p["paragraph_breaking"]={"emergency_stretch_em":3,"bibliographic_slash_breaks":True}
     p["math_array_padding_pt"]=10
+    p["math_width_backends"]={"display":"registered-font-advances","inline":"conservative-with-operator-glue-and-punctuation"}
     component_hash=hashlib.sha256(json.dumps({name:entries[name] for name in selected},sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
     return p,component_hash
 

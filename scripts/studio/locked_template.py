@@ -388,7 +388,12 @@ def fill(native, metadata, equations, master, p, output):
                     cell_budget = width/20/cells-12
                 from .docx_layout import following_punctuation_width
                 cell_budget-=following_punctuation_width(formula,p["body_size_pt"])
-                changes = wrap(formula, cell_budget,p["body_size_pt"],p.get("math_array_padding_pt",0),metrics=metrics)
+                # hmtx advances improve display estimates, but inline TeX
+                # conversion may select italic glyphs and attach punctuation
+                # with different spacing (real L-cell regression 37962150207).
+                # Retain the verified conservative inline budget rather than
+                # using font advances as a substitute for inline rendering.
+                changes = wrap(formula, cell_budget,p["body_size_pt"],p.get("math_array_padding_pt",0))
                 inline_ledger.append(changes)
             anchor.addprevious(element)
     if index != len(equations): raise StudioError("FORMULA_COUNT_CHANGED")
