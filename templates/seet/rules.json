@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "property": "structure",
+      "value": [
+        "引言",
+        "问题描述",
+        "模型建立",
+        "算法设计",
+        "仿真与分析",
+        "结论",
+        "参考文献"
+      ],
+      "source_type": "recommended_structure",
+      "source": "https://www.sys-ele.com/CN/column/column10.shtml",
+      "status": "pending_user_review",
+      "confidence": "recommendation",
+      "adoption_reason": "参考论文优先，冲突按本刊官方写作模板消歧"
+    },
+    {
+      "property": "page_parameters",
+      "value": {
+        "size": "a4",
+        "width_cm": 21,
+        "margin_cm": {
+          "top": 2.2,
+          "bottom": 2.2,
+          "left": 2.2,
+          "right": 2.2
+        },
+        "column_spacing_cm": 0.6
+      },
+      "source_type": "engineering_default",
+      "status": "not_reference_measurement",
+      "confidence": "engineering",
+      "adoption_reason": "Existing defaults, pending actual source measurement"
+    },
+    {
+      "property": "captions",
+      "value": {
+        "figure": "above",
+        "table": "below"
+      },
+      "source_type": "user_choice",
+      "status": "confirmed",
+      "adoption_reason": "Explicit project preference",
+      "official_compliance": false
+    },
+    {
+      "property": "fonts",
+      "value": {
+        "cjk": "Noto Serif CJK SC",
+        "latin": "Liberation Serif",
+        "math": "Latin Modern Math"
+      },
+      "source_type": "engineering_default",
+      "status": "test_fixture_only",
+      "adoption_reason": "User must choose before production export"
+    }
+  ]
+}

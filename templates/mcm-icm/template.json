@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "mcm-icm",
+  "version": "1.0.0",
+  "article_type": "MCM/ICM美赛",
+  "year": 2027,
+  "policy": {
+    "page": {
+      "size": "a4",
+      "width_cm": 21,
+      "margin_cm": {
+        "top": 2.2,
+        "bottom": 2.2,
+        "left": 2.2,
+        "right": 2.2
+      },
+      "column_spacing_cm": 0.6
+    },
+    "fonts": {
+      "cjk": "Noto Serif CJK SC",
+      "latin": "Liberation Serif",
+      "math": "Latin Modern Math"
+    },
+    "body_size_pt": 10,
+    "body_line_minimum_pt": 14,
+    "table_line_minimum_pt": 12,
+    "tables": {
+      "top_rule_pt": 1,
+      "header_rule_pt": 0.5,
+      "bottom_rule_pt": 1,
+      "header_rows": 1
+    },
+    "front_columns": 1,
+    "end_abstract_columns": 1,
+    "automatic_full_width_objects": false,
+    "content_layout_overrides": false,
+    "english_abstract_position": "front",
+    "equation_numbering": "preserve",
+    "captions": {
+      "figure": "above",
+      "table": "below"
+    },
+    "body_columns": 1,
+    "metadata_languages": [
+      "en"
+    ],
+    "anonymous": true,
+    "anonymous_no_toc": false,
+    "front_separate_page": true
+  },
+  "components": [
+    "page.base",
+    "region.front",
+    "region.body",
+    "region.end",
+    "title.bilingual",
+    "abstract.bilingual",
+    "keywords",
+    "section.model",
+    "section.algorithm",
+    "section.validation",
+    "math.inline",
+    "math.display",
+    "math.multiline",
+    "math.number",
+    "figure.inline",
+    "table.three-line",
+    "caption",
+    "cross-reference",
+    "bibliography",
+    "check.structure",
+    "check.content",
+    "check.math",
+    "check.geometry",
+    "check.visual"
+  ],
+  "variants": [
+    "front",
+    "end"
+  ],
+  "font_profile_id": "open-serif",
+  "availability": {
+    "md_ready": false,
+    "docx_ready": false,
+    "latex_ready": false,
+    "automatic_pass": false,
+    "visual_review_complete": false
+  },
+  "rules": "rules.json",
+  "source": "https://contest.comap.org/undergraduate/contests/mcm/instructions.php",
+  "guidance": "guidance.md",
+  "compliance": {
+    "official_submission": false,
+    "status": "personal-review",
+    "pending_official_layout": true
+  }
+}

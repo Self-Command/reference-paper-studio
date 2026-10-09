@@ -14,7 +14,7 @@ def require_approval(events, event_id, kind, fingerprint, template=None, finding
         raise StudioError("APPROVAL_MISSING: "+kind)
     if event.get("validity_status","valid") != "valid" or event.get("content_snapshot_sha256") != fingerprint:
         raise StudioError("APPROVAL_STALE: "+kind)
-    if any(e.get("supersedes")==event_id or e.get("invalidated_by")==event_id for e in events):
+    if event.get("invalidated_by") or any(e.get("supersedes")==event_id for e in events):
         raise StudioError("APPROVAL_STALE: superseded "+kind)
     if template and event.get("template_manifest_sha256") != template:
         raise StudioError("APPROVAL_STALE: template "+kind)

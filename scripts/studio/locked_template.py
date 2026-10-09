@@ -31,6 +31,11 @@ def policy():
 
 def resolve_template(request):
     require_actions()
+    if request.get("schema_version") == 2:
+        from .contracts import validate
+        from .registry import resolve
+        validate(request,"request")
+        return resolve(request)
     forbidden = {"profile", "fonts", "font", "font_size", "body_size_pt", "page", "margins", "columns", "sections", "template_path", "styles", "layout"}
     extra = forbidden.intersection(request)
     if extra: raise StudioError("TEMPLATE_OVERRIDE_FORBIDDEN: " + ", ".join(sorted(extra)))
@@ -53,7 +58,9 @@ def resolve_template(request):
 
 def column_width(p):
     margins = p["page"]["margin_cm"]
-    return round((21-margins["left"]-margins["right"]-p["page"]["column_spacing_cm"])/2*1440/2.54)
+    columns=p.get("body_columns",2)
+    page_width=p["page"].get("width_cm",21)
+    return round((page_width-margins["left"]-margins["right"]-(columns-1)*p["page"]["column_spacing_cm"])/columns*1440/2.54)
 
 
 def pstyle(element, role):
@@ -72,11 +79,11 @@ def paragraph(text, role):
     return element
 
 
-def create_templates(directory):
+def create_templates(directory, policy_override=None):
     """Create release assets once; never build a mother from a manuscript."""
     require_actions()
     directory = Path(directory); directory.mkdir(parents=True, exist_ok=True)
-    p = policy(); variants = {}
+    p = policy_override or policy(); variants = {}
     for variant in ("front", "end"):
         doc = Document(); body = doc._element.body
         for item in list(body):
@@ -84,36 +91,42 @@ def create_templates(directory):
         for role in ROLES:
             style = doc.styles.add_style("RPS"+role, 1); style.base_style = doc.styles["Normal"]
             style.font.name = p["fonts"]["latin"]
-            style.font.size = Pt(16 if role == "Title" else 12 if role == "Heading1" else 1 if role == "Marker" else 10)
+            style.font.size = Pt(16 if role == "Title" else 12 if role == "Heading1" else 1 if role == "Marker" else p["body_size_pt"])
             style.font.bold = role == "Title" or role.startswith("Heading")
             style.font.color.rgb = RGBColor(0, 0, 0)
             set_fonts(style.element.get_or_add_rPr(), latin=p["fonts"]["latin"], cjk=p["fonts"]["cjk"])
             fmt = style.paragraph_format
             fmt.space_before = Pt(6 if role.startswith("Heading") else 0)
             fmt.space_after = Pt(0 if role == "Marker" else 2 if role == "TableText" else 3)
-            fmt.line_spacing = Pt(1 if role == "Marker" else 24 if role == "Title" else 12 if role == "TableText" else 14)
+            fmt.line_spacing = Pt(1 if role == "Marker" else 24 if role == "Title" else p.get("table_line_minimum_pt",12) if role == "TableText" else p.get("body_line_minimum_pt",14))
             fmt.line_spacing_rule = WD_LINE_SPACING.EXACTLY if role == "Marker" else WD_LINE_SPACING.AT_LEAST
             fmt.keep_with_next = role.startswith("Heading"); fmt.keep_together = False
             fmt.widow_control = True; fmt.page_break_before = False
             fmt.first_line_indent = Pt(20 if role == "Body" else 0)
             fmt.left_indent = Pt(0); fmt.right_indent = Pt(0)
             fmt.alignment = 1 if role in ("Title", "Author", "Caption") else 3 if role in ("Body", "Abstract") else 0
-        normal = doc.styles["Normal"]; normal.font.name = p["fonts"]["latin"]; normal.font.size = Pt(10)
+        normal = doc.styles["Normal"]; normal.font.name = p["fonts"]["latin"]; normal.font.size = Pt(p["body_size_pt"])
         set_fonts(normal.element.get_or_add_rPr(), latin=p["fonts"]["latin"], cjk=p["fonts"]["cjk"])
         settings = doc.settings.element
         for inherited in list(settings.findall(M+"mathPr")): settings.remove(inherited)
         math = OxmlElement("m:mathPr"); font = OxmlElement("m:mathFont"); font.set(qn("m:val"), p["fonts"]["math"]); math.append(font); settings.append(math)
         wrap_indent=OxmlElement("m:wrapIndent"); wrap_indent.set(M+"val","0"); math.append(wrap_indent)
         def metadata(suffix):
+            if suffix not in p.get("metadata_languages",["zh","en"]): return
             for key, role in (("title", "Title"), ("authors", "Author"), ("affiliation", "Author"), ("abstract", "Abstract"), ("keywords", "Keywords")):
+                if p.get("anonymous") and key in ("authors","affiliation"): continue
                 body.insert(len(body)-1, paragraph("{{"+key+"_"+suffix+"}}", role))
         metadata("zh")
         if variant == "front": metadata("en")
         body.insert(len(body)-1, section_break(1, p))
         body.insert(len(body)-1, paragraph("{{RPS_BODY}}", "Body"))
-        if variant == "end": body.insert(len(body)-1, section_break(2, p)); metadata("en")
+        if p.get("front_separate_page"):
+            boundary=body[-2].getprevious()
+            if boundary is not None and boundary.find(W+"pPr/"+W+"sectPr") is not None:
+                set_child(boundary.find(W+"pPr/"+W+"sectPr"),"type",{"w:val":"nextPage"})
+        if variant == "end": body.insert(len(body)-1, section_break(p.get("body_columns",2), p)); metadata("en")
         final = body.find(W+"sectPr")
-        _apply_sectpr(final, {**p["page"], "columns": 2 if variant == "front" else 1, "doc_grid": False})
+        _apply_sectpr(final, {**p["page"], "columns": p.get("body_columns",2) if variant == "front" else 1, "doc_grid": False})
         set_child(final, "type", {"w:val": "continuous"})
         path = directory/("master-"+variant+".docx"); doc.save(path)
         variants[variant] = {"file": path.name, "sha256": digest(path)}
@@ -140,7 +153,7 @@ def clean_content(element, p):
         if props is not None: run.remove(props)
         props = OxmlElement("w:rPr"); run.insert(1 if run.find(M+"rPr") is not None else 0, props)
         set_fonts(props, latin=p["fonts"]["math"], cjk=p["fonts"]["cjk"])
-        set_child(props, "sz", {"w:val": "20"})
+        set_child(props, "sz", {"w:val": str(round(p["body_size_pt"]*2))})
     return element
 
 
@@ -148,7 +161,7 @@ def check_contract(path, p):
     require_actions()
     doc = Document(path)
     columns = [int(s._sectPr.find(W+"cols").get(W+"num", "1")) for s in doc.sections]
-    expected = [1, 2] if p["english_abstract_position"] == "front" else [1, 2, 1]
+    expected = [1, p.get("body_columns",2)] if p["english_abstract_position"] == "front" else [1, p.get("body_columns",2), 1]
     if columns != expected: raise StudioError("TEMPLATE_SECTIONS_CHANGED: "+str(columns))
     active = False; bookmark = None
     for item in doc._element.body:
@@ -166,11 +179,10 @@ def check_contract(path, p):
                 props=run.find(W+"rPr")
                 if props is not None and any(c.tag not in {W+"b",W+"i",W+"vertAlign"} for c in props): raise StudioError("CONTENT_RUN_LAYOUT_FORBIDDEN")
     for section in doc.sections:
-        expected_margin = round(2.2*1440/2.54)
         margins = section._sectPr.find(W+"pgMar")
-        if any(abs(int(margins.get(W+side))-expected_margin)>1 for side in ("top", "bottom", "left", "right")):
+        if any(abs(int(margins.get(W+side))-round(p["page"]["margin_cm"][side]*1440/2.54))>1 for side in ("top", "bottom", "left", "right")):
             raise StudioError("TEMPLATE_MARGINS_CHANGED")
-    return {"section_columns": columns, "body_columns": 2, "body_section_changes": 0, "content_layout_overrides": False}
+    return {"section_columns": columns, "body_columns": p.get("body_columns",2), "body_section_changes": 0, "content_layout_overrides": False}
 
 
 def import_resources(source, target, elements):
@@ -242,7 +254,37 @@ def fill(native, metadata, equations, master, p, output):
     require_actions()
     from .math_layout import wrap, tree
     from .docx_layout import move_table_captions
-    source = Document(native); doc = Document(master); body = doc._element.body
+    source = Document(native)
+    from docxtpl import DocxTemplate
+    from jinja2 import Environment, StrictUndefined
+    import tempfile
+    context={key+"_"+lang:"" for lang in ("zh","en") for key in ("title","authors","affiliation","abstract","keywords")}
+    context["RPS_BODY"]="{{RPS_BODY}}"
+    for key,value in metadata.items():
+        if key not in context: continue
+        if isinstance(value,list): value="; ".join(value)
+        if any(c in str(value) for c in ("\f","\a")): raise StudioError("CONTENT_CONTROL_CHARACTER")
+        if value and key.startswith("abstract_"): value=("摘要：" if key.endswith("zh") else "Abstract: ")+str(value)
+        if value and key.startswith("keywords_"): value=("关键词：" if key.endswith("zh") else "Keywords: ")+str(value)
+        context[key]=str(value)
+    tpl=DocxTemplate(master); tpl.render(context,jinja_env=Environment(undefined=StrictUndefined),autoescape=True)
+    rendered=BytesIO(); tpl.save(rendered); rendered.seek(0)
+    doc=Document(rendered); body = doc._element.body
+    if metadata.get("_meta_docx"):
+        meta_source=Document(metadata["_meta_docx"])
+        meta_elements=[deepcopy(e) for e in meta_source._element.body if e.tag!=W+"sectPr"]
+        import_resources(meta_source,doc,meta_elements)
+        if len(meta_elements)!=len(metadata["_meta_roles"]): raise StudioError("METADATA_OBJECT_COUNT_CHANGED")
+        for key,element in zip(metadata["_meta_roles"],meta_elements):
+            role="Title" if key.startswith("title") else "Author" if key.startswith(("authors","affiliation")) else "Abstract" if key.startswith("abstract") else "Keywords"
+            target=next((e for e in body if e.tag==W+"p" and "".join(t.text or "" for t in e.iter(W+"t"))==context[key] and e.find(W+"pPr/"+W+"pStyle") is not None and e.find(W+"pPr/"+W+"pStyle").get(W+"val")=="RPS"+role),None)
+            if target is None:
+                if p.get("anonymous") and role=="Author" or key[-2:] not in p.get("metadata_languages",["zh","en"]): continue
+                raise StudioError("METADATA_ROLE_MISSING: "+key)
+            clean_content(element,p); pstyle(element,role); target.addprevious(element); body.remove(target)
+    for element in list(body):
+        if element.tag==W+"p" and not "".join(t.text or "" for t in element.iter(W+"t")) and not list(element.iter(M+"oMath")) and element.find(W+"pPr/"+W+"sectPr") is None:
+            body.remove(element)
     original = [clean_content(deepcopy(e), p) for e in source._element.body if e.tag != W+"sectPr"]
     import_resources(source, doc, original); import_lists(source, doc, original)
     for element in list(body):
@@ -276,6 +318,7 @@ def fill(native, metadata, equations, master, p, output):
             for edge in ("top", "bottom", "left", "right"): set_child(margins, edge, {"w:w": "0", "w:type": "dxa"})
             for cell, column, cell_width in zip(table.rows[0].cells, table.columns, (width-550, 550)):
                 cell.width = Twips(cell_width); column.width = Twips(cell_width)
+                set_child(cell._tc.get_or_add_tcPr(),"vAlign",{"w:val":"center"})
             formula = table.cell(0, 0).paragraphs[0]._p; pstyle(formula, "Equation")
             # The native display wrapper stays editable, including original cases.
             for child in list(element):
@@ -300,7 +343,7 @@ def fill(native, metadata, equations, master, p, output):
             anchor.addprevious(element)
     if index != len(equations): raise StudioError("FORMULA_COUNT_CHANGED")
     end = OxmlElement("w:bookmarkEnd"); end.set(W+"id", "9181"); anchor.addprevious(end); body.remove(anchor)
-    moved = move_table_captions(doc)
+    moved = 0
     for table in doc.tables:
         if is_equation_table(table._tbl): continue
         if len(table.columns) == 0: raise StudioError("EMPTY_TABLE")
@@ -323,7 +366,10 @@ def fill(native, metadata, equations, master, p, output):
     for element in body:
         if element.tag==W+"p" and list(element.iter(W+"drawing")):
             pstyle(element,"Equation")
-            set_child(element.find(W+"pPr"),"keepNext",{"w:val":"1"})
+    if p.get("captions"):
+        from .captions import arrange
+        moved=arrange(doc,p)
+    else: moved=move_table_captions(doc)
     if list(body.iter("{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}anchor")):
         raise StudioError("FLOATING_IMAGE_FORBIDDEN")
     doc.save(output)

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "property": "structure",
+      "value": [
+        "Introduction",
+        "Related Work",
+        "Problem Formulation",
+        "Proposed Method",
+        "Analysis",
+        "Experiments and Results",
+        "Discussion",
+        "Conclusion",
+        "References"
+      ],
+      "source_type": "recommended_structure",
+      "source": "https://ieeeaccess.ieee.org/authors/preparing-your-article/",
+      "status": "pending_user_review",
+      "confidence": "recommendation",
+      "adoption_reason": "IEEE Access官方准备指南；本版为开源字体个人审阅适配"
+    },
+    {
+      "property": "page_parameters",
+      "value": {
+        "size": "a4",
+        "width_cm": 21,
+        "margin_cm": {
+          "top": 2.2,
+          "bottom": 2.2,
+          "left": 2.2,
+          "right": 2.2
+        },
+        "column_spacing_cm": 0.6
+      },
+      "source_type": "engineering_default",
+      "status": "not_reference_measurement",
+      "confidence": "engineering",
+      "adoption_reason": "Existing defaults, pending actual source measurement"
+    },
+    {
+      "property": "captions",
+      "value": {
+        "figure": "above",
+        "table": "below"
+      },
+      "source_type": "user_choice",
+      "status": "confirmed",
+      "adoption_reason": "Explicit project preference",
+      "official_compliance": false
+    },
+    {
+      "property": "fonts",
+      "value": {
+        "cjk": "Noto Serif CJK SC",
+        "latin": "Liberation Serif",
+        "math": "Latin Modern Math"
+      },
+      "source_type": "engineering_default",
+      "status": "test_fixture_only",
+      "adoption_reason": "User must choose before production export"
+    }
+  ]
+}

@@ -39,16 +39,27 @@ def _export(root, request, output, reference_rules=None):
     require_actions()
     root, output = Path(root).resolve(), Path(output).resolve(); output.mkdir(parents=True, exist_ok=True)
     source = confined(root, request["manuscript"])
-    meta = json.loads(confined(root, request["metadata"]).read_text(encoding="utf-8"))
+    ast, equations = parse(source, output)
+    from .frontmatter import extract,prepare
+    meta=extract(ast)
+    if request.get("metadata"):
+        legacy_meta=json.loads(confined(root,request["metadata"]).read_text(encoding="utf-8"))
+        if any(key in meta and meta[key]!=value for key,value in legacy_meta.items()): raise StudioError("METADATA_CONFLICT")
+        meta.update(legacy_meta)
+    ast["meta"]={}
     master, profile, template_identity = resolve_template(request)
+    if request.get("schema_version")==2:
+        from .approvals import check_export
+        approval=check_export(root,request,template_identity)
+        write_json(output/"approval-binding.json",approval)
     if request.get("reference_evidence"):
         from .references import analyze
         reference_rules = analyze(root, request["reference_evidence"], output/"reference-analysis")["rules"]
     applied_rules = []
     for rule in reference_rules or []:
         if rule["status"] not in ("reference_consensus", "official_disambiguation"): continue
-        if rule["property"] == "body_columns" and rule["value"] != 2: raise StudioError("UNSUPPORTED_BODY_COLUMN_RULE")
-        supported={"table_lines":"three_line","table_caption_position":"above","figure_caption_position":"below"}
+        if rule["property"] == "body_columns" and rule["value"] != profile.get("body_columns",2): raise StudioError("TEMPLATE_REFERENCE_CONFLICT: body columns")
+        supported={"table_lines":"three_line","table_caption_position":profile.get("captions",{}).get("table","above"),"figure_caption_position":profile.get("captions",{}).get("figure","below")}
         if rule["property"] in supported and rule["value"] != supported[rule["property"]]:
             raise StudioError("UNSUPPORTED_REFERENCE_RULE: "+rule["property"])
         if rule["property"] == "english_abstract_position" and profile["english_abstract_position"] != rule["value"]:
@@ -59,7 +70,10 @@ def _export(root, request, output, reference_rules=None):
         raise StudioError("INVALID_PROFILE")
     check_fonts(profile)
     gate = model_gate(root, request["manuscript"], request.get("model_evidence"), request.get("document_kind") == "paper")
-    ast, equations = parse(source, output)
+    if profile.get("anonymous") and any(value for key,value in meta.items() if key.startswith(("authors_","affiliation_"))):
+        raise StudioError("ANONYMOUS_IDENTITY_FORBIDDEN")
+    meta={key:value for key,value in meta.items() if key[-2:] in profile.get("metadata_languages",["zh","en"])}
+    meta=prepare(meta,ast["pandoc-api-version"],output)
     removed_attributes = strip_layout_attributes(ast)
     promoted_title=None
     if ast["blocks"] and ast["blocks"][0].get("t")=="Header" and ast["blocks"][0]["c"][0]==1 and text_of(ast["blocks"][0])==meta.get("title_zh"):
@@ -177,7 +191,7 @@ def _export(root, request, output, reference_rules=None):
     try: content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
     except StudioError as error:
         content={"status":"failed","error":str(error)}; acceptance_errors.append(str(error))
-    docx = check_docx(final)
+    docx = check_docx(final,profile)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
     write_json(output/"reference-map.json", {"equations": mapping, "literature": "shared resolved AST", "objects": object_map})
     report = {"build": "passed", "automatic_acceptance": "failed" if acceptance_errors else "passed", "visual_review": "blocked" if acceptance_errors else "pending", "model_gate": gate,

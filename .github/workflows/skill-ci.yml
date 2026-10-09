@@ -8,7 +8,7 @@ on:
       stage:
         type: choice
         default: full
-        options: [core, master, full]
+        options: [core, modular, master, full]
 permissions:
   contents: read
 jobs:
@@ -24,6 +24,10 @@ jobs:
       - run: bash ci/setup.sh
         if: inputs.stage != 'master' && inputs.stage != 'core'
       - run: python ci/suite_check.py
+      - run: python ci/template_matrix.py
+        if: inputs.stage == 'modular'
+      - run: python ci/modular_regression.py
+        if: inputs.stage == 'modular'
       - run: python -m pytest tests/test_suite_core.py -q --junitxml=build/suite-tests.xml
         if: inputs.stage == 'core'
       - run: python ci/validate_skill.py
@@ -38,7 +42,7 @@ jobs:
         if: inputs.stage != 'master' && inputs.stage != 'core'
       - run: python ci/regression.py
         id: regression
-        if: inputs.stage != 'master' && inputs.stage != 'core'
+        if: inputs.stage != 'master' && inputs.stage != 'core' && inputs.stage != 'modular'
       - run: python ci/package.py
         if: always() && inputs.stage != 'master' && inputs.stage != 'core' && steps.tests.outcome == 'success'
       - run: git rev-parse HEAD > build/skill-commit.txt

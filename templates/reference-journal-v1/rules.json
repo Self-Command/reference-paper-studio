@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "property": "captions",
+      "value": {
+        "figure": "above",
+        "table": "below"
+      },
+      "source_type": "user_choice",
+      "status": "confirmed"
+    },
+    {
+      "property": "page",
+      "value": {
+        "size": "a4",
+        "width_cm": 21,
+        "margin_cm": {
+          "top": 2.2,
+          "bottom": 2.2,
+          "left": 2.2,
+          "right": 2.2
+        },
+        "column_spacing_cm": 0.6
+      },
+      "source_type": "engineering_default",
+      "status": "not_measured"
+    }
+  ]
+}

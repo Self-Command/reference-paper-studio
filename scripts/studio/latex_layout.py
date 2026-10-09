@@ -39,15 +39,16 @@ def front(meta, english=False):
         value=meta.get(key+suffix, "")
         if isinstance(value,list):value="; ".join(value)
         if not value:continue
-        if key=="title":output.append(r"\begin{center}\Large\bfseries "+escape(value)+r"\end{center}")
-        elif key in ("authors","affiliation"):output.append(r"\begin{center}"+escape(value)+r"\end{center}")
+        rendered=meta.get("_meta_tex",{}).get(key+suffix,escape(value))
+        if key=="title":output.append(r"\begin{center}\Large\bfseries "+rendered+r"\end{center}")
+        elif key in ("authors","affiliation"):output.append(r"\begin{center}"+rendered+r"\end{center}")
         else:
             label=("Abstract: " if english else "摘要：") if key=="abstract" else ("Keywords: " if english else "关键词：")
-            output.append(r"\noindent\textbf{"+label+"}"+escape(value)+"\n\n")
+            output.append(r"\noindent"+(rendered if key+suffix in meta.get("_meta_tex",{}) else r"\textbf{"+label+"}"+escape(value))+"\n\n")
     return "\n".join(output)
 
 
-def column_table(table, api, output):
+def column_table(table, api, output, caption_position="above"):
     """Independent rows can break between columns, never across the gutter."""
     from .runtime import StudioError
     count = len(table["c"][2])
@@ -60,7 +61,8 @@ def column_table(table, api, output):
         path = Path(output)/"cell.json"
         path.write_text(json.dumps({"pandoc-api-version":api,"meta":{},"blocks":blocks},ensure_ascii=False),encoding="utf-8")
         return run(["pandoc",path,"-f","json","-t","latex","--wrap=none"]).strip()
-    if caption: pieces.append(r"\begin{center}"+tex(caption)+r"\end{center}")
+    caption_tex=r"\begin{center}"+tex(caption)+r"\end{center}" if caption else ""
+    if caption and caption_position=="above": pieces.append(caption_tex)
     spec = "@{}"+"".join("p{\\dimexpr\\linewidth/"+str(count)+"-6pt\\relax}" for _ in range(count))+"@{}"
     for number, row in enumerate(rows):
         cells = row[1]
@@ -70,6 +72,7 @@ def column_table(table, api, output):
         rule = r"\toprule" if number == 0 else ""
         end = r"\midrule" if number == len(table["c"][3][1])-1 else r"\bottomrule" if number == len(rows)-1 else ""
         pieces.append("\\noindent\\begin{tabular}{"+spec+"}"+rule+"\n"+" & ".join(values)+r"\\"+end+"\n\\end{tabular}\\par\n")
+    if caption and caption_position=="below": pieces.append(caption_tex)
     return "".join(pieces)
 
 
@@ -117,6 +120,7 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
 \begin{document}
 """
     preamble=preamble.replace("LATINFONT",profile["fonts"]["latin"]).replace("CJKFONT",profile["fonts"]["cjk"])
+    preamble=preamble.replace(r"\setmathfont{Latin Modern Math}",r"\setmathfont{"+profile["fonts"]["math"]+"}")
     preamble=preamble.replace("[10pt,a4paper]", f"[{profile['body_size_pt']}pt,a4paper]")
     preamble=preamble.replace(r"\columnsep}{0.6cm}",r"\columnsep}{"+str(profile["page"].get("column_spacing_cm",0.6))+"cm}")
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
@@ -124,7 +128,14 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     layout=latex_ast(layout_ast or ast,equations,profile["equation_numbering"]); blocks=[]
     for block in layout["blocks"]:
         if block.get("t") == "Table":
-            blocks.append({"t":"RawBlock","c":["latex",column_table(block,ast["pandoc-api-version"],output)]})
+            blocks.append({"t":"RawBlock","c":["latex",column_table(block,ast["pandoc-api-version"],output,profile.get("captions",{}).get("table","above"))]})
+        elif block.get("t")=="Figure":
+            fragment={"pandoc-api-version":ast["pandoc-api-version"],"meta":{},"blocks":block["c"][2]}
+            image_tex=run(["pandoc","-f","json","-t","latex","--wrap=none"],input_text=json.dumps(fragment))
+            caption_fragment={"pandoc-api-version":ast["pandoc-api-version"],"meta":{},"blocks":block["c"][1][1]}
+            caption_tex=run(["pandoc","-f","json","-t","latex","--wrap=none"],input_text=json.dumps(caption_fragment))
+            ordered=(caption_tex+"\n"+image_tex) if profile.get("captions",{}).get("figure","below")=="above" else (image_tex+"\n"+caption_tex)
+            blocks.append({"t":"RawBlock","c":["latex",r"\begin{center}"+ordered+r"\end{center}"]})
         else: blocks.append(block)
     layout["blocks"]=blocks
     layout_path=output/"layout.json";layout_path.write_text(json.dumps(layout,ensure_ascii=False),encoding="utf-8")
@@ -136,5 +147,8 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     header=front(metadata)
     if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True)
     end=front(metadata,True) if profile["english_abstract_position"]=="end" else ""
-    (output/"main.tex").write_text(preamble+header+"\n\\begin{multicols}{2}\n"+body+"\n\\end{multicols}\n"+end+"\n\\end{document}\n",encoding="utf-8")
+    if profile.get("front_separate_page"): header+=r"\clearpage"
+    columns=profile.get("body_columns",2)
+    wrapped=("\n\\begin{multicols}{"+str(columns)+"}\n"+body+"\n\\end{multicols}\n") if columns>1 else "\n"+body+"\n"
+    (output/"main.tex").write_text(preamble+header+wrapped+end+"\n\\end{document}\n",encoding="utf-8")
     return output/"main.tex"

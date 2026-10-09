@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "property": "structure",
+      "value": [
+        "引言",
+        "问题描述与假设",
+        "模型与理论分析",
+        "算法或决策方法",
+        "验证与应用",
+        "讨论",
+        "结论",
+        "参考文献"
+      ],
+      "source_type": "recommended_structure",
+      "source": "https://sysengi.cjoe.ac.cn/CN/column/50/items",
+      "status": "pending_user_review",
+      "confidence": "recommendation",
+      "adoption_reason": "官方LaTeX模板仍需云端读取；本版为个人审阅结构与工程版式"
+    },
+    {
+      "property": "page_parameters",
+      "value": {
+        "size": "a4",
+        "width_cm": 21,
+        "margin_cm": {
+          "top": 2.2,
+          "bottom": 2.2,
+          "left": 2.2,
+          "right": 2.2
+        },
+        "column_spacing_cm": 0.6
+      },
+      "source_type": "engineering_default",
+      "status": "not_reference_measurement",
+      "confidence": "engineering",
+      "adoption_reason": "Existing defaults, pending actual source measurement"
+    },
+    {
+      "property": "captions",
+      "value": {
+        "figure": "above",
+        "table": "below"
+      },
+      "source_type": "user_choice",
+      "status": "confirmed",
+      "adoption_reason": "Explicit project preference",
+      "official_compliance": false
+    },
+    {
+      "property": "fonts",
+      "value": {
+        "cjk": "Noto Serif CJK SC",
+        "latin": "Liberation Serif",
+        "math": "Latin Modern Math"
+      },
+      "source_type": "engineering_default",
+      "status": "test_fixture_only",
+      "adoption_reason": "User must choose before production export"
+    }
+  ]
+}

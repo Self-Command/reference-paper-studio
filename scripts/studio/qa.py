@@ -21,6 +21,14 @@ def math_list(ast):
 
 def assert_text(left, right, label):
     a, b = normalized_text(left), normalized_text(right)
+    # Caption placement is a template choice; compare its content independently
+    # without accepting missing/duplicated captions or changing the rest of prose.
+    from .manuscript import text_of
+    for node in walk(left):
+        if node.get("t") not in ("Table","Figure"): continue
+        caption=re.sub(r"\s+","",text_of(node["c"][1][1]))
+        if caption and a.count(caption)==b.count(caption):
+            a=a.replace(caption,""); b=b.replace(caption,"")
     if a != b:
         index = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
         raise StudioError(f"CONTENT_CHANGED {label} at {index}: {a[max(0,index-30):index+70]!r} != {b[max(0,index-30):index+70]!r}")
@@ -118,6 +126,8 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     with zipfile.ZipFile(final) as package:
         xml = etree.fromstring(package.read("word/document.xml"))
     expected = sum(n.get("t") == "Math" for n in walk(ast))
+    metadata_math_file=Path(output)/"metadata-math.json"
+    if metadata_math_file.is_file(): expected+=len(json.loads(metadata_math_file.read_text(encoding="utf-8")))
     if len(list(xml.iter(M+"oMath"))) != expected:
         raise StudioError("FORMULA_CONVERSION_FAILED: native equation count")
     result = {"prose_numbers_tables_references": "exact_visible_text", "latex_math": "source_expression_preserved",
@@ -128,20 +138,21 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     return result
 
 
-def check_docx(path):
+def check_docx(path, profile=None):
     require_actions()
     doc = Document(path)
     columns = [int(s._sectPr.find(W+"cols").get(W+"num", "1")) for s in doc.sections]
-    if 1 not in columns or 2 not in columns:
+    if profile is None and (1 not in columns or 2 not in columns):
         raise StudioError("MIXED_COLUMNS_LOST")
     for table in doc.tables:
         if is_equation_table(table._tbl): continue
         for edge in table._tbl.iter():
             if etree.QName(edge).localname in ("left", "right", "insideV", "start", "end") and edge.get(W+"val") not in (None, "nil", "none", "0"):
                 raise StudioError("TABLE_VERTICAL_BORDER")
-        after = table._tbl.getnext()
-        if after is not None and re.match(r"^(表\s*\d|Table\s+\d)", "".join(t.text or "" for t in after.iter(W+"t"))):
-            raise StudioError("TABLE_CAPTION_BELOW")
+        if profile is None or profile.get("captions",{}).get("table","above")=="above":
+            after = table._tbl.getnext()
+            if after is not None and re.match(r"^(表\s*\d|Table\s+\d)", "".join(t.text or "" for t in after.iter(W+"t"))):
+                raise StudioError("TABLE_CAPTION_BELOW")
     return {"section_columns": columns, "data_tables": sum(not is_equation_table(t._tbl) for t in doc.tables), "equation_layouts":sum(is_equation_table(t._tbl) for t in doc.tables), "three_line_tables": "checked"}
 
 
@@ -231,7 +242,8 @@ def check_column_geometry(path, profile, ast, metadata):
             end=find_line(page,end_title) if profile["english_abstract_position"]=="end" else None
             bottom=end-1 if end is not None else page.height-profile["page"]["margin_cm"]["bottom"]*72/2.54
             chars=[c for c in page.chars if c["text"].strip() and c["top"]>=top and c["bottom"]<=bottom+1]
-            bad=[c for c in chars if c["x0"]<left-1 or c["x1"]>right+1 or c["x0"]<midpoint and c["x1"]>gutter[0]+1 or c["x0"]>=midpoint and c["x0"]<gutter[1]-1]
+            columns=profile.get("body_columns",2)
+            bad=[c for c in chars if c["x0"]<left-1 or c["x1"]>right+1 or columns==2 and (c["x0"]<midpoint and c["x1"]>gutter[0]+1 or c["x0"]>=midpoint and c["x0"]<gutter[1]-1)]
             for char in bad[:50]: violations.append({"page":number,"text":char["text"],"x0":round(char["x0"],2),"x1":round(char["x1"],2),"top":round(char["top"],2)})
             regions.append({"page":number,"body_top":round(top,2),"body_bottom":round(bottom,2),"characters":len(chars),"overflow_glyphs":len(bad)})
             if end is not None: break
