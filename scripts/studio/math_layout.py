@@ -135,7 +135,11 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
         old = etree.tostring(element, encoding="unicode")
         for child in list(element): element.remove(child)
         array = OxmlElement("m:eqArr")
-        props = OxmlElement("m:eqArrPr"); jc = OxmlElement("m:baseJc"); jc.set(M+"val", "top"); props.append(jc); array.append(props)
+        # Generated continuation rows form one mathematical object. Its
+        # surrounding text baseline must follow the object's centre, rather
+        # than the first row. ISO 29500 baseJc defines this relationship;
+        # choosing top also offsets numbers when an importer uses that base.
+        props = OxmlElement("m:eqArrPr"); jc = OxmlElement("m:baseJc"); jc.set(M+"val", "center"); props.append(jc); array.append(props)
         for row in rows:
             entry = OxmlElement("m:e")
             first = row[0].findtext(M+"t", "") if row[0].tag == M+"r" else ""

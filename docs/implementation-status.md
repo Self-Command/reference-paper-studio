@@ -6,9 +6,9 @@
 |---|---|---|
 | P0 基线 | 云端自动基线通过 | 本地基线 dc98901；实际云端基线 81b0e635e229de63e5a93ddae757f9dfe7602e1f，运行 37924423776 成功；未宣称视觉或数学验证通过 |
 | P1 技能与审批内核 | 10入口及授权内核自动检查通过 | [37936785611](https://github.com/Self-Command/reference-paper-studio/actions/runs/37936785611) 13项核心/导出/修订检查；完整说明卡、已有授权复用、实际报告与首版绑定、模型写作门禁 |
-| P2 组件与原模板 | 新组件及重复导出自动通过，最新视觉复检待完成 | [37956876239](https://github.com/Self-Command/reference-paper-studio/actions/runs/37956876239) 136项检查、双变体与重复导出通过；30条显示公式、120个数学对象。原运行37937780240的26页已复检，结果有问题，收据37943408516已核验。最新校样不能沿用旧收据 |
+| P2 组件与原模板 | 新组件及重复导出自动通过，27页复检发现问题 | [37956876239](https://github.com/Self-Command/reference-paper-studio/actions/runs/37956876239) 136项检查、双变体与重复导出通过；30条显示公式、120个数学对象。27页收据在37959736355核验通过，仍有长公式、编号、Word续表及篇末留白问题；后续候选另行检查 |
 | P3 九类MD模板 | 已制作，按用户要求保留待审 | docs/MD模板结构审阅.md；用户回复“先保留待审，继续技术开发” |
-| P4 九类物理模板 | 原生栏/CALS候选与9类合成稿自动检查通过，官方变体仍未完成 | [37956875025](https://github.com/Self-Command/reference-paper-studio/actions/runs/37956875025) 136项测试、9类双输出；包含关系符数学间距修复。7份官方附件在[37930263001](https://github.com/Self-Command/reference-paper-studio/actions/runs/37930263001)提取成功。官方页面/封面/页码/续表等缺口见来源与覆盖记录 |
+| P4 九类物理模板 | 九类工程回归自动通过，官方变体仍未完成 | [37958081099](https://github.com/Self-Command/reference-paper-studio/actions/runs/37958081099) 142项测试及9类双输出通过，包含比赛正文另页及真实题名可见性检查。较早135项运行37955184906的25页已复检，收据37959763474核验；英文标签、官方身份/页码等缺口保留 |
 | P5 完整流程回归 | 原模型及合成稿已跑，公开论文首次使用尚未完成 | 没有把修改过的合成夹具或私人模型回归冒充公开论文首次使用 |
 | P6 发布与安装 | 候选10技能安装包已构建，尚未发布安装 | `installation_allowed: false`；九类MD待审，视觉与承诺模板仍有缺口；本机旧技能保持原样 |
 
@@ -35,6 +35,8 @@
 真实模型[37955185217](https://github.com/Self-Command/reference-paper-studio/actions/runs/37955185217)构建通过，自动验收仍失败；此前的数组边距修复没有消除表中L行后逗号的4.32pt越栏。独立诊断[37956323724](https://github.com/Self-Command/reference-paper-studio/actions/runs/37956323724)记录原生OMML、实际预算和源码，定位关系符数学间距未计入估算。新增关系符、二元运算符和数学标点的间距预算，以及真实窄表格环境的XeLaTeX检查；新运行结果独立记录，不降低越栏阈值。
 
 [37956876239](https://github.com/Self-Command/reference-paper-studio/actions/runs/37956876239)确认上述越栏消除，自动检查与同输入重复导出通过。重复核验覆盖实际Word正文、OMML数学树、共同引用/内容回读、同一母版、实际TeX与两套校样逐页PNG；未把PDF时间戳或ZIP时间戳当作内容差异。它不证明跨引擎版本可重现，也不替代逐页视觉审阅。之后的未知科学元数据拒绝改动独立提交，继续按新运行检查。
+
+最新复检：[原模型27页](visual/37956876239.md)、[九类候选25页](visual/37955184906.md)均已完成，Actions核验其全部指纹及21项清单，结果仍为发现问题。比赛母版将nextPage登记到正文开始节，37958081099的Word题名和独立前页已有局部视觉确认。英文生成引用标签改由登记语言确定；作者已写的引用文字不改。公式编号修复依据[Microsoft baseJc定义](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.math.basejustification?view=openxml-3.0.1)，生成换行数组不再采用首行基线；新增隔离公式真实字框中心测量，修复效果必须看新云端校样，不能提前写为通过。
 
 详细记录：[技能使用说明](../references/skill-usage.md)、[官方来源核对](官方来源核对记录.md)、[32场景覆盖与待办](验收覆盖与待办.md)。尚未确认官方投稿合规、全部视觉通过或数学正确性；正式发行号0.3.0不创建。
 

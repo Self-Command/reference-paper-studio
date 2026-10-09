@@ -29,6 +29,22 @@ def number_region(page, label):
                and c["top"]>=hit["top"]-2 and c["bottom"]<=bottom+1 and c["x1"]>hit["x0"]-3]
     return {"label_left":hit["x0"],"minimum_gap_pt":3,"violations":[{"text":c["text"],"x0":c["x0"],"x1":c["x1"],"top":c["top"]} for c in offenders]}
 
+
+def isolated_number_center(page,label):
+    """Measure an isolated display only; never infer identity from nearby prose."""
+    hits=page.search(re.escape(label),regex=True,return_chars=True)
+    headings=page.search("Formula",regex=False,return_chars=True)
+    if len(hits)!=1 or len(headings)!=1:return {"status":"unavailable"}
+    label_chars=hits[0]["chars"]
+    glyphs=[c for c in page.chars if c not in label_chars and c["text"].strip()
+            and c["top"]>=headings[0]["bottom"]-1 and c["bottom"]<page.height-60]
+    if not glyphs:return {"status":"unavailable"}
+    top=min(c["top"] for c in glyphs);bottom=max(c["bottom"] for c in glyphs)
+    center=(top+bottom)/2;number=(hits[0]["top"]+hits[0]["bottom"])/2
+    return {"status":"measured","math_glyph_top":top,"math_glyph_bottom":bottom,
+            "math_center":center,"number_center":number,"center_delta_pt":number-center,
+            "limitation":"Glyph bounds in an isolated LibreOffice proof; visual review is still required."}
+
 def prove(path, directory):
     require_actions()
     directory=Path(directory); directory.mkdir(parents=True,exist_ok=True)
@@ -70,7 +86,7 @@ def prove(path, directory):
         for page,item in zip(pdf.pages,expected):
             text=page.extract_text() or ""; observed=glyphs(text.replace(item["label"],"").replace("Formula",""))
             missing=dict(item["glyphs"]-observed)
-            report.append({"label":item["label"],"missing":missing,"number_region":number_region(page,item["label"]) if item["display"] else {"violations":[]},"expected_glyphs":dict(item["glyphs"]),"observed_glyphs":dict(observed)})
+            report.append({"label":item["label"],"missing":missing,"number_region":number_region(page,item["label"]) if item["display"] else {"violations":[]},"isolated_center":isolated_number_center(page,item["label"]) if item["display"] else {"status":"not_applicable"},"expected_glyphs":dict(item["glyphs"]),"observed_glyphs":dict(observed)})
     write_json(directory/"glyph-preservation.json",report)
     run(["pdftoppm","-r","100","-png",directory/"isolated.pdf",directory/"equation"],timeout=300)
     return {"equations":len(report),"display_equations":len(report)-inline_index,"inline_equations":inline_index,"missing":[r for r in report if r["missing"] or r["number_region"]["violations"]],"normalization":"NFKC font alphabets and whitespace only"}
