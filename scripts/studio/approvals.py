@@ -35,7 +35,8 @@ def check_export(root, request, identity):
             raise StudioError("INPUT_ROLE_MISMATCH: "+field)
     if any(f["role"]=="approvals" and f["path"]!=request["approval_file"] for f in files):
         raise StudioError("INPUT_ROLE_MISMATCH: extra approvals file")
-    declared={f["path"]:f["sha256"] for f in files if f["path"]!=request["approval_file"]}
+    declared={f["path"]:f["sha256"] for f in files if f["path"]!=request["approval_file"] and f["role"]!="font"}
+    font_files={f["path"]:f["sha256"] for f in files if f["role"]=="font"}
     for name, fingerprint in {f["path"]:f["sha256"] for f in files}.items():
         if digest(confined(root,name)) != fingerprint: raise StudioError("INPUT_FINGERPRINT_MISMATCH: "+name)
     fingerprint=snapshot(declared)
@@ -50,6 +51,8 @@ def check_export(root, request, identity):
             identity["manifest_sha256"] if kind in ("presentation","export") else None)
         if kind=="presentation" and event.get("font_profile_sha256") != identity["font_profile_sha256"]:
             raise StudioError("APPROVAL_STALE: font choice")
+        if font_files and kind in ("presentation","export") and event.get("font_snapshot_sha256")!=snapshot(font_files):
+            raise StudioError("APPROVAL_STALE: supplied font bytes")
         if kind=="export" and not set(request.get("outputs",["docx","latex"])).issubset(event.get("approved_outputs",[])):
             raise StudioError("APPROVAL_MISSING: requested outputs")
-    return {"status":"bound","snapshot_sha256":fingerprint,"identity_assurance":"Recorded user instruction and scope; not cryptographic human authentication"}
+    return {"status":"bound","snapshot_sha256":fingerprint,"font_snapshot_sha256":snapshot(font_files),"identity_assurance":"Recorded user instruction and scope; not cryptographic human authentication"}

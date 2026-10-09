@@ -8,18 +8,20 @@ from .composition import load_composition, font_profile
 from .contracts import ROOT
 def asset_root():
     return Path(os.environ.get("RPS_REGISTRY_ROOT",ROOT/"assets/registered"))
-def build(template_id, version, profile_id="open-serif"):
+def build(template_id, version, profile_id="open-serif", font_assets=None):
     require_actions()
     from .locked_template import create_templates
     descriptor,p=load_composition(template_id,version)
     fonts=font_profile(profile_id)
     p["fonts"]=fonts["fonts"]
+    from .qa import check_fonts
+    check_fonts(p)
     target=asset_root()/template_id/version/profile_id
     create_templates(target,p)
     manifest=json.loads((target/"manifest.json").read_text(encoding="utf-8"))
     manifest.update(schema_version=2,composition_sha256=p["composition_sha256"],
         font_profile_id=profile_id,font_profile_sha256=hashlib.sha256(json.dumps(fonts,sort_keys=True).encode()).hexdigest(),
-        policy=p,release_state="candidate",automatic_pass=False,visual_review_complete=False)
+        policy=p,font_assets=font_assets or {},release_state="candidate",automatic_pass=False,visual_review_complete=False)
     write_json(target/"manifest.json",manifest)
     return target
 
@@ -37,6 +39,8 @@ def resolve(request):
     current_font_hash=hashlib.sha256(json.dumps(current_fonts,sort_keys=True).encode()).hexdigest()
     if manifest.get("font_profile_sha256")!=current_font_hash:
         raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: font profile")
+    requested_fonts={f["path"]:f["sha256"] for f in request.get("files",[]) if f.get("role")=="font"}
+    if requested_fonts!=manifest.get("font_assets",{}): raise StudioError("FONT_ASSET_IDENTITY_MISMATCH: register this font variant first")
     if manifest.get("release_state")!="released" and os.environ.get("RPS_CANDIDATE_BUILD")!="true":
         raise StudioError("TEMPLATE_NOT_READY: candidate asset")
     variant=identity["variant"]

@@ -208,7 +208,7 @@ def _export(root, request, output, reference_rules=None):
     write_json(output/"latex-column-geometry.json",latex_geometry)
     if word_geometry["violations"] or latex_geometry["violations"]:
         acceptance_errors.append("BODY_COLUMN_OVERFLOW: see *-column-geometry.json")
-    try: content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
+    try: content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output,input_root=root)
     except StudioError as error:
         content={"status":"failed","error":str(error)}; acceptance_errors.append(str(error))
     docx = check_docx(final,profile)

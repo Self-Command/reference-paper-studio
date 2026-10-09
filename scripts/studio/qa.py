@@ -107,7 +107,24 @@ def check_equation_visibility(path, identifiers):
     return found
 
 
-def check_roundtrips(ast, baseline, final, latex_body, output):
+def check_image_assets(ast,word_body,latex_ast,root,texdir):
+    require_actions()
+    from collections import Counter
+    from .runtime import confined
+    original=Counter(digest(confined(root,node["c"][-1][0])) for node in walk(ast) if node.get("t")=="Image")
+    doc=Document(word_body)
+    embedded=[]
+    for blip in doc._element.iter("{http://schemas.openxmlformats.org/drawingml/2006/main}blip"):
+        key=blip.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed")
+        if not key: raise StudioError("IMAGE_RELATIONSHIP_LOST")
+        import hashlib
+        embedded.append(hashlib.sha256(doc.part.rels[key].target_part.blob).hexdigest())
+    if Counter(embedded)!=original: raise StudioError("IMAGE_CONTENT_OR_COUNT_CHANGED: Word")
+    rendered=Counter(digest(confined(texdir,node["c"][-1][0])) for node in walk(latex_ast) if node.get("t")=="Image")
+    if rendered!=original: raise StudioError("IMAGE_CONTENT_OR_COUNT_CHANGED: LaTeX")
+    return {"count":sum(original.values()),"word":"exact_source_bytes_and_occurrences","latex":"exact_source_bytes_and_occurrences"}
+
+def check_roundtrips(ast, baseline, final, latex_body, output, input_root=None):
     require_actions()
     baseline_ast = read_ast(baseline, "docx")
     write_json(Path(output)/"docx-readback.json",baseline_ast)
@@ -144,6 +161,7 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     expected_layout = json.loads((Path(output)/"layout-document.json").read_text(encoding="utf-8"))
     assert_text(expected_layout, rendered_ast, "actual LaTeX layout body")
     if math_list(expected_layout) != math_list(rendered_ast): raise StudioError("MATH_CHANGED: actual LaTeX layout body")
+    images=check_image_assets(ast,audit_path,rendered_ast,input_root,Path(latex_body).parent) if input_root is not None else {"status":"not_checked"}
     # Check original conversion retained all inline and display equations as editable OMML.
     with zipfile.ZipFile(final) as package:
         xml = etree.fromstring(package.read("word/document.xml"))
@@ -153,7 +171,7 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     if len(list(xml.iter(M+"oMath"))) != expected:
         raise StudioError("FORMULA_CONVERSION_FAILED: native equation count")
     result = {"prose_numbers_tables_references": "exact_visible_text", "latex_math": "source_expression_preserved",
-              "docx_math": "recorded_layout_reversed_exact_math_tree_and_readback_equal", "math_count": expected,
+              "docx_math": "recorded_layout_reversed_exact_math_tree_and_readback_equal", "math_count": expected,"images":images,
               "reader_normalization":"Identical longtable repeated-page headers are read once; actual Word XML text is used instead of duplicated reader caption aliases.",
               "limitation": "Preservation checks do not prove mathematical correctness."}
     write_json(Path(output)/"content-report.json", result)
