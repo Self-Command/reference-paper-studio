@@ -191,6 +191,7 @@ def _export(root, request, output, reference_rules=None):
     report["content_layout_attributes_removed"] = removed_attributes
     report["implementation_version"] = __import__("studio").__version__
     report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
+    report["editable_outputs"] = {"manuscript.docx":digest(final)}
     write_json(output/"acceptance.json", report)
     report["errors"]=acceptance_errors
     write_json(output/"acceptance.json", report)
