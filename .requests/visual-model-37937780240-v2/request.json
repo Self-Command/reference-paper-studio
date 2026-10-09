@@ -1,0 +1,16 @@
+{
+  "artifact_run": "37937780240",
+  "operation": "visual-receipt",
+  "visual_receipt": "receipt.json",
+  "artifact_name": "skill-delivery",
+  "task_id": "visual-model-37937780240-v2",
+  "files": [
+    {
+      "path": "receipt.json",
+      "role": "visual_receipt",
+      "sha256": "ed7b9841920799097d2607644a28f8a649ea0f3a07975951f50ba4efecc67d23"
+    }
+  ],
+  "schema_version": 2,
+  "engine_commit": "626e30b93359f749ca361827aa2cb9ff488d8d06"
+}
