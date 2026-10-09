@@ -1,0 +1,20 @@
+name: Template acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        type: choice
+        default: matrix
+        options: [matrix, sources]
+  workflow_call:
+    inputs:
+      stage:
+        type: string
+        default: matrix
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    uses: ./.github/workflows/build-core.yml
+    with:
+      stage: ${{ inputs.stage }}

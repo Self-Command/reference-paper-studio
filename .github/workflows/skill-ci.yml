@@ -26,8 +26,6 @@ jobs:
       - run: python ci/suite_check.py
       - run: python ci/template_matrix.py
         if: inputs.stage == 'modular'
-      - run: python ci/modular_regression.py
-        if: inputs.stage == 'modular'
       - run: python -m pytest tests/test_suite_core.py -q --junitxml=build/suite-tests.xml
         if: inputs.stage == 'core'
       - run: python ci/validate_skill.py
@@ -38,6 +36,8 @@ jobs:
       - run: python -m pytest -q --junitxml=build/test-results.xml
         id: tests
         if: inputs.stage != 'master' && inputs.stage != 'core'
+      - run: python ci/modular_regression.py
+        if: inputs.stage == 'modular'
       - run: python ci/probe_math.py
         if: inputs.stage != 'master' && inputs.stage != 'core'
       - run: python ci/regression.py

@@ -5,6 +5,7 @@ __pycache__/
 dist/
 build/
 artifacts/
+deliveries/
 .requests/
 node_modules/
 *.log

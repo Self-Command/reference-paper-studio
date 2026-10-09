@@ -25,7 +25,7 @@ def safe_input(root, name):
     path = (root/name).resolve()
     if Path(name).is_absolute() or not path.is_relative_to(root) or not path.is_file():
         raise ValueError(f"Input must be an existing file beneath --root: {name}")
-    if "\\" in name or ".." in PurePosixPath(name).parts or name.startswith("."):
+    if "\\" in name or ".." in PurePosixPath(name).parts or any(part in (".git",".codex") for part in PurePosixPath(name).parts):
         raise ValueError(f"Use plain slash-separated relative input paths: {name}")
     return path
 
@@ -33,10 +33,15 @@ def safe_input(root, name):
 def submit(args):
     root = Path(args.root).resolve()
     spec = json.loads(Path(args.request).read_text(encoding="utf-8-sig"))
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,62}", spec["id"]): raise ValueError("Invalid task id")
-    if spec["stage"] not in ("reference", "review", "export", "visual"): raise ValueError("Invalid stage")
-    if not spec.get("files") or len(set(spec["files"])) != len(spec["files"]): raise ValueError("Explicit unique file list required")
-    sources = [(name, safe_input(root, name)) for name in spec["files"]]
+    version2=spec.get("schema_version")==2
+    if version2:
+        task_id=spec["task_id"]; stage=spec["operation"]
+        names=[item["path"] for item in spec["files"]]
+    else: task_id=spec["id"]; stage=spec["stage"]; names=spec["files"]
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,62}",task_id): raise ValueError("Invalid task id")
+    if stage not in ("reference","review","model-review","md-review","template-build","export","visual","visual-receipt","package"): raise ValueError("Invalid stage")
+    if not names or len(set(names))!=len(names): raise ValueError("Explicit unique file list required")
+    sources=[(name,safe_input(root,name)) for name in names]
     info = json.loads(command(["gh", "repo", "view", args.repo, "--json", "isPrivate,defaultBranchRef"]))
     if not info["isPrivate"]: raise ValueError("Task submission requires a private repository")
     # REST transfers exactly the listed blobs; avoids cloning private fixtures or
@@ -48,24 +53,32 @@ def submit(args):
     args_repo=args.repo
     default_ref=info["defaultBranchRef"]["name"]
     parent=api("git/ref/heads/"+default_ref)["object"]["sha"]
+    workflow_ref=args.workflow_ref or default_ref
+    if version2:
+        selected_engine=api("git/ref/heads/"+workflow_ref)["object"]["sha"]
+        if spec.get("engine_commit") and spec["engine_commit"]!=selected_engine: raise ValueError("Declared engine differs from selected workflow branch")
+        spec["engine_commit"]=selected_engine
+        # A commit cannot contain its own SHA. The workflow stamps input_commit
+        # after checkout; any declared source identity is checked in the runner.
+        if spec.get("input_commit"): raise ValueError("Omit input_commit in submission source; Actions binds the resulting immutable input commit")
     base_tree=api("git/commits/"+parent)["tree"]["sha"]
-    tree=[];hashes={};prefix=".requests/"+spec["id"]
+    tree=[];hashes={};prefix=".requests/"+task_id
     for name,source in sources:
         content=source.read_bytes();hashes[name]=hashlib.sha256(content).hexdigest()
+        if version2 and next(item["sha256"] for item in spec["files"] if item["path"]==name)!=hashes[name]: raise ValueError("Declared transfer fingerprint mismatch: "+name)
         blob=api("git/blobs",{"content":base64.b64encode(content).decode("ascii"),"encoding":"base64"})
         tree.append({"path":prefix+"/files/"+name,"mode":"100644","type":"blob","sha":blob["sha"]})
-    spec["sha256"]=hashes
+    if not version2: spec["sha256"]=hashes
     blob=api("git/blobs",{"content":json.dumps(spec,ensure_ascii=False,indent=2),"encoding":"utf-8"})
     tree.append({"path":prefix+"/request.json","mode":"100644","type":"blob","sha":blob["sha"]})
     new_tree=api("git/trees",{"base_tree":base_tree,"tree":tree})
-    commit=api("git/commits",{"message":"Submit document task "+spec["id"],"tree":new_tree["sha"],"parents":[parent]})["sha"]
-    api("git/refs",{"ref":"refs/heads/request/"+spec["id"],"sha":commit})
-    workflow_ref=args.workflow_ref or default_ref
-    dispatch=["gh", "workflow", "run", "document-task.yml", "--repo", args.repo, "--ref", workflow_ref, "-f", "task_id="+spec["id"], "-f", "input_commit="+commit, "-f", "request_path="+prefix+"/request.json", "-f", "phase="+spec["stage"]]
-    if spec["stage"] == "visual":
+    commit=api("git/commits",{"message":"Submit document task "+task_id,"tree":new_tree["sha"],"parents":[parent]})["sha"]
+    api("git/refs",{"ref":"refs/heads/request/"+task_id,"sha":commit})
+    dispatch=["gh", "workflow", "run", "document-task.yml", "--repo", args.repo, "--ref", workflow_ref, "-f", "task_id="+task_id, "-f", "input_commit="+commit, "-f", "request_path="+prefix+"/request.json", "-f", "phase="+stage]
+    if stage in ("visual","visual-receipt"):
         dispatch += ["-f","artifact_run="+str(spec["artifact_run"]),"-f","artifact_name="+spec.get("artifact_name","document-task")]
     command(dispatch)
-    return {"task_id": spec["id"], "input_commit": commit, "input_files": spec["files"], "workflow_ref": workflow_ref, "status": "dispatched", "runs_url": "https://github.com/"+args.repo+"/actions/workflows/document-task.yml"}
+    return {"task_id":task_id,"input_commit":commit,"input_files":names,"workflow_ref":workflow_ref,"status":"dispatched","runs_url":"https://github.com/"+args.repo+"/actions/workflows/document-task.yml"}
 
 
 def main():
@@ -83,6 +96,8 @@ def main():
             result = json.loads(command(["gh", "run", "list", "--repo", args.repo, "--workflow", "document-task.yml", "--limit", "50", "--json", "databaseId,status,conclusion,displayTitle,url,headSha"]))
             if args.task: result = [r for r in result if r["displayTitle"] == "Document task: "+args.task]
     else:
+        destination=Path(args.output).resolve()
+        if destination.exists() and any(destination.iterdir()): raise ValueError("Download destination must be empty; preserve earlier versions")
         command(["gh", "run", "download", args.run, "--repo", args.repo, "--dir", Path(args.output).resolve()])
         result = {"run": args.run, "output": str(Path(args.output).resolve())}
     print(json.dumps(result, ensure_ascii=False, indent=2))

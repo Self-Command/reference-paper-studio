@@ -32,6 +32,8 @@ def export(root, request, output, reference_rules=None):
         if existing.is_file() and json.loads(existing.read_text(encoding="utf-8")).get("pdfs"): raise
         complete=all((directory/n).is_file() for n in ("manuscript.docx","word-compat-proof.pdf","latex-proof.pdf"))
         write_json(directory/"acceptance.json", {"build":"passed" if complete else "failed", "automatic_acceptance":"failed", "visual_review":"blocked", "error":str(error), "exception_type":type(error).__name__, "execution":{"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA")},"template_request":{k:request.get(k) for k in ("template_id","template_version","template_variant")},"diagnostic_artifacts_retained":True})
+        from .reporting import publish
+        publish(directory,json.loads((directory/"acceptance.json").read_text(encoding="utf-8")))
         raise
 
 
@@ -176,6 +178,9 @@ def _export(root, request, output, reference_rules=None):
         labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
         try: word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
         except StudioError as error: acceptance_errors.append(str(error))
+        from .equation_alignment import measure
+        try: word_pdf["equation_alignment"]=measure(output/"word-compat-proof.pdf",equations,profile)
+        except StudioError as error: acceptance_errors.append(str(error))
     for _ in range(2):
         run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", "-file-line-error", "main.tex"], cwd=texdir, timeout=300)
     log = (texdir/"main.log").read_text(encoding="utf-8", errors="replace")
@@ -207,5 +212,7 @@ def _export(root, request, output, reference_rules=None):
     write_json(output/"acceptance.json", report)
     report["errors"]=acceptance_errors
     write_json(output/"acceptance.json", report)
+    from .reporting import publish
+    publish(output,report)
     if acceptance_errors: raise StudioError("AUTOMATIC_ACCEPTANCE_FAILED: "+"; ".join(acceptance_errors))
     return report

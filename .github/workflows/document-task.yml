@@ -15,7 +15,7 @@ on:
       phase:
         required: true
         type: choice
-        options: [reference, review, export, visual]
+        options: [reference, review, model-review, md-review, template-build, export, visual, visual-receipt]
       artifact_run:
         type: string
         default: ''
@@ -42,9 +42,9 @@ jobs:
           python-version: '3.12.8'
       - run: pip install -r requirements.lock
       - run: bash ci/setup.sh
-        if: inputs.phase != 'visual'
+        if: inputs.phase != 'visual' && inputs.phase != 'visual-receipt'
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        if: inputs.phase == 'visual'
+        if: inputs.phase == 'visual' || inputs.phase == 'visual-receipt'
         with:
           name: '${{ inputs.artifact_name }}'
           run-id: '${{ inputs.artifact_run }}'

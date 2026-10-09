@@ -194,7 +194,6 @@
           "approval_file",
           "approvals",
           "engine_commit",
-          "input_commit",
           "outputs"
         ]
       }

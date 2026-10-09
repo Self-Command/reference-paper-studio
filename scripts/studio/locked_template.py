@@ -368,7 +368,13 @@ def fill(native, metadata, equations, master, p, output):
             pstyle(element,"Equation")
     if p.get("captions"):
         from .captions import arrange
-        moved=arrange(doc,p)
+        try: moved=arrange(doc,p)
+        except StudioError:
+            # Keep the actual first diagnostic Word without claiming acceptance.
+            doc.save(output)
+            write_json(Path(output).parent/"math-layout-ledger.json",ledger)
+            write_json(Path(output).parent/"inline-math-layout-ledger.json",inline_ledger)
+            raise
     else: moved=move_table_captions(doc)
     if list(body.iter("{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}anchor")):
         raise StudioError("FLOATING_IMAGE_FORBIDDEN")
