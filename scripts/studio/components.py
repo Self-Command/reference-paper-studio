@@ -32,6 +32,7 @@ def compile_components(descriptor):
     # The registered region/table components own the TeX backend. A task
     # cannot select a different output routine or disable continuation.
     p["latex_body_backend"]="native-columns"
+    p["latex_end_backend"]="cuted-strip" if "region.end" in selected else None
     p["latex_table_backend"]="cals" if "table.three-line" in selected else None
     p["paragraph_breaking"]={"emergency_stretch_em":3,"bibliographic_slash_breaks":True}
     p["math_array_padding_pt"]=10

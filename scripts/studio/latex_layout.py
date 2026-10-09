@@ -203,7 +203,14 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
             # observe the actual native column break and repeat its header.
             wrapped="\n\\twocolumn[{\\begin{minipage}{\\textwidth}\n"+header+"\n\\end{minipage}}]\n"+body
             header=""
-        if end: end="\n\\onecolumn\n"+end
+        if end:
+            if profile.get("latex_end_backend")=="cuted-strip":
+                # Reuse cuted's registered full-width strip only for the end
+                # metadata region. Native body columns and CALS continuation
+                # remain intact; manuscripts cannot insert their own strips.
+                preamble=preamble.replace(r"\begin{document}",r"\usepackage{cuted}"+"\n"+r"\begin{document}")
+                end="\n\\begin{strip}\n"+end+"\n\\end{strip}\n"
+            else:end="\n\\onecolumn\n"+end
     else:
         wrapped=("\n\\begin{multicols}{"+str(columns)+"}\n"+body+"\n\\end{multicols}\n") if columns>1 else "\n"+body+"\n"
     (output/"main.tex").write_text(preamble+header+wrapped+end+"\n\\end{document}\n",encoding="utf-8")
