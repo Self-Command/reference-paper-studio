@@ -124,11 +124,11 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
 """
     preamble=preamble.replace("LATINFONT",profile["fonts"]["latin"]).replace("CJKFONT",profile["fonts"]["cjk"])
     preamble=preamble.replace(r"\setmathfont{Latin Modern Math}",r"\setmathfont{"+profile["fonts"]["math"]+"}")
-    from .fonts import resolve_faces,fontspec_options
+    from .fonts import resolve_faces,fontspec_declaration
     faces=profile.get("font_faces") or resolve_faces(profile["fonts"])
     for role,command in (("latin",r"\setmainfont"),("cjk",r"\setCJKmainfont"),("math",r"\setmathfont")):
         declaration=command+"{"+profile["fonts"][role]+"}"
-        preamble=preamble.replace(declaration,declaration+fontspec_options(faces[role]))
+        preamble=preamble.replace(declaration,fontspec_declaration(command,profile["fonts"][role],faces[role]))
     preamble=preamble.replace("[10pt,a4paper]", f"[{profile['body_size_pt']}pt,a4paper]")
     preamble=preamble.replace(r"\columnsep}{0.6cm}",r"\columnsep}{"+str(profile["page"].get("column_spacing_cm",0.6))+"cm}")
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")

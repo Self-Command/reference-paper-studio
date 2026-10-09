@@ -25,6 +25,22 @@ def fontspec_options(faces):
     options=[keys[shape]+"={FontIndex="+str(face["index"])+"}" for shape,face in faces.items() if face["collection"]]
     return "["+",".join(options)+"]" if options else ""
 
+def fontspec_declaration(command,family,faces):
+    """TTC FontIndex applies to files; a family-name lookup may discard it."""
+    require_actions()
+    if not any(face["collection"] for face in faces.values()):return command+"{"+family+"}"
+    paths={}
+    styles={"upright":"Regular","bold":"Bold","italic":"Italic","bolditalic":"Bold Italic"}
+    for shape,face in faces.items():
+        path=run(["fc-match","-f","%{file}",family+":style="+styles[shape]]).strip()
+        if Path(path).name!=face["file"] or digest(path)!=face["sha256"]:raise StudioError("FONT_FACE_FINGERPRINT_MISMATCH: "+family)
+        if any(char in path for char in ("{","}","%","#","\\")):raise StudioError("FONT_PATH_UNSAFE: "+family)
+        paths[shape]=path
+    options=fontspec_options(faces)[1:-1]
+    for shape,key in (("bold","BoldFont"),("italic","ItalicFont"),("bolditalic","BoldItalicFont")):
+        options+=","+key+"={"+paths[shape]+"}"
+    return command+"{"+paths["upright"]+"}["+options+"]"
+
 def install_declared(root,request,output):
     require_actions()
     fonts=[file for file in request.get("files",[]) if file.get("role")=="font"]
