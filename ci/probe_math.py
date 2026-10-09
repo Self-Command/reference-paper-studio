@@ -39,3 +39,40 @@ montage=Image.new("RGB",(sum(p.width for p in screens),max(p.height for p in scr
 x=0
 for p in screens:montage.paste(p,(x,0));x+=p.width
 montage.save(folder/"comparison.png")
+
+# Small controlled continuation cases distinguish importer property ordering
+# from the general row layout. This is diagnosis, never an acceptance bypass.
+import pdfplumber
+from studio.vendor.ptlib.ooxml import set_child
+from studio.locked_template import create_templates, paragraph
+create_templates(folder/"masters")
+probe=Document(folder/"masters/master-front.docx"); body=probe._element.body
+for item in list(body):
+    if item.tag != qn("w:sectPr"): body.remove(item)
+for number,mode in enumerate(("plain","lit-sty","nor-sty","lit-only","nor-only","box","lit-false-sty")):
+    header=paragraph(mode,"Body")
+    if number: set_child(header.find(qn("w:pPr")),"pageBreakBefore")
+    body.insert(len(body)-1,header)
+    par=paragraph("","Equation"); formula=OxmlElement("m:oMath")
+    array=OxmlElement("m:eqArr")
+    for value in ("x", "=0"):
+        entry=OxmlElement("m:e")
+        for text in (value[0],value[1:]):
+            if not text:continue
+            token=OxmlElement("m:r"); prop=OxmlElement("m:rPr")
+            if text=="=" and mode!="plain":
+                if "lit" in mode: set_child(prop,"m:lit",{"m:val":"0" if "false" in mode else "1"})
+                if "nor" in mode: set_child(prop,"m:nor",{"m:val":"1"})
+                if "sty" in mode:set_child(prop,"m:sty",{"m:val":"p"})
+                token.append(prop)
+            literal=OxmlElement("m:t"); literal.text=text; token.append(literal)
+            if text=="=" and mode=="box":
+                box=OxmlElement("m:box"); contents=OxmlElement("m:e");contents.append(token);box.append(contents);entry.append(box)
+            else:entry.append(token)
+        array.append(entry)
+    formula.append(array); par.append(formula);body.insert(len(body)-1,par)
+path=folder/"continuations.docx";probe.save(path)
+run(["libreoffice","-env:UserInstallation=file:///tmp/rps-continuations","--headless","--convert-to","pdf","--outdir",folder,path])
+with pdfplumber.open(folder/"continuations.pdf") as proof:
+    (folder/"continuations.json").write_text(json.dumps([{"page":i,"text":p.extract_text()} for i,p in enumerate(proof.pages,1)],ensure_ascii=False,indent=2),encoding="utf-8")
+run(["pdftoppm","-r","75","-png",folder/"continuations.pdf",folder/"continuation"])
