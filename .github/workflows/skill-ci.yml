@@ -81,6 +81,23 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
+          name: review-delivery
+          path: |
+            build/modular-model-*/manuscript.docx
+            build/modular-model-*/*proof.pdf
+            build/modular-model-*/previews/
+            build/modular-model-*/acceptance.json
+            build/modular-model-*/content-report.json
+            build/modular-model-*/equation-alignment.json
+            build/modular-model-*/latex/main.tex
+            build/modular-model-*/fixture-changes.json
+            build/modular-input-*/fixture-changes.json
+            build/modular-regression.json
+            build/test-results.xml
+          retention-days: 30
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
           name: skill-delivery
           path: build/
           retention-days: 30

@@ -42,3 +42,20 @@ def check_content(ast,policy):
         elif kind=="Table":required="table"
         elif kind=="Cite":required="bibliography"
         if required and required not in allowed: raise StudioError("CONTENT_COMPONENT_UNSUPPORTED: "+required+" at AST object "+str(index))
+
+def check_metadata(metadata,policy):
+    """A template mismatch must not silently discard manuscript fields."""
+    require_actions()
+    languages=set(policy.get("metadata_languages",["zh","en"]))
+    roles=set(policy["front_roles"])
+    for key,value in metadata.items():
+        if not value: continue
+        role,separator,language=key.rpartition("_")
+        if not separator or role not in {"title","authors","affiliation","abstract","keywords"}:
+            raise StudioError("METADATA_FIELD_UNSUPPORTED: "+key)
+        if policy.get("anonymous") and role in {"authors","affiliation"}:
+            raise StudioError("ANONYMOUS_IDENTITY_FORBIDDEN: "+key)
+        if role not in roles: raise StudioError("METADATA_COMPONENT_UNSUPPORTED: "+key)
+        if language not in languages:
+            raise StudioError("METADATA_LANGUAGE_UNSUPPORTED: "+key+"; select a registered language variant or confirm a separate manuscript snapshot")
+    return {key:value for key,value in metadata.items() if value}

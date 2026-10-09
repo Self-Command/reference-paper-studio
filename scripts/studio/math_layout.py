@@ -60,13 +60,26 @@ def wrap(root, width_pt, font_size_pt=10):
     if current != old:
         changes.append({"path":[],"before":old,"after":current,"reason":"editable leading operators in existing math arguments"})
     containers = {"oMath", "e", "num", "den", "lim"}
-    def contains_piecewise(element):
-        for delimiter in element.iter(M+"d"):
-            props=delimiter.find(M+"dPr")
-            if props is None: continue
-            begin,end=props.find(M+"begChr"),props.find(M+"endChr")
-            if begin is not None and end is not None and begin.get(M+"val")=="{" and end.get(M+"val")=="": return True
-        return False
+    def segments_of(element):
+        tokens=[]
+        for child in element:
+            if child.tag==M+"r" and len(child.findall(M+"t"))==1:
+                value=child.findtext(M+"t","")
+                for piece in filter(None,re.split(r"(?=[=<>≤≥+−×∧∨,;]|[\u3400-\u9fff])",value)):
+                    token=deepcopy(child); token.find(M+"t").text=piece; tokens.append(token)
+            else: tokens.append(deepcopy(child))
+        segments=[]; segment=[]; depth=0; previous=""
+        for token in tokens:
+            value=token.findtext(M+"t","") if token.tag==M+"r" else ""
+            safe=(depth==0 and (token.tag==M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;\u3400-\u9fff]",value)) or previous.endswith(")") and value=="1")) or (depth==1 and token.tag==M+"r" and value.startswith(","))
+            if safe and segment: segments.append(segment); segment=[]
+            segment.append(token)
+            for character in value:
+                if character in "([{": depth+=1
+                elif character in ")]}": depth=max(0,depth-1)
+            previous=value
+        if segment: segments.append(segment)
+        return segments
     def visit(element, path, budget):
         name = etree.QName(element).localname
         # Only a piecewise delimiter may stack value/condition cells. A general
@@ -89,41 +102,21 @@ def wrap(root, width_pt, font_size_pt=10):
                     changes.append({"path":path,"before":old,"after":etree.tostring(element,encoding="unicode"),"reason":"piecewise value then condition, one column"})
         # Reserve delimiters, fraction rules and matrix neighbours conservatively.
         children = list(element)
-        linear_overflow=name in containers and contains_piecewise(element) and math_width_pt(element,font_size_pt)>budget
+        linear_overflow=name in containers and len(segments_of(element))>1 and math_width_pt(element,font_size_pt)>budget
         for index, child in enumerate(children):
             child_budget = budget
             if name in ("d", "borderBox"): child_budget -= 15
             if name in ("mr", "oMath", "e") and child.tag not in (M+"r", M+"rPr", W+"rPr"):
                 other = sum(math_width_pt(c, font_size_pt) for c in children if c is not child)
-                # The overflowing parent will be split at legal operators.
+                # Only a parent with actual legal split points may move its
+                # neighbours to separate lines. Indivisible objects still
+                # reserve their neighbours and cannot borrow column width.
                 # Reserving ALL unwrapped neighbours here would give a cases
                 # condition only 45 pt even after its parent moves to a new row.
                 child_budget = max(45,budget-8 if linear_overflow else budget-other-8)
             visit(child, path+[index], max(45, child_budget))
         if name not in containers or math_width_pt(element, font_size_pt) <= budget: return
-        tokens = []
-        for child in element:
-            if child.tag == M+"r":
-                texts = child.findall(M+"t")
-                if len(texts) == 1:
-                    value = texts[0].text or ""
-                    # Ordinary mathematical text may wrap between Chinese characters.
-                    pieces = re.split(r"(?=[=<>≤≥+−×∧∨,;]|[\u3400-\u9fff])", value)
-                    for piece in filter(None, pieces):
-                        copy = deepcopy(child); copy.find(M+"t").text = piece; tokens.append(copy)
-                    continue
-            tokens.append(deepcopy(child))
-        segments = []; segment = []; depth = 0; previous = ""
-        for token in tokens:
-            value = token.findtext(M+"t", "") if token.tag == M+"r" else ""
-            safe = (depth == 0 and (token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;\u3400-\u9fff]", value)) or previous.endswith(")") and value == "1")) or (depth == 1 and token.tag == M+"r" and value.startswith(","))
-            if safe and segment: segments.append(segment); segment=[]
-            segment.append(token)
-            for character in value:
-                if character in "([{": depth += 1
-                elif character in ")]}": depth = max(0,depth-1)
-            previous = value
-        if segment: segments.append(segment)
+        segments=segments_of(element)
         rows = []; row = []; used = 0
         for segment in segments:
             size = sum(math_width_pt(t,font_size_pt) for t in segment)

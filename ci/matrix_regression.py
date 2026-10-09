@@ -2,6 +2,7 @@
 from pathlib import Path
 import os,sys,json
 from PIL import Image,ImageDraw
+import yaml
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
 from studio.runtime import require_actions,digest,write_json
 from studio.approvals import snapshot
@@ -17,7 +18,7 @@ for template_path in sorted((root/"templates").glob("*/template.json")):
     if descriptor["id"]=="reference-journal-v1": continue
     key=descriptor["id"]; folder=root/"build/matrix-inputs"/key; folder.mkdir(parents=True,exist_ok=True)
     image=Image.new("RGB",(640,220),"white"); draw=ImageDraw.Draw(image);draw.rectangle((25,25,615,195),outline="black",width=3);draw.text((50,90),"SYNTHETIC FORMAT FIXTURE: SOURCE -> TEMPLATE -> CHECK",fill="black");image.save(folder/"flow.png")
-    (folder/"manuscript.md").write_text(r'''---
+    synthetic_text=r'''---
 title_zh: "合成排版验收样例"
 title_en: "Synthetic formatting acceptance fixture"
 abstract_zh: "本材料只测试排版，数字不是实验结果。验证行内公式 $x_i^2/(1+x_i)$。"
@@ -54,7 +55,15 @@ Table 1 Synthetic parameter values
 # Conclusion
 
 The manuscript is only a layout fixture. Successful conversion is not mathematical validation, official submission compliance, or authorization to publish research.
-''',encoding="utf-8")
+'''
+    header,body=synthetic_text.split("---",2)[1:]
+    fields=yaml.safe_load(header)
+    fields={key:value for key,value in fields.items() if key[-2:] in descriptor["policy"]["metadata_languages"]}
+    if not descriptor["policy"].get("anonymous"):
+        for language in descriptor["policy"]["metadata_languages"]:
+            fields["authors_"+language]="合成测试作者" if language=="zh" else "Synthetic test author"
+            fields["affiliation_"+language]="排版测试单位（非实际作者单位）" if language=="zh" else "Synthetic formatting fixture affiliation"
+    (folder/"manuscript.md").write_text("---\n"+yaml.safe_dump(fields,allow_unicode=True,sort_keys=False)+"---"+body,encoding="utf-8")
     target=build(key,descriptor["version"]); manifest=json.loads((target/"manifest.json").read_text(encoding="utf-8"))
     files=[{"path":name,"sha256":digest(folder/name),"role":"manuscript" if name.endswith(".md") else "image"} for name in ("manuscript.md","flow.png")]
     snap=snapshot({f["path"]:f["sha256"] for f in files})

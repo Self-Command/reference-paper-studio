@@ -55,6 +55,7 @@
     "region.body",
     "region.end",
     "title.bilingual",
+    "authors.affiliations",
     "abstract.bilingual",
     "keywords",
     "section.model",

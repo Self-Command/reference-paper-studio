@@ -83,11 +83,11 @@ def _export(root, request, output, reference_rules=None):
     if profile.get("anonymous") and any(value for key,value in meta.items() if key.startswith(("authors_","affiliation_"))):
         raise StudioError("ANONYMOUS_IDENTITY_FORBIDDEN")
     if request.get("schema_version")==2:
-        from .components import check_content
+        from .components import check_content,check_metadata
         check_content(ast,profile)
-        if any(value and key.rsplit("_",1)[0] not in profile["front_roles"] for key,value in meta.items()):
-            raise StudioError("METADATA_COMPONENT_UNSUPPORTED")
-    meta={key:value for key,value in meta.items() if key[-2:] in profile.get("metadata_languages",["zh","en"])}
+        meta=check_metadata(meta,profile)
+    else:
+        meta={key:value for key,value in meta.items() if key[-2:] in profile.get("metadata_languages",["zh","en"])}
     meta=prepare(meta,ast["pandoc-api-version"],output)
     removed_attributes = strip_layout_attributes(ast)
     promoted_title=None
