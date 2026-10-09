@@ -8,6 +8,12 @@ from .manuscript import walk
 def extract(ast):
     require_actions()
     metadata={}
+    allowed={prefix+"_"+lang for prefix in ("title","authors","affiliation","abstract","keywords") for lang in ("zh","en")}
+    unsupported=set(ast.get("meta",{}))-allowed
+    if unsupported:
+        # A foreign MD template may carry author records, funding or other
+        # scientific metadata. Never drop these while clearing Pandoc meta.
+        raise StudioError("METADATA_FIELD_UNSUPPORTED: "+", ".join(sorted(unsupported))+"; confirm a mapping to registered content roles before export")
     def value(node):
         if node["t"]=="MetaString": return node["c"]
         if node["t"]=="MetaList": return [value(v) for v in node["c"]]
@@ -15,8 +21,7 @@ def extract(ast):
         data={"pandoc-api-version":ast["pandoc-api-version"],"meta":{},"blocks":blocks}
         return run(["pandoc","-f","json","-t","markdown","--wrap=none"],input_text=json.dumps(data)).strip()
     for key,node in ast.get("meta",{}).items():
-        if key in {prefix+"_"+lang for prefix in ("title","authors","affiliation","abstract","keywords") for lang in ("zh","en")}:
-            metadata[key]=value(node)
+        metadata[key]=value(node)
     return metadata
 
 def prepare(metadata, api_version, output):

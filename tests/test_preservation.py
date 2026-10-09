@@ -9,6 +9,16 @@ from studio.frontmatter import prepare
 from studio.latex_layout import front,write_latex
 from studio.composition import load_composition
 
+
+@pytest.mark.parametrize("field",["authors","funding","doi","columns"])
+def test_foreign_yaml_metadata_is_reported_before_it_can_be_discarded(field):
+    from studio.frontmatter import extract
+    source={"pandoc-api-version":[1,23,1],"meta":{
+        "title_en":{"t":"MetaString","c":"Source title"},
+        field:{"t":"MetaString","c":"Source information"}},"blocks":[]}
+    with pytest.raises(StudioError,match="METADATA_FIELD_UNSUPPORTED: "+field):extract(source)
+    assert source["meta"][field]["c"]=="Source information"
+
 def test_cjk_metadata_terminates_latex_control_word():
     assert r"\noindent{}摘要：" in front({"abstract_zh":"摘要", "_meta_tex":{"abstract_zh":"摘要：正文"}})
 
