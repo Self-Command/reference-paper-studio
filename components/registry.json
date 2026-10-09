@@ -19,7 +19,7 @@
     },
     {
       "id": "region.body",
-      "version": "1",
+      "version": "2",
       "kind": "layout",
       "requires": [],
       "source": "Shared studio adapter over Pandoc/python-docx",
@@ -187,7 +187,7 @@
     },
     {
       "id": "table.three-line",
-      "version": "1",
+      "version": "2",
       "kind": "layout",
       "requires": [],
       "source": "Shared studio adapter over Pandoc/python-docx",

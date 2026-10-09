@@ -134,11 +134,19 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
     if "component_versions" in profile:
         preamble=preamble.replace(r"\begin{document}",r"\pagestyle{"+("plain" if profile.get("page_numbers") else "empty")+"}\n"+r"\begin{document}")
-    # A single body multicols region. Content has no section/column authority.
+    native=profile.get("latex_body_backend")=="native-columns"
+    if profile.get("latex_table_backend")=="cals":
+        preamble=preamble.replace(r"\begin{document}",r"\usepackage{cals}\newcounter{rpsTableSegment}"+"\n"+r"\begin{document}")
+    # One registered body region; content cannot switch output routines.
     layout=latex_ast(layout_ast or ast,equations,profile["equation_numbering"]); blocks=[]
     for block in layout["blocks"]:
         if block.get("t") == "Table":
-            blocks.append({"t":"RawBlock","c":["latex",column_table(block,ast["pandoc-api-version"],output,profile.get("captions",{}).get("table","above"))]})
+            if profile.get("latex_table_backend")=="cals":
+                from .latex_tables import render
+                table_tex=render(block,ast["pandoc-api-version"],output,profile.get("captions",{}).get("table","above"),profile["tables"])
+            else:
+                table_tex=column_table(block,ast["pandoc-api-version"],output,profile.get("captions",{}).get("table","above"))
+            blocks.append({"t":"RawBlock","c":["latex",table_tex]})
         elif block.get("t")=="Figure":
             fragment={"pandoc-api-version":ast["pandoc-api-version"],"meta":{},"blocks":block["c"][2]}
             image_tex=run(["pandoc","-f","json","-t","latex","--wrap=none"],input_text=json.dumps(fragment))
@@ -165,6 +173,16 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
         end="\n\\par\\noindent\\begin{minipage}{\\textwidth}\n"+end+"\n\\end{minipage}\\par\n"
     if profile.get("front_separate_page"): header+=r"\clearpage"
     columns=profile.get("body_columns",2)
-    wrapped=("\n\\begin{multicols}{"+str(columns)+"}\n"+body+"\n\\end{multicols}\n") if columns>1 else "\n"+body+"\n"
+    if native and columns==2:
+        if profile.get("front_separate_page"):
+            wrapped="\n\\twocolumn\n"+body
+        else:
+            # Only the fixed front area spans both columns. CALS can now
+            # observe the actual native column break and repeat its header.
+            wrapped="\n\\twocolumn[{\\begin{minipage}{\\textwidth}\n"+header+"\n\\end{minipage}}]\n"+body
+            header=""
+        if end: end="\n\\onecolumn\n"+end
+    else:
+        wrapped=("\n\\begin{multicols}{"+str(columns)+"}\n"+body+"\n\\end{multicols}\n") if columns>1 else "\n"+body+"\n"
     (output/"main.tex").write_text(preamble+header+wrapped+end+"\n\\end{document}\n",encoding="utf-8")
     return output/"main.tex"

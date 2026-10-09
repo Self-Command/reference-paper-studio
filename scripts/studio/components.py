@@ -29,6 +29,10 @@ def compile_components(descriptor):
     p["enabled_objects"]=[role for name,role in OBJECT_COMPONENTS.items() if name in selected]
     p["component_versions"]={name:entries[name]["version"] for name in selected}
     p["page_numbers"]={"position":"footer-center","start":1,"scope":"all"} if "page-number" in selected else None
+    # The registered region/table components own the TeX backend. A task
+    # cannot select a different output routine or disable continuation.
+    p["latex_body_backend"]="native-columns"
+    p["latex_table_backend"]="cals" if "table.three-line" in selected else None
     component_hash=hashlib.sha256(json.dumps({name:entries[name] for name in selected},sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
     return p,component_hash
 

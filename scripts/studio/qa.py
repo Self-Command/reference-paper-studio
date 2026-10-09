@@ -157,7 +157,8 @@ def check_roundtrips(ast, baseline, final, latex_body, output, input_root=None):
     assert_text(ast, latex_ast, "LaTeX readback")
     if math_list(ast) != math_list(latex_ast):
         raise StudioError("MATH_CHANGED: LaTeX readback")
-    rendered_ast = read_ast(Path(latex_body).parent/"layout-body.tex", "latex")
+    from .latex_tables import reader_copy
+    rendered_ast = read_ast(reader_copy(Path(latex_body).parent/"layout-body.tex",output), "latex")
     expected_layout = json.loads((Path(output)/"layout-document.json").read_text(encoding="utf-8"))
     assert_text(expected_layout, rendered_ast, "actual LaTeX layout body")
     if math_list(expected_layout) != math_list(rendered_ast): raise StudioError("MATH_CHANGED: actual LaTeX layout body")
@@ -172,7 +173,7 @@ def check_roundtrips(ast, baseline, final, latex_body, output, input_root=None):
         raise StudioError("FORMULA_CONVERSION_FAILED: native equation count")
     result = {"prose_numbers_tables_references": "exact_visible_text", "latex_math": "source_expression_preserved",
               "docx_math": "recorded_layout_reversed_exact_math_tree_and_readback_equal", "math_count": expected,"images":images,
-              "reader_normalization":"Identical longtable repeated-page headers are read once; actual Word XML text is used instead of duplicated reader caption aliases.",
+              "reader_normalization":"Identical longtable repeated-page headers are read once; actual CALS cells/caption are audited via a controlled grammar, not rebuilt from source AST; actual Word XML text is read without duplicated caption aliases.",
               "limitation": "Preservation checks do not prove mathematical correctness."}
     write_json(Path(output)/"content-report.json", result)
     return result

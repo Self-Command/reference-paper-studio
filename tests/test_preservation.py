@@ -34,5 +34,6 @@ def test_end_abstract_uses_one_fixed_unbreakable_region(tmp_path):
     profile["english_abstract_position"]="end"
     main=write_latex(ast,[],{"title_en":"Synthetic title","abstract_en":"Synthetic abstract","keywords_en":["fixture"]},profile,tmp_path)
     text=main.read_text()
-    assert text.index(r"\end{multicols}")<text.index(r"\begin{minipage}{\textwidth}")
+    assert text.index(r"\twocolumn[")<text.index("Synthetic body.")<text.index(r"\onecolumn")<text.index("Synthetic title")
+    assert r"\begin{multicols}" not in text
     assert text.index("Synthetic abstract")<text.index(r"\end{minipage}")
