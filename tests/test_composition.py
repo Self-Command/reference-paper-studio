@@ -50,3 +50,31 @@ def test_contest_year_and_ieee_identity_cannot_be_substituted(tmp_path,monkeypat
         resolve({"template":{**identity,"year":2025}})
     with pytest.raises(StudioError,match="UNKNOWN_TEMPLATE"):
         load_composition("ieee-generic","1.0.0")
+
+
+def test_template_build_reuses_frozen_asset_and_never_resets_release(tmp_path,monkeypatch):
+    monkeypatch.setenv("RPS_REGISTRY_ROOT",str(tmp_path))
+    target=build("reference-journal-v1","2.0.0")
+    manifest=json.loads((target/"manifest.json").read_text())
+    # Synthetic maintenance guard fixture, not a suite release declaration.
+    manifest.update(release_state="released",automatic_pass=True,visual_review_complete=True)
+    (target/"manifest.json").write_text(json.dumps(manifest))
+    before={path.name:digest(path) for path in target.iterdir() if path.is_file()}
+    assert build("reference-journal-v1","2.0.0")==target
+    assert before=={path.name:digest(path) for path in target.iterdir() if path.is_file()}
+    changed=deepcopy(manifest);changed["composition_sha256"]="0"*64
+    (target/"manifest.json").write_text(json.dumps(changed))
+    fingerprint=digest(target/"manifest.json")
+    with pytest.raises(StudioError,match="TEMPLATE_REGISTRY_IDENTITY_CONFLICT"):
+        build("reference-journal-v1","2.0.0")
+    assert digest(target/"manifest.json")==fingerprint
+
+
+def test_build_cannot_repair_tampered_mother_silently(tmp_path,monkeypatch):
+    monkeypatch.setenv("RPS_REGISTRY_ROOT",str(tmp_path))
+    target=build("reference-journal-v1","2.0.0")
+    with (target/"master-front.docx").open("ab") as stream:stream.write(b"tampered")
+    fingerprint=digest(target/"master-front.docx")
+    with pytest.raises(StudioError,match="TEMPLATE_INTEGRITY_MISMATCH"):
+        build("reference-journal-v1","2.0.0")
+    assert digest(target/"master-front.docx")==fingerprint

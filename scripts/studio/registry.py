@@ -17,10 +17,29 @@ def build(template_id, version, profile_id="open-serif", font_assets=None):
     from .qa import check_fonts
     p["font_faces"]=check_fonts(p)
     target=asset_root()/template_id/version/profile_id
+    current_font_hash=hashlib.sha256(json.dumps(fonts,sort_keys=True).encode()).hexdigest()
+    existing=target/"manifest.json"
+    if existing.is_file():
+        frozen=json.loads(existing.read_text(encoding="utf-8"))
+        if (frozen.get("composition_sha256")!=p["composition_sha256"] or
+            frozen.get("font_profile_sha256")!=current_font_hash or
+            frozen.get("font_assets",{})!=(font_assets or {}) or frozen.get("policy")!=p):
+            raise StudioError("TEMPLATE_REGISTRY_IDENTITY_CONFLICT: register a new version/font variant")
+        for asset in frozen.get("variants",{}).values():
+            from .runtime import confined
+            mother=confined(target,asset["file"])
+            if not mother.is_file() or digest(mother)!=asset["sha256"]:
+                raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: frozen mother")
+        if not frozen.get("variants"):raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: missing frozen variants")
+        # Maintenance reuses an identical asset; it must not reset accepted
+        # release/review state or regenerate ZIP bytes under the same version.
+        return target
+    if target.exists() and any(target.iterdir()):
+        raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: incomplete registered asset")
     create_templates(target,p)
     manifest=json.loads((target/"manifest.json").read_text(encoding="utf-8"))
     manifest.update(schema_version=2,composition_sha256=p["composition_sha256"],
-        font_profile_id=profile_id,font_profile_sha256=hashlib.sha256(json.dumps(fonts,sort_keys=True).encode()).hexdigest(),
+        font_profile_id=profile_id,font_profile_sha256=current_font_hash,
         policy=p,font_assets=font_assets or {},template_year=descriptor.get("year"),release_state="candidate",automatic_pass=False,visual_review_complete=False)
     write_json(target/"manifest.json",manifest)
     return target
