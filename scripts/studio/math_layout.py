@@ -112,12 +112,15 @@ def wrap(root, width_pt):
             entry = OxmlElement("m:e")
             first = row[0].findtext(M+"t", "") if row[0].tag == M+"r" else ""
             if re.match(r"^[=<>≤≥+−×∧∨]",first):
-                # m:lit must precede inherited m:sty. LibreOffice reads these
-                # properties in schema order; appending m:nor was ignored.
-                props=row[0].find(M+"rPr")
-                if props is None: props=OxmlElement("m:rPr"); row[0].insert(0,props)
-                for inherited in list(props): props.remove(inherited)
-                literal=OxmlElement("m:lit"); literal.set(M+"val","1"); props.insert(0,literal)
+                # Cloud probe: lit/nor still produce a missing-operand marker
+                # in LibreOffice 26.8. A borderless math box groups the single
+                # continuation operator while retaining an editable symbol.
+                operator = deepcopy(row[0]); operator.find(M+"t").text = first[0]
+                box=OxmlElement("m:box"); argument=OxmlElement("m:e")
+                argument.append(operator); box.append(argument)
+                if len(first)>1:
+                    row[0].find(M+"t").text=first[1:]; row.insert(0,box)
+                else: row[0]=box
             for child in row: entry.append(child)
             array.append(entry)
         element.append(array)
