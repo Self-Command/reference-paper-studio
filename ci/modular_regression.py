@@ -38,5 +38,7 @@ for variant in ("front","end"):
         results.append({"case":variant,"status":"passed"})
     except Exception as error:
         results.append({"case":variant,"status":"failed","error":str(error)})
+        print(variant+": "+str(error),flush=True)
 write_json(root/"build/modular-regression.json",results)
+print(json.dumps(results,ensure_ascii=False),flush=True)
 if any(r["status"]=="failed" for r in results): raise StudioError("MODULAR_REGRESSION_FAILED")

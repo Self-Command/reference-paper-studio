@@ -25,7 +25,7 @@ def safe_input(root, name):
     path = (root/name).resolve()
     if Path(name).is_absolute() or not path.is_relative_to(root) or not path.is_file():
         raise ValueError(f"Input must be an existing file beneath --root: {name}")
-    if "\\" in name or ".." in PurePosixPath(name).parts or any(part in (".git",".codex") for part in PurePosixPath(name).parts):
+    if "\\" in name or ".." in PurePosixPath(name).parts or name.startswith(".") and not name.startswith(".paper-studio/") or any(part in (".git",".codex") for part in PurePosixPath(name).parts):
         raise ValueError(f"Use plain slash-separated relative input paths: {name}")
     return path
 

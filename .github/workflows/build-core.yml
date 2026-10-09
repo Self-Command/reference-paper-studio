@@ -19,6 +19,7 @@ jobs:
       - run: pip install -r requirements.lock
       - run: bash ci/setup.sh
       - run: python ci/suite_check.py
+      - run: python ci/lock_dependencies.py
       - run: python ci/template_matrix.py
       - run: python -m pytest -q --junitxml=build/test-results.xml
       - run: python ci/matrix_regression.py
