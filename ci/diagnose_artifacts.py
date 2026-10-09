@@ -14,7 +14,7 @@ for path in sorted(root.rglob("latex-column-geometry.json")):
     records.append(item)
 for path in sorted(root.rglob("main.log")):
     log=path.read_text(encoding="utf-8",errors="replace")
-    source=path.with_suffix("tex").read_text(encoding="utf-8").splitlines()
+    source=path.with_suffix(".tex").read_text(encoding="utf-8").splitlines()
     for match in re.finditer(r"Overfull \\hbox.*?(?:at lines|in paragraph at lines) (\d+)--(\d+)",log,re.S):
         first,last=map(int,match.groups())
         item={"file":path.as_posix(),"first_line":first,"last_line":last,"source":"\n".join(source[max(0,first-2):min(len(source),last+2)])}
