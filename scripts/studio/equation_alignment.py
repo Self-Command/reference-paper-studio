@@ -6,6 +6,9 @@ from .runtime import require_actions,write_json,StudioError
 
 def measure(path,equations,profile):
     require_actions()
+    import json
+    ledger_path=Path(path).parent/"math-layout-ledger.json"
+    anchors={item["id"]:item.get("number_anchor") for item in json.loads(ledger_path.read_text(encoding="utf-8"))} if ledger_path.is_file() else {}
     records=[]; failures=[]
     with pdfplumber.open(path) as pdf:
         for equation in equations:
@@ -31,7 +34,7 @@ def measure(path,equations,profile):
             if not matches:
                 failures.append(label); records.append({"id":label,"status":"label_not_located_at_column_edge"}); continue
             number,label_box,glyphs=max(matches,key=lambda item:len(item[2]))
-            record={"id":label,"page":number,"label_bbox":[label_box[k] for k in ("x0","top","x1","bottom")],"nearby_visible_glyphs":len(glyphs),"observed_fonts":sorted({c.get("fontname","") for c in glyphs}),"anchor":"center" if re.search(r"\\begin\{(?:cases|aligned|array|matrix)|\\\\",equation["source"]) else "baseline","assessment":"visual_required","reason":"Nearby glyphs are geometry evidence, not proof of equation identity or alignment. PDF font boxes do not expose a reliable equation baseline; inspect cloud pages."}
+            record={"id":label,"page":number,"label_bbox":[label_box[k] for k in ("x0","top","x1","bottom")],"nearby_visible_glyphs":len(glyphs),"observed_fonts":sorted({c.get("fontname","") for c in glyphs}),"anchor":anchors.get(equation["id"]) or ("center" if re.search(r"\\begin\{(?:cases|aligned|array|matrix)|\\\\",equation["source"]) else "baseline"),"assessment":"visual_required","reason":"Nearby glyphs are geometry evidence, not proof of equation identity or alignment. PDF font boxes do not expose a reliable equation baseline; inspect cloud pages."}
             if glyphs:
                 record["nearby_math_bbox"]=[min(c["x0"] for c in glyphs),min(c["top"] for c in glyphs),max(c["x1"] for c in glyphs),max(c["bottom"] for c in glyphs)]
             else: failures.append(label); record["status"]="math_not_located"

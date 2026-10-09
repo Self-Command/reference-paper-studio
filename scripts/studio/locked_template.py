@@ -310,8 +310,9 @@ def fill(native, metadata, equations, master, p, output):
             # Keep an extra 10 pt safety allowance for renderer width
             # differences; isolation also checks the actual number boundary.
             changes = wrap(formulae[0], (width-550)/20-26,p["body_size_pt"])
-            ledger.append({"id": equation["id"], "changes": changes})
-            table = doc.add_table(rows=1, cols=2); table.autofit = False
+            multiline=any(len(node.findall(M+"e"))>1 for node in formulae[0].iter(M+"eqArr")) or any(len(node.findall(M+"mr"))>1 for node in formulae[0].iter(M+"m"))
+            ledger.append({"id": equation["id"], "changes": changes,"number_anchor":"center" if multiline else "baseline"})
+            table = doc.add_table(rows=1, cols=2 if multiline else 1); table.autofit = False
             table._tbl.getparent().remove(table._tbl)
             set_child(table._tbl.tblPr, "tblW", {"w:w": str(width), "w:type": "dxa"})
             set_child(table._tbl.tblPr, "tblDescription", {"w:val": "RPS_EQUATION_LAYOUT"})
@@ -319,17 +320,33 @@ def fill(native, metadata, equations, master, p, output):
             for edge in ("top", "bottom", "left", "right", "insideH", "insideV"): set_child(borders, edge, {"w:val": "nil"})
             margins = set_child(table._tbl.tblPr, "tblCellMar")
             for edge in ("top", "bottom", "left", "right"): set_child(margins, edge, {"w:w": "0", "w:type": "dxa"})
-            for cell, column, cell_width in zip(table.rows[0].cells, table.columns, (width-550, 550)):
+            for cell, column, cell_width in zip(table.rows[0].cells, table.columns, (width-550,550) if multiline else (width,)):
                 cell.width = Twips(cell_width); column.width = Twips(cell_width)
                 set_child(cell._tc.get_or_add_tcPr(),"vAlign",{"w:val":"center"})
             formula = table.cell(0, 0).paragraphs[0]._p; pstyle(formula, "Equation")
-            # The native display wrapper stays editable, including original cases.
-            for child in list(element):
-                if child.tag == M+"oMathPara": formula.append(child)
             label = equation["id"] if p["equation_numbering"] == "preserve" else str(index)
-            right = table.cell(0, 1).paragraphs[0]._p; pstyle(right, "Equation")
-            right.append(paragraph("("+label+")", "Equation").find(W+"r"))
-            set_child(right.find(W+"pPr"), "jc", {"w:val": "right"})
+            if multiline:
+                # Multiline displays use a separate fixed number area with
+                # vertical centering across the complete mathematical object.
+                for child in list(element):
+                    if child.tag == M+"oMathPara": formula.append(child)
+                right = table.cell(0, 1).paragraphs[0]._p; pstyle(right, "Equation")
+                right.append(paragraph("("+label+")", "Equation").find(W+"r"))
+                set_child(right.find(W+"pPr"), "jc", {"w:val": "right"})
+            else:
+                # Shared paragraph means native math and its label share the
+                # actual text baseline. Cell centering alone cannot do this
+                # for an asymmetric fraction or subscripted expression.
+                props=formula.find(W+"pPr")
+                set_child(props,"jc",{"w:val":"left"})
+                set_child(props,"textAlignment",{"w:val":"baseline"})
+                tabs=set_child(props,"tabs")
+                for position,kind in (((width-550)//2,"center"),(width,"right")):
+                    node=OxmlElement("w:tab"); node.set(W+"val",kind);node.set(W+"pos",str(position));tabs.append(node)
+                leading=OxmlElement("w:r");leading.append(OxmlElement("w:tab"));formula.append(leading)
+                formula.append(formulae[0])
+                numbered=paragraph("("+label+")","Equation").find(W+"r")
+                numbered.insert(0,OxmlElement("w:tab"));formula.append(numbered)
             set_child(table._tbl.find(W+"tr").get_or_add_trPr(), "cantSplit")
             anchor.addprevious(table._tbl)
         else:

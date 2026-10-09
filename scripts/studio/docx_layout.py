@@ -281,6 +281,12 @@ def body_only_docx(source, target):
             body.remove(element); continue
         if is_equation_table(element):
             paragraph=element.find(qn("w:tr")).find(qn("w:tc")).find(qn("w:p"))
+            # The single-line generator uses inline OMML and the label in one
+            # paragraph to share a baseline. Normalize ONLY this audit copy to
+            # the source display wrapper; the mathematical tree stays exact.
+            if paragraph.find(M+"oMathPara") is None:
+                for math in list(paragraph.findall(M+"oMath")):
+                    wrapper=OxmlElement("m:oMathPara");math.addprevious(wrapper);wrapper.append(math)
             element.addprevious(paragraph);body.remove(element);element=paragraph
         if list(element.iter(M+"oMath")):
             for r in list(element.findall(qn("w:r"))):
