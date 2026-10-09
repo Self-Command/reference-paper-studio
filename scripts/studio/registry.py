@@ -24,7 +24,10 @@ def build(template_id, version, profile_id="open-serif", font_assets=None):
         if (frozen.get("composition_sha256")!=p["composition_sha256"] or
             frozen.get("font_profile_sha256")!=current_font_hash or
             frozen.get("font_assets",{})!=(font_assets or {}) or frozen.get("policy")!=p):
-            raise StudioError("TEMPLATE_REGISTRY_IDENTITY_CONFLICT: register a new version/font variant")
+            changed=[key for key in set(frozen.get("policy",{}))|set(p) if frozen.get("policy",{}).get(key)!=p.get(key)]
+            raise StudioError("TEMPLATE_REGISTRY_IDENTITY_CONFLICT: register a new version/font variant; changed policy keys="+str(sorted(changed))+
+                              "; composition="+str(frozen.get("composition_sha256")!=p["composition_sha256"])+
+                              "; font_profile="+str(frozen.get("font_profile_sha256")!=current_font_hash))
         for asset in frozen.get("variants",{}).values():
             from .runtime import confined
             mother=confined(target,asset["file"])
