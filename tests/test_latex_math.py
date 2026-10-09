@@ -43,3 +43,15 @@ def test_measured_widths_record_actual_fixed_region_fit(tmp_path):
     widths=measured_widths(main,tmp_path/"measure",2)
     assert widths[0]["fits"] and not widths[1]["fits"]
     assert widths[1]["math_width_bp"]>widths[1]["formula_slot_bp"]
+
+
+def test_actual_isolated_proof_rejects_a_deliberately_displaced_number(tmp_path):
+    from studio.latex_math import prove_number_slots
+    expression=r"\begin{array}{r}x_1\\x_2\\x_3\end{array}"
+    # A renderer regression that lifts only the label must fail; attributes or
+    # generated-source equality alone would accept the same mathematical tree.
+    bad=MACRO.replace(r"\hfil\box1",r"\hfil\raise20bp\box1")
+    (tmp_path/"main.tex").write_text(r"\documentclass{article}\usepackage{amsmath}"+bad+r"\begin{document}x\end{document}",encoding="utf-8")
+    (tmp_path/"layout-body.tex").write_text(render(expression,"M10"),encoding="utf-8")
+    with pytest.raises(StudioError,match="TEX_NUMBER_ANCHOR_FAILED"):
+        prove_number_slots(tmp_path/"main.tex",tmp_path/"proof",2)

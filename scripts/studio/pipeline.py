@@ -199,6 +199,9 @@ def _export(root, request, output, reference_rules=None):
     with zipfile.ZipFile(final) as package:(output/"word-document.xml").write_bytes(package.read("word/document.xml"))
     write_json(output/"shared-layout-map.json",bridge_map)
     main = write_latex(ast, equations, meta, profile, texdir, layout_ast)
+    if profile.get("latex_number_backend")=="fixed-slots":
+        from .latex_math import prove_number_slots
+        prove_number_slots(main,output/"isolated-tex-number-proof",profile.get("body_columns",2))
     write_json(output/"layout-document.json",layout_ast)
     for node in walk(ast):
         if node.get("t") == "Image":

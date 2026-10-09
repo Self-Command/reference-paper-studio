@@ -97,3 +97,39 @@ def measured_widths(main,output,columns):
     if [r["label"] for r in records]!=[label for _,label in displays]:raise StudioError("FIXED_MATH_MEASUREMENT_COUNT_CHANGED")
     write_json(folder/"widths.json",records)
     return records
+
+
+def prove_number_slots(main,output,columns):
+    require_actions()
+    source=Path(main).read_text(encoding="utf-8")
+    preamble=source.split(r"\begin{document}",1)[0]
+    actual_body=(Path(main).parent/"layout-body.tex").read_text(encoding="utf-8")
+    displays=re.findall(r"\\\[(.*?)\\tag\{([^{}]+)\}\\\]",reader_text(actual_body),re.S)
+    if not displays:return {"status":"not_applicable","displays":[]}
+    folder=Path(output);folder.mkdir(parents=True,exist_ok=True)
+    body=[r"\begin{document}\pagestyle{empty}",r"\setlength{\columnwidth}{\dimexpr(\textwidth-"+str(columns-1)+r"\columnsep)/"+str(columns)+r"\relax}"]
+    for index,(expression,label) in enumerate(displays):
+        if index:body.append(r"\clearpage")
+        body.extend([r"\noindent\begin{minipage}{\columnwidth}Formula\par",render(expression,label),r"\end{minipage}"])
+    body.append(r"\end{document}")
+    (folder/"isolated.tex").write_text(preamble+"\n"+"\n".join(body),encoding="utf-8")
+    run(["xelatex","-no-shell-escape","-interaction=nonstopmode","-halt-on-error","isolated.tex"],cwd=folder,timeout=180)
+    log=(folder/"isolated.log").read_text(encoding="utf-8",errors="replace")
+    if "Missing character:" in log:raise StudioError("MISSING_GLYPH: TeX isolated numbered formulas")
+    import pdfplumber
+    from .math_proof import isolated_number_center
+    records=[];failed=[]
+    with pdfplumber.open(folder/"isolated.pdf") as pdf:
+        if len(pdf.pages)!=len(displays):raise StudioError("TEX_ISOLATED_EQUATION_PAGINATION_CHANGED")
+        for page,(expression,label) in zip(pdf.pages,displays):
+            center=isolated_number_center(page,"("+label+")")
+            center["limitation"]="Actual isolated XeLaTeX glyph bounds; full-page visual review is still required."
+            multiline=render(expression,label).endswith("{1}")
+            valid=center["status"]=="measured" and (not multiline or abs(center["center_delta_pt"])<=6)
+            record={"id":label,"anchor":"center" if multiline else "baseline","measurement":center,"passed":valid}
+            records.append(record)
+            if not valid:failed.append(label)
+    result={"status":"failed" if failed else "passed","displays":records,"failures":failed}
+    write_json(folder/"number-slots.json",result)
+    if failed:raise StudioError("TEX_NUMBER_ANCHOR_FAILED: "+", ".join(failed))
+    return result
