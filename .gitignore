@@ -9,3 +9,4 @@ deliveries/
 .requests/
 node_modules/
 *.log
+/.tool-downloads/
