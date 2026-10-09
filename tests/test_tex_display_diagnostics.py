@@ -26,3 +26,12 @@ def test_extract_preserves_complete_generated_display_expression():
     (r"\[x\tag{unsafe/name}\]","UNSUPPORTED_MEASUREMENT_LABEL")])
 def test_measurement_input_fails_explicitly(source,error):
     with pytest.raises(StudioError,match=error):module().extract_displays(source)
+
+
+@pytest.mark.parametrize("columns,expected",[(1,400),(2,190)])
+def test_column_setup_compiles_to_the_actual_registered_width(tmp_path,columns,expected):
+    from studio.runtime import run
+    source=r"\documentclass{article}\begin{document}\setlength{\textwidth}{400pt}\setlength{\columnsep}{20pt}"+module().column_setup(columns)+r"\typeout{COLUMN=\the\columnwidth}x\end{document}"
+    (tmp_path/"probe.tex").write_text(source,encoding="utf-8")
+    run(["xelatex","-no-shell-escape","-interaction=nonstopmode","-halt-on-error","probe.tex"],cwd=tmp_path)
+    assert "COLUMN="+str(expected)+".0pt" in (tmp_path/"probe.log").read_text(encoding="utf-8")

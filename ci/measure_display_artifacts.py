@@ -19,6 +19,14 @@ def extract_displays(source):
     return records
 
 
+def column_setup(columns):
+    require_actions()
+    if columns not in (1,2):raise StudioError("UNSUPPORTED_MEASUREMENT_COLUMNS")
+    # e-TeX dimexpr accepts a literal multiplier, not a parenthesized integer
+    # expression followed by a dimension. Resolve that integer in Python.
+    return r"\setlength{\columnwidth}{\dimexpr(\textwidth-"+str(columns-1)+r"\columnsep)/"+str(columns)+r"\relax}"
+
+
 def main():
     require_actions()
     artifact_root=Path("diagnostic-artifacts")
@@ -35,7 +43,7 @@ def main():
         folder=output/case;folder.mkdir(parents=True,exist_ok=True)
         columns=accepted.get("layout",{}).get("body_columns",2)
         body=[r"\begin{document}\pagestyle{empty}",
-              r"\setlength{\columnwidth}{\dimexpr(\textwidth-("+str(columns)+r"-1)\columnsep)/"+str(columns)+r"\relax}",
+              column_setup(columns),
               r"\typeout{RPS-COLUMN=\the\columnwidth}"]
         for index,display in enumerate(displays):
             if index:body.append(r"\clearpage")
@@ -55,7 +63,7 @@ def main():
         if not column:raise StudioError("MEASUREMENT_COLUMN_MISSING")
         column_pt=float(column.group(1))
         metrics=[]
-        for match in re.finditer(r"RPS-METRIC=([^|\s]+)\|([0-9.]+)pt\|([0-9.]+)pt\|([0-9.]+)pt\|([0-9.]+)pt",log):
+        for match in re.finditer(r"RPS-METRIC=([^|\s]+)\|\s*([0-9.]+)pt\|\s*([0-9.]+)pt\|\s*([0-9.]+)pt\|\s*([0-9.]+)pt",log):
             label,width,height,depth,number=match.groups()
             width,height,depth,number=map(float,(width,height,depth,number))
             metrics.append({"id":label,"width_tex_pt":width,"height_tex_pt":height,"depth_tex_pt":depth,
