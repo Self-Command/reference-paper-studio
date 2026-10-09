@@ -54,7 +54,11 @@ def install_declared(root,request,output):
     records=[]
     # This is a runner-local font directory; font bytes are not put in build/
     # or redistributed in skill packages.
-    directory=Path.home()/".local/share/fonts"/("rps-"+os.environ["GITHUB_RUN_ID"])
+    # Follow fontconfig's XDG data directory. Tests can then install declared
+    # bytes in a temporary font inventory without changing later build jobs.
+    data_home=Path(os.environ.get("XDG_DATA_HOME") or Path.home()/".local/share")
+    if not data_home.is_absolute():data_home=Path.home()/".local/share"
+    directory=data_home/"fonts"/("rps-"+os.environ["GITHUB_RUN_ID"])
     for file in fonts:
         source=confined(root,file["path"])
         if digest(source)!=file["sha256"]: raise StudioError("INPUT_FINGERPRINT_MISMATCH: font "+file["path"])

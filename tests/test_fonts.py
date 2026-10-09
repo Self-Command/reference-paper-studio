@@ -1,6 +1,6 @@
 import pytest
 from studio.runtime import StudioError,run,digest
-from studio.fonts import install_declared
+from studio.fonts import install_declared,resolve_faces
 from studio.registry import build,resolve
 
 def test_custom_font_uses_exact_declared_bytes_and_requires_registered_variant(tmp_path,monkeypatch):
@@ -9,12 +9,19 @@ def test_custom_font_uses_exact_declared_bytes_and_requires_registered_variant(t
     from pathlib import Path
     font=tmp_path/"selected.ttf";font.write_bytes(Path(source).read_bytes())
     request={"files":[{"path":font.name,"sha256":digest(font),"role":"font"}]}
-    assets=install_declared(tmp_path,request,tmp_path/"report")
-    target=build("general-modeling","1.0.0","open-serif",assets)
-    identity={"id":"general-modeling","version":"1.0.0","variant":"front","font_profile":"open-serif","manifest_sha256":digest(target/"manifest.json")}
-    monkeypatch.setenv("RPS_CANDIDATE_BUILD","true")
-    assert resolve({**request,"template":identity})[0].is_file()
-    with pytest.raises(StudioError,match="FONT_ASSET_IDENTITY_MISMATCH"):resolve({"template":identity})
+    before=resolve_faces({"latin":"Liberation Serif"})
+    with monkeypatch.context() as environment:
+        environment.setenv("XDG_DATA_HOME",str(tmp_path/"font-inventory"))
+        assets=install_declared(tmp_path,request,tmp_path/"report")
+        target=build("general-modeling","1.0.0","open-serif",assets)
+        identity={"id":"general-modeling","version":"1.0.0","variant":"front","font_profile":"open-serif","manifest_sha256":digest(target/"manifest.json")}
+        environment.setenv("RPS_CANDIDATE_BUILD","true")
+        assert resolve({**request,"template":identity})[0].is_file()
+        with pytest.raises(StudioError,match="FONT_ASSET_IDENTITY_MISMATCH"):resolve({"template":identity})
+        assert list((tmp_path/"font-inventory/fonts").rglob("*.ttf"))
+    # A duplicate copy of identical bytes must not change fc-match's selected
+    # filename in a subsequent frozen-mother build outside this test scope.
+    assert resolve_faces({"latin":"Liberation Serif"})==before
 
 def test_missing_selected_font_never_falls_back(tmp_path,monkeypatch):
     monkeypatch.setenv("RPS_REGISTRY_ROOT",str(tmp_path))
