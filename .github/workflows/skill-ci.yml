@@ -46,12 +46,21 @@ jobs:
             build/model/previews/word-compat-proof/*.png
             build/objects-end/previews/word-compat-proof/*.png
             build/model/acceptance.json
+            build/model/manuscript.docx
+            build/model/word-document.xml
+            build/model/isolated-math-proof/glyph-preservation.json
+            build/model/math-layout-ledger.json
+            build/model/inline-math-layout-ledger.json
+            build/model/word-column-geometry.json
+            build/model/latex-column-geometry.json
             build/model/equation-visibility.json
             build/model/latex/main.tex
             build/model/latex/body.tex
             build/libreoffice-version.txt
             build/pandoc-version.txt
             build/probe/comparison.png
+            build/probe/continuations.json
+            build/probe/continuation-*.png
           retention-days: 30
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
