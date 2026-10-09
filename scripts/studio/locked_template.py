@@ -241,7 +241,7 @@ def fill(native, metadata, equations, master, p, output):
         element.find(W+"r/"+W+"t").text = str(value)
     anchor = next(e for e in body if "".join(t.text or "" for t in e.iter(W+"t")) == "{{RPS_BODY}}")
     start = OxmlElement("w:bookmarkStart"); start.set(W+"id", "9181"); start.set(W+"name", "RPS_BODY"); anchor.addprevious(start)
-    width = column_width(p); ledger = []; index = 0
+    width = column_width(p); ledger = []; inline_ledger = []; index = 0
     for element in original:
         if element.tag == W+"p" and list(element.iter(M+"oMathPara")):
             if index >= len(equations): raise StudioError("FORMULA_COUNT_CHANGED")
@@ -270,7 +270,18 @@ def fill(native, metadata, equations, master, p, output):
             set_child(right.find(W+"pPr"), "jc", {"w:val": "right"})
             set_child(table._tbl.find(W+"tr").get_or_add_trPr(), "cantSplit")
             anchor.addprevious(table._tbl)
-        else: anchor.addprevious(element)
+        else:
+            # Inline formulas in table cells use that cell's column budget.
+            for formula in element.iter(M+"oMath"):
+                cell = next((a for a in formula.iterancestors() if a.tag == W+"tc"), None)
+                cell_budget = width/20-12
+                if cell is not None:
+                    table = next(a for a in cell.iterancestors() if a.tag == W+"tbl")
+                    cells = len(table.find(W+"tr").findall(W+"tc"))
+                    cell_budget = width/20/cells-12
+                changes = wrap(formula, cell_budget)
+                inline_ledger.append(changes)
+            anchor.addprevious(element)
     if index != len(equations): raise StudioError("FORMULA_COUNT_CHANGED")
     end = OxmlElement("w:bookmarkEnd"); end.set(W+"id", "9181"); anchor.addprevious(end); body.remove(anchor)
     moved = move_table_captions(doc)
@@ -304,4 +315,5 @@ def fill(native, metadata, equations, master, p, output):
         for part in ("word/styles.xml","word/settings.xml"):
             if original_package.read(part) != final_package.read(part): raise StudioError("TEMPLATE_PART_CHANGED: "+part)
     write_json(Path(output).parent/"math-layout-ledger.json", ledger)
+    write_json(Path(output).parent/"inline-math-layout-ledger.json", inline_ledger)
     return {**check_contract(output, p), "display_count": index, "table_captions_moved": moved, "math_layout_changes": sum(len(e["changes"]) for e in ledger), "native_math_count": len(list(body.iter(M+"oMath")))}

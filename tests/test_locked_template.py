@@ -111,3 +111,22 @@ def test_glyph_probe_ignores_only_invisible_spacing():
     from studio.math_proof import glyphs
     assert glyphs("x\u200b≤y = z") == glyphs("x≤y=z")
     assert glyphs("x<y") != glyphs("xy")
+
+
+def test_piecewise_stacking_preserves_value_condition_order():
+    from copy import deepcopy
+    from studio.math_layout import wrap, restore, tree
+    formula = OxmlElement("m:oMath"); delimiter = OxmlElement("m:d")
+    props = OxmlElement("m:dPr")
+    for name,value in (("begChr","{"),("endChr","")):
+        node = OxmlElement("m:"+name); node.set(qn("m:val"),value); props.append(node)
+    delimiter.append(props); matrix=OxmlElement("m:m"); delimiter.append(matrix); formula.append(delimiter)
+    for values in (("expressionexpression","conditioncondition"),("otherexpression","otherwise")):
+        row=OxmlElement("m:mr"); matrix.append(row)
+        for value in values:
+            cell=OxmlElement("m:e"); run=OxmlElement("m:r"); token=OxmlElement("m:t"); token.text=value
+            run.append(token); cell.append(run); row.append(cell)
+    original=deepcopy(formula); changes=wrap(formula,100)
+    assert tree(restore(formula,changes))==tree(original)
+    assert [t.text for t in formula.iter(qn("m:t"))]==[t.text for t in original.iter(qn("m:t"))]
+    assert all(len(row.findall(qn("m:e")))==1 for row in matrix.findall(qn("m:mr")))

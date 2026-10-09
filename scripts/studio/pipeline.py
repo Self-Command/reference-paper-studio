@@ -128,13 +128,19 @@ def _export(root, request, output, reference_rules=None):
     all_math = [n for n in walk(layout_ast) if n.get("t") == "Math"]
     if len(bridge_math) != len(all_math): raise StudioError("LAYOUT_BRIDGE_MATH_COUNT_CHANGED")
     ledger = json.loads((output/"math-layout-ledger.json").read_text(encoding="utf-8"))
-    display_index = 0; bridge_map = []
+    inline_ledger = json.loads((output/"inline-math-layout-ledger.json").read_text(encoding="utf-8"))
+    display_index = 0; inline_index = 0; bridge_map = []
     for index, (node, rendered) in enumerate(zip(all_math, bridge_math)):
         if node["c"][0]["t"] == "DisplayMath":
             if ledger[display_index]["changes"]:
                 bridge_map.append({"math_index":index,"id":equations[display_index]["id"],"original":node["c"][1],"layout":rendered["c"][1]})
                 node["c"][1] = rendered["c"][1]
             display_index += 1
+        else:
+            if inline_ledger[inline_index]:
+                bridge_map.append({"math_index":index,"id":"inline-"+str(inline_index),"original":node["c"][1],"layout":rendered["c"][1]})
+                node["c"][1] = rendered["c"][1]
+            inline_index += 1
     write_json(output/"shared-layout-map.json",bridge_map)
     main = write_latex(ast, equations, meta, profile, texdir, layout_ast)
     write_json(output/"layout-document.json",layout_ast)

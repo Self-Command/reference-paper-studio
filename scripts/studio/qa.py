@@ -93,6 +93,10 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     for wrapper, record in zip(displays, ledger):
         formula = wrapper.find(M+"oMath")
         wrapper.replace(formula, restore(formula, record["changes"]))
+    inline_ledger = json.loads((Path(output)/"inline-math-layout-ledger.json").read_text(encoding="utf-8"))
+    inline = [m for m in audit._element.iter(M+"oMath") if m.getparent().tag != M+"oMathPara"]
+    if len(inline) != len(inline_ledger): raise StudioError("INLINE_LEDGER_COUNT_CHANGED")
+    for formula, changes in zip(inline, inline_ledger): formula.getparent().replace(formula, restore(formula,changes))
     base_math = list(Document(baseline)._element.iter(M+"oMath"))
     audit_math = list(audit._element.iter(M+"oMath"))
     if [tree(m) for m in base_math] != [tree(m) for m in audit_math]: raise StudioError("MATH_STRUCTURE_CHANGED")

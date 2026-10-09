@@ -87,6 +87,7 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
 \usepackage{fontspec,xeCJK}
 \setmainfont{LATINFONT}
 \setCJKmainfont{CJKFONT}
+\xeCJKsetup{PunctStyle=plain}
 \usepackage[top=TOPcm,bottom=BOTTOMcm,left=LEFTcm,right=RIGHTcm]{geometry}
 \usepackage{amsmath,amssymb,mathtools,graphicx,booktabs,longtable,array,multirow}
 \usepackage{multicol,caption,hyperref,xurl,xcolor,calc,etoolbox,enumitem,float}

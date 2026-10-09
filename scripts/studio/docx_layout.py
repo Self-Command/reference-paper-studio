@@ -64,7 +64,7 @@ def math_width_pt(element, size):
     if local.endswith("Pr"):
         return 0
     if local == "t":
-        return sum(size * (1 if ord(c) > 0x2fff else .28 if c.isspace() else .58) for c in element.text or "")
+        return sum(size * (1.15 if ord(c) > 0x2fff else .28 if c.isspace() else .70) for c in element.text or "")
     children = [c for c in element if not etree.QName(c).localname.endswith("Pr")]
     widths = {etree.QName(c).localname: math_width_pt(c, size) for c in children}
     if local == "f":

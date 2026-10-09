@@ -37,6 +37,23 @@ def wrap(root, width_pt):
     containers = {"oMath", "e", "num", "den", "lim"}
     def visit(element, path, budget):
         name = etree.QName(element).localname
+        # Only a piecewise delimiter may stack value/condition cells. A general
+        # matrix keeps its columns: changing those would change its meaning.
+        if name == "m" and math_width_pt(element, 10) > budget:
+            delimiter = element.getparent()
+            props = delimiter.find(M+"dPr") if delimiter is not None and delimiter.tag == M+"d" else None
+            if props is not None and props.find(M+"begChr") is not None and props.find(M+"begChr").get(M+"val") == "{" and props.find(M+"endChr") is not None and props.find(M+"endChr").get(M+"val") == "":
+                rows = element.findall(M+"mr")
+                if rows and all(len(row.findall(M+"e")) == 2 for row in rows):
+                    old = etree.tostring(element, encoding="unicode")
+                    for row in rows:
+                        left, condition = row.findall(M+"e")
+                        nested = OxmlElement("m:eqArr")
+                        nested.append(deepcopy(left)); nested.append(deepcopy(condition))
+                        for child in list(left): left.remove(child)
+                        left.append(nested); row.remove(condition)
+                    for inherited in list(element.findall(M+"mPr")): element.remove(inherited)
+                    changes.append({"path":path,"before":old,"after":etree.tostring(element,encoding="unicode"),"reason":"piecewise value then condition, one column"})
         # Reserve delimiters, fraction rules and matrix neighbours conservatively.
         children = list(element)
         for index, child in enumerate(children):
@@ -85,12 +102,13 @@ def wrap(root, width_pt):
         for row in rows:
             entry = OxmlElement("m:e")
             first = row[0].findtext(M+"t", "") if row[0].tag == M+"r" else ""
-            if re.match(r"^[=<>≤≥]",first):
-                # A continuation relation is displayed as a literal operator,
-                # avoiding a compatibility parser's missing-operand placeholder.
+            if re.match(r"^[=<>≤≥+−]",first):
+                # m:lit must precede inherited m:sty. LibreOffice reads these
+                # properties in schema order; appending m:nor was ignored.
                 props=row[0].find(M+"rPr")
                 if props is None: props=OxmlElement("m:rPr"); row[0].insert(0,props)
-                normal=OxmlElement("m:nor"); normal.set(M+"val","1"); props.append(normal)
+                for inherited in list(props.findall(M+"lit")): props.remove(inherited)
+                literal=OxmlElement("m:lit"); literal.set(M+"val","1"); props.insert(0,literal)
             for child in row: entry.append(child)
             array.append(entry)
         element.append(array)
