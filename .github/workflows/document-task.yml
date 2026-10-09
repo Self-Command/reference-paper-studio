@@ -15,7 +15,7 @@ on:
       phase:
         required: true
         type: choice
-        options: [reference, review, model-review, md-review, template-build, export, visual, visual-receipt]
+        options: [reference, review, model-review, md-review, template-build, export, visual, visual-receipt, package]
       artifact_run:
         type: string
         default: ''

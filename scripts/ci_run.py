@@ -67,6 +67,19 @@ def execute(input_root, request_path, output, artifact_root=None, artifact_run=N
     elif stage in ("visual","visual-receipt") and artifact_root and artifact_run:
         from studio.visual_review import verify_receipt
         result = verify_receipt(confined(root,request["visual_receipt"]),artifact_root,artifact_run,output)
+    elif stage=="package":
+        from studio.runtime import run
+        from studio.contracts import ROOT
+        import shutil
+        # This operation creates a candidate, never a release or installation
+        # receipt. Publication remains gated by approved MD and bound reviews.
+        run([sys.executable,ROOT/"ci/package.py"])
+        Path(output).mkdir(parents=True,exist_ok=True)
+        manifest=json.loads((ROOT/"build/package-manifest.json").read_text(encoding="utf-8"))
+        for filename in (manifest["file"],"package-manifest.json"):
+            origin=ROOT/"build"/filename; target=Path(output)/filename
+            if origin.resolve()!=target.resolve(): shutil.copy2(origin,target)
+        result={"package":manifest["file"],"state":"candidate","installation_allowed":False}
     else: raise StudioError("INVALID_STAGE")
     if request.get("consistency_registry"):
         from studio.kdense import check_consistency

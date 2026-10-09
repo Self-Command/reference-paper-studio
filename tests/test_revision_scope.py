@@ -12,11 +12,18 @@ def test_font_change_preserves_content_and_model_approvals():
 
 def test_revision_scope_and_first_version_bytes(tmp_path):
     original=tmp_path/"first.docx"; original.write_bytes(b"exact first version")
-    event={"event_id":"r1","event_type":"revision","actor_type":"human","user_instruction":"修复F1","instruction_source":"user:fixture","content_snapshot_sha256":"a"*64,"approved_finding_ids":["F1"],"approved_paths":["layout.py"],"report_sha256":"b"*64}
+    report=tmp_path/"review.json"; report.write_text('{"findings":["F1"]}')
+    revision=tmp_path/"layout.py"; revision.write_text("new source")
+    after={"layout.py":digest(revision)}
+    event={"event_id":"r1","event_type":"revision","actor_type":"human","user_instruction":"修复F1","instruction_source":"user:fixture","content_snapshot_sha256":"a"*64,"approved_finding_ids":["F1"],"approved_paths":["layout.py"],"report_sha256":digest(report),"report_path":"review.json"}
     first={"first.docx":digest(original)}
-    assert verify(tmp_path,{"layout.py":"old"},{"layout.py":"new"},[event],"r1","a"*64,["F1"],first)["first_version_preserved"]
+    assert verify(tmp_path,{"layout.py":"old"},after,[event],"r1","a"*64,["F1"],first)["first_version_preserved"]
     with pytest.raises(StudioError,match="REVISION_SCOPE_EXCEEDED"):
         verify(tmp_path,{"paper.md":"old"},{"paper.md":"new"},[event],"r1","a"*64,["F1"],first)
     original.write_bytes(b"replacement")
     with pytest.raises(StudioError,match="FIRST_VERSION_CHANGED"):
-        verify(tmp_path,{"layout.py":"old"},{"layout.py":"new"},[event],"r1","a"*64,["F1"],first)
+        verify(tmp_path,{"layout.py":"old"},after,[event],"r1","a"*64,["F1"],first)
+    original.write_bytes(b"exact first version")
+    report.write_text('{"findings":["different report"]}')
+    with pytest.raises(StudioError,match="REVISION_REPORT_CHANGED"):
+        verify(tmp_path,{"layout.py":"old"},after,[event],"r1","a"*64,["F1"],first)

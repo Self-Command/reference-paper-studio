@@ -24,10 +24,19 @@ def invalidate(events,changes):
 def verify(root,before,after,events,event_id,snapshot_sha256,findings,first_artifacts):
     require_actions()
     event=require_approval(events,event_id,"revision",snapshot_sha256,findings=findings)
-    if not event.get("report_sha256") or not event.get("approved_paths"):
+    if not event.get("report_sha256") or not event.get("report_path") or not event.get("approved_paths"):
         raise StudioError("REVISION_SCOPE_MISSING: report and paths required")
+    report=confined(root,event["report_path"])
+    if not report.is_file() or digest(report)!=event["report_sha256"]:
+        raise StudioError("REVISION_REPORT_CHANGED")
     changed=sorted(name for name in set(before)|set(after) if before.get(name)!=after.get(name))
     if set(changed)-set(event["approved_paths"]): raise StudioError("REVISION_SCOPE_EXCEEDED: "+str(changed))
+    for name in changed:
+        path=confined(root,name)
+        if after.get(name) is None:
+            if path.exists(): raise StudioError("REVISION_DIFF_MISMATCH: "+name)
+        elif not path.is_file() or digest(path)!=after[name]:
+            raise StudioError("REVISION_DIFF_MISMATCH: "+name)
     for name,fingerprint in first_artifacts.items():
         if not confined(root,name).is_file() or digest(confined(root,name))!=fingerprint:
             raise StudioError("FIRST_VERSION_CHANGED: "+name)

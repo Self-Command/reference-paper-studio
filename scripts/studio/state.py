@@ -8,11 +8,20 @@ class ProjectFlow:
     def __init__(self, initial="intake"):
         require_actions()
         self.authorized=False
-        transitions=[{"trigger":event,"source":src,"dest":dest,**({"conditions":"has_authorization"} if event in USER_EVENTS else {})} for event,src,dest in EDGES]
+        self.model_evidence_ready=False
+        transitions=[{"trigger":event,"source":src,"dest":dest,**({"conditions":"has_authorization"} if event in USER_EVENTS else {"conditions":"has_model_evidence"} if event=="draft_md" else {})} for event,src,dest in EDGES]
         self.machine=Machine(model=self,states=STATES,transitions=transitions,initial=initial,auto_transitions=False,send_event=False)
     def has_authorization(self): return self.authorized
-    def apply(self,event,authorized=False):
+    def has_model_evidence(self): return self.model_evidence_ready
+    def apply(self,event,authorized=False,model_context=None):
         require_actions()
         self.authorized=authorized
-        try: return self.trigger(event)
-        finally: self.authorized=False
+        try:
+            if event=="draft_md" and model_context is not None:
+                from .manuscript import model_gate
+                result=model_gate(model_context["root"],model_context["source"],model_context.get("evidence"),True)
+                self.model_evidence_ready=result["status"]=="evidence_bound"
+            return self.trigger(event)
+        finally:
+            self.authorized=False
+            self.model_evidence_ready=False

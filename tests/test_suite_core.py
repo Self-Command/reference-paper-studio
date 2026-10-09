@@ -4,6 +4,7 @@ from transitions import MachineError
 from studio.approvals import snapshot, require_approval
 from studio.state import ProjectFlow
 from studio.runtime import StudioError
+from studio.runtime import digest
 from studio.kdense import check_consistency
 from studio.contracts import validate
 
@@ -51,3 +52,15 @@ def test_upstream_consistency_adapter_runs_and_reports_failure(tmp_path):
     with pytest.raises(StudioError,match="EVIDENCE_INCONSISTENT"):
         check_consistency(source,tmp_path/"failed.json")
     assert (tmp_path/"failed.json").is_file()
+
+def test_model_direction_approval_does_not_enable_paper_drafting(tmp_path):
+    flow=ProjectFlow("model_confirmed")
+    assert not flow.apply("draft_md",authorized=True)
+    assert flow.state=="model_confirmed"
+    model=tmp_path/"model.md"; model.write_text("Synthetic model for workflow testing")
+    report=tmp_path/"verification.md"; report.write_text("Author supplied verification fixture; not actual scientific evidence")
+    evidence={"status":"passed","author_approved":True,"model":"model.md","report":"verification.md","model_sha256":digest(model),"report_sha256":digest(report)}
+    (tmp_path/"evidence.json").write_text(json.dumps(evidence))
+    assert flow.apply("draft_md",model_context={"root":tmp_path,"source":"model.md","evidence":"evidence.json"})
+    assert flow.state=="md_draft"
+    assert not flow.model_evidence_ready

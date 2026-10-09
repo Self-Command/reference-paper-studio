@@ -13,6 +13,10 @@ ids=set()
 for entry in catalog["skills"]:
     if entry["id"] in ids: raise StudioError("DUPLICATE_SKILL_ID")
     ids.add(entry["id"])
+    for field in ("inputs","outputs","preconditions"):
+        if not isinstance(entry.get(field),list) or not entry[field] or any(not isinstance(value,str) or not value.strip() for value in entry[field]):
+            raise StudioError("SKILL_GUIDE_CARD_INCOMPLETE: "+entry["id"]+":"+field)
+    if not entry.get("example","").startswith("$"+entry["id"]+" "): raise StudioError("SKILL_USAGE_EXAMPLE_MISMATCH")
     source=root/entry["entrypoint"]
     text=source.read_text(encoding="utf-8")
     header=yaml.safe_load(text.split("---",2)[1])
