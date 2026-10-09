@@ -1,0 +1,18 @@
+{
+  "id": "reference-journal-v1",
+  "version": 1,
+  "page": {"size": "a4", "margin_cm": {"top": 2.2, "bottom": 2.2, "left": 2.2, "right": 2.2}, "column_spacing_cm": 0.6},
+  "fonts": {"cjk": "Noto Serif CJK SC", "latin": "Liberation Serif", "math": "Latin Modern Math"},
+  "body_size_pt": 10,
+  "english_abstract_position": "front",
+  "equation_numbering": "preserve",
+  "tables": {"top_rule_pt": 1.0, "header_rule_pt": 0.5, "bottom_rule_pt": 1.0, "header_rows": 1},
+  "body_columns": 2,
+  "front_columns": 1,
+  "end_abstract_columns": 1,
+  "body_line_minimum_pt": 14,
+  "table_line_minimum_pt": 12,
+  "automatic_full_width_objects": false,
+  "content_layout_overrides": false,
+  "source_notes": "双栏与三线表依据参考论文共识。页边距、字号与开源替代字体为工程配置，不宣称精确复现参考字体。"
+}

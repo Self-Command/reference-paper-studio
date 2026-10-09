@@ -4,6 +4,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      stage:
+        type: choice
+        default: full
+        options: [master, full]
 permissions:
   contents: read
 jobs:
@@ -17,11 +22,19 @@ jobs:
           python-version: '3.12.8'
       - run: pip install -r requirements.lock
       - run: bash ci/setup.sh
+        if: inputs.stage != 'master'
       - run: python ci/validate_skill.py
+      - run: python ci/template_build.py
+      - run: python -m pytest tests/test_locked_template.py -q --junitxml=build/template-tests.xml
+        if: inputs.stage == 'master'
       - run: python -m pytest -q --junitxml=build/test-results.xml
+        if: inputs.stage != 'master'
       - run: python ci/probe_math.py
+        if: inputs.stage != 'master'
       - run: python ci/regression.py
+        if: inputs.stage != 'master'
       - run: python ci/package.py
+        if: inputs.stage != 'master'
       - run: git rev-parse HEAD > build/skill-commit.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
