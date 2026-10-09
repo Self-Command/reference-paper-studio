@@ -7,3 +7,9 @@ Inspected and copied commit 92ace75ac21efe19a620434e0ca4e356081fe807.
 Files: scientific-writing/{_common.py,audit_claims.py,check_consistency.py}; peer-review/{_common.py,validate_claim_evidence.py}; citation-management/{_common.py,doi_to_bibtex.py}.
 Original license: scripts/studio/vendor/kdense/LICENSE.md.
 Adaptation: each command entry checks the Actions environment before execution; helper implementations remain upstream. The shared adapter executes explicitly authored consistency registries. Line-based audits are not represented as mathematical proofs or automatic Chinese AST evidence audits.
+
+## FontTools and CALS cloud investigation
+
+FontTools 4.66.1 (MIT), https://github.com/fonttools/fonttools, is an installed dependency for reading selected font-face metadata and glyph maps. No upstream source is copied into this repository and no fonts are extracted, rewritten or redistributed by this inspection.
+
+CALS 2.4.2 by Oleg Parashchenko (LPPL), https://ctan.org/pkg/cals, is provided by the pinned TeX Live environment. Only its documented interfaces are exercised in the cloud feasibility check. It has not yet been adopted as the default export backend. The native two-column check is separate from the failed automatic continuation experiment inside multicols; that failure is retained in Actions 37944090286.

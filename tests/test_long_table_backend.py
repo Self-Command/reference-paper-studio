@@ -2,14 +2,13 @@
 import re
 from studio.runtime import run
 
-def test_upstream_cals_repeats_headers_and_bottom_captions_in_two_columns(tmp_path):
+def test_upstream_cals_repeats_headers_and_bottom_captions_in_native_columns(tmp_path):
     rows="\n".join(r"\brow\cell{Entry"+str(i)+r"}\cell{Value"+str(i)+r"}\erow" for i in range(160))
-    source=r"""\documentclass{article}
+    source=r"""\documentclass[twocolumn,a4paper]{article}
 \usepackage[margin=2.2cm]{geometry}
 \usepackage{multicol,cals}
 \makeatletter
 \begin{document}
-\begin{multicols}{2}
 \par\begin{calstable}
 \colwidths{{\dimexpr\linewidth/2\relax}{\dimexpr\linewidth/2\relax}}
 \def\cals@cs@width{0pt}\def\cals@framecs@width{0pt}
@@ -18,7 +17,7 @@ def test_upstream_cals_repeats_headers_and_bottom_captions_in_two_columns(tmp_pa
 \tfoot{\lastrule\par\noindent Table 1 Stress dataset\par}
 ROWS
 \end{calstable}
-\end{multicols}\end{document}
+\end{document}
 """.replace("ROWS",rows)
     (tmp_path/"table.tex").write_text(source,encoding="utf-8")
     run(["xelatex","-interaction=nonstopmode","-halt-on-error","table.tex"],cwd=tmp_path)

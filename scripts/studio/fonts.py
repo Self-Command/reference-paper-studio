@@ -15,7 +15,10 @@ def resolve_faces(fonts):
                 raise StudioError("MISSING_FONT: exact family "+family+" ("+shape+")")
             file,index,names,postscript=fields
             if not index.isdecimal() or not Path(file).is_file():raise StudioError("FONT_FACE_UNRESOLVED: "+family)
-            records[role][shape]={"family":family,"families":names,"file":Path(file).name,"index":int(index),"postscript_name":postscript,"sha256":digest(file),"collection":Path(file).suffix.lower() in (".ttc",".otc")}
+            from fontTools.ttLib import TTFont
+            with TTFont(file,fontNumber=int(index)) as font:
+                cff_names=font["CFF "].cff.fontNames if "CFF " in font else []
+            records[role][shape]={"family":family,"families":names,"file":Path(file).name,"index":int(index),"postscript_name":postscript,"cff_names":cff_names,"sha256":digest(file),"collection":Path(file).suffix.lower() in (".ttc",".otc")}
     return records
 
 def fontspec_options(faces):

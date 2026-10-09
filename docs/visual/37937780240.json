@@ -1,0 +1,328 @@
+{
+  "visual_status": "completed",
+  "installation_allowed": false,
+  "findings": [
+    {
+      "check_id": "V12",
+      "page": 3,
+      "description": "Long formulas preserve content but are split into too many short lines; improve reversible breakpoint layout.",
+      "object": "M10",
+      "id": "F01"
+    },
+    {
+      "check_id": "V17",
+      "page": 1,
+      "description": "LaTeX continuation in the next column lacks a repeated header. Word end variant splits data row H. Both lack continuation labels.",
+      "object": "Table 1",
+      "id": "F02"
+    },
+    {
+      "check_id": "V02",
+      "page": 6,
+      "description": "Title and beginning are on page 5; continuation and keywords on page 6 create large avoidable white space.",
+      "object": "end variant LaTeX English abstract",
+      "id": "F03"
+    },
+    {
+      "check_id": "V04",
+      "page": 1,
+      "description": "Page-number component not implemented in this candidate mother.",
+      "object": "Word all pages",
+      "id": "F04"
+    },
+    {
+      "check_id": "V03",
+      "page": 1,
+      "description": "Selected Noto Serif CJK SC is rendered using NotoSerifCJKjp faces; actual TTC face must be fixed.",
+      "object": "LaTeX PDF font records",
+      "id": "F05"
+    },
+    {
+      "check_id": "V16",
+      "page": 2,
+      "description": "Fixture-only name is explicitly awaiting author confirmation; no authority to silently add or approve scientific body references.",
+      "object": "Table 1 name and body reference",
+      "id": "F06"
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "V01",
+      "result": "passed"
+    },
+    {
+      "check_id": "V02",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V03",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V04",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V05",
+      "result": "passed"
+    },
+    {
+      "check_id": "V06",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V07",
+      "result": "passed"
+    },
+    {
+      "check_id": "V08",
+      "result": "passed"
+    },
+    {
+      "check_id": "V09",
+      "result": "passed"
+    },
+    {
+      "check_id": "V10",
+      "result": "passed"
+    },
+    {
+      "check_id": "V11",
+      "result": "passed"
+    },
+    {
+      "check_id": "V12",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V13",
+      "result": "not_applicable"
+    },
+    {
+      "check_id": "V14",
+      "result": "not_applicable"
+    },
+    {
+      "check_id": "V15",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V16",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V17",
+      "result": "issues_found"
+    },
+    {
+      "check_id": "V18",
+      "result": "passed"
+    },
+    {
+      "check_id": "V19",
+      "result": "not_applicable"
+    },
+    {
+      "check_id": "V20",
+      "result": "passed"
+    },
+    {
+      "check_id": "V21",
+      "result": "passed"
+    }
+  ],
+  "schema_version": 2,
+  "artifacts": [
+    {
+      "path": "modular-model-front/manuscript.docx",
+      "reviewed": true,
+      "review_basis": "cloud-rendered proof and editable-output preservation report",
+      "sha256": "e0e4f92fe88b34f98924773271b40df2cba9a912527654191442e654585bf165"
+    },
+    {
+      "path": "modular-model-front/latex/main.tex",
+      "reviewed": true,
+      "review_basis": "cloud-rendered proof and editable-output preservation report",
+      "sha256": "4af2b78fc07cf069a36959e07cdf7362bc4a2a7fc06a5dc7605928f0011910ee"
+    },
+    {
+      "path": "modular-model-front/word-compat-proof.pdf",
+      "reviewed": true,
+      "sha256": "6041a3456ad5ef59285e80af73b0d3aac644bc45256a493858e2401af0308464"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-1.png",
+      "reviewed": true,
+      "sha256": "b81bbd2f2725b6ed243bd91aae051f94201094325953f674acbd6d89327ca484"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-2.png",
+      "reviewed": true,
+      "sha256": "56bef9216754fc94f6069476420b9e73b64b3d3e0c91d3bb3061b4561a9cdecd"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-3.png",
+      "reviewed": true,
+      "sha256": "c55b22fe9a5a8cdc5655b6bf3e76d751f08e07bacc7652c75bc9672ca1f7facf"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-4.png",
+      "reviewed": true,
+      "sha256": "3c6d8d8d71a7c7ed31f40d4efa2349f2c9a51618bbc794af3aac8ab4b54d5e98"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-5.png",
+      "reviewed": true,
+      "sha256": "5ee3eee7473fb0ec9dba81d55200188d54f168480cdfc260da5da860160f82f2"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-6.png",
+      "reviewed": true,
+      "sha256": "d38d0be816a707c3f141faffb512f9bb67a6f5dcbc21854f05d1d361c8f7fcbf"
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-7.png",
+      "reviewed": true,
+      "sha256": "89eb7ac2521098c13d2c546a3c7ac88fc91ca2bf12266aa8b5665af033c750ef"
+    },
+    {
+      "path": "modular-model-front/latex-proof.pdf",
+      "reviewed": true,
+      "sha256": "cb6c18853963f30bda0a249ee03cc3e05219b764f7c43e02126b6571e58a06ca"
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-1.png",
+      "reviewed": true,
+      "sha256": "f67916ba19acb0f8eaf90ca46bc4f59de73148acf63e806cd7948df6f97278b3"
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-2.png",
+      "reviewed": true,
+      "sha256": "689aac2cd8b8ab8112c10a990f7c77cb8ce8cc175775ee02aff05fd42a1535af"
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-3.png",
+      "reviewed": true,
+      "sha256": "5d1d056457b44d4964ff77ec12858419cc9a4b1f714a2c10f694b4b89bfa68b7"
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-4.png",
+      "reviewed": true,
+      "sha256": "1e1d3a54035d1522c54461e4fa706cefc2db29acefc4a7b3008993a97743b1b9"
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-5.png",
+      "reviewed": true,
+      "sha256": "731d3015509308327ebbfc99e11283364ee97de06896207ebf066d60c23563a1"
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-6.png",
+      "reviewed": true,
+      "sha256": "80fb60841a52495e3bcc5df858ea088606a61e2c6eb5776a24bac726f5bd1d1d"
+    },
+    {
+      "path": "modular-model-end/manuscript.docx",
+      "reviewed": true,
+      "review_basis": "cloud-rendered proof and editable-output preservation report",
+      "sha256": "266d7351c8b90fa24ed598ecd75ca8e4ab5a4c56812e09460f4b3e290fc28409"
+    },
+    {
+      "path": "modular-model-end/latex/main.tex",
+      "reviewed": true,
+      "review_basis": "cloud-rendered proof and editable-output preservation report",
+      "sha256": "1bb4c4d6bec79f444ddbd977ddc1c02c4417351fa7285be5868db22378159e98"
+    },
+    {
+      "path": "modular-model-end/word-compat-proof.pdf",
+      "reviewed": true,
+      "sha256": "c466112f3b52a16600e245742fe7b0bb5165e6a337bc93ffd549d31ae21398c4"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-1.png",
+      "reviewed": true,
+      "sha256": "08d3e27e9c515912f7086742b252523d97b9506289a60e940c4d41ea183d5f83"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-2.png",
+      "reviewed": true,
+      "sha256": "dcdcf9dc40db2fcefc481b2602f3968b46b603a784673771dea1e1020792c21d"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-3.png",
+      "reviewed": true,
+      "sha256": "3250f6d14e81d9a171712ebb22f5817c4be4c010f329773edea2dcc9c0d21342"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-4.png",
+      "reviewed": true,
+      "sha256": "34f35ec1da74a3104e9cbd2af9f73e05bb421d0e258650ea40267d53c46af6a4"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-5.png",
+      "reviewed": true,
+      "sha256": "f7dd74a32252b4f381a44b70026368cc751dffdf18db8c93a7ec5892c82e5433"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-6.png",
+      "reviewed": true,
+      "sha256": "62a49ab1e7278a21882d6132224d7075d650874e075a1c476f6a922e3aeee839"
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-7.png",
+      "reviewed": true,
+      "sha256": "747956e01faf77ff4a61d0065dd632b17588852dcb27eeb55463f9e856b9ebb0"
+    },
+    {
+      "path": "modular-model-end/latex-proof.pdf",
+      "reviewed": true,
+      "sha256": "a5e73e79c50a73f095289b49105d6e6fa44e0bd759593ffbccc77c0b19d47561"
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-1.png",
+      "reviewed": true,
+      "sha256": "b41d257aab71ac6cb0dee9cfb06ea4d1c9ee467175dd9ad32170480b5771bdd7"
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-2.png",
+      "reviewed": true,
+      "sha256": "cf7068372d9fd322f0abeedaff57563396a44896a4e89977830cc16d278093cb"
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-3.png",
+      "reviewed": true,
+      "sha256": "ea4e290ca85821eea9e6098a51e203166b83d1471e18bfc14e2e914d08e993f7"
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-4.png",
+      "reviewed": true,
+      "sha256": "69e2c944c579912e1b9f8447f5a9eacb5864a4d0caa68594b296b4ad0e545cbb"
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-5.png",
+      "reviewed": true,
+      "sha256": "f603d5bb902fbd1d9a9f538cac078b4fe8aa4f69f685bedd922e5c2d984cc376"
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-6.png",
+      "reviewed": true,
+      "sha256": "9637ef6e11af0c9b5f8b31d0f5b8930eccce363aa79acef475a1c7b341ee41b5"
+    }
+  ],
+  "report": "docs/visual/37937780240.md",
+  "run_id": "37937780240",
+  "visual_result": "issues_found",
+  "reviewer": "Codex: full cloud PNG visual inspection, 2026-10-09",
+  "reviewed_page_count": 26,
+  "report_bindings": {
+    "modular-model-front/acceptance.json": {
+      "template_manifest_sha256": "23aa369a6439c4edb24bdf518935d8854e9156ccf3d8e7286efc5b6fbde98a21",
+      "input_sha256": "38dde9e159556eb4634b33a5ceb02a82a737ca7a1df31f3de140d75c4b1f2e4f",
+      "sha256": "9f1296863788a3bafbce10cd077006d47df420b077aeff015cd42eaa4fdf307b"
+    },
+    "modular-model-end/acceptance.json": {
+      "template_manifest_sha256": "c27bdc4054ec8d21799789862ffb0039281c4d3963a5141cc893a0ddb7ce4c2a",
+      "input_sha256": "38dde9e159556eb4634b33a5ceb02a82a737ca7a1df31f3de140d75c4b1f2e4f",
+      "sha256": "159d4ba99b6e86c71c1731d91dc7d95de91a14fca821a55a5e4bac2cbdc81eb3"
+    }
+  }
+}

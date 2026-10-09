@@ -26,12 +26,30 @@ def test_ttc_collection_uses_actual_sc_face_in_compiled_pdf(tmp_path):
     fonts={"cjk":"Noto Serif CJK SC","latin":"Liberation Serif","math":"Latin Modern Math"}
     faces=resolve_faces(fonts)
     source=tmp_path/"face.tex"
-    source.write_text(r"\documentclass{article}\usepackage{fontspec,xeCJK}"+fontspec_declaration(r"\setCJKmainfont",fonts["cjk"],faces["cjk"])+r"\begin{document}简体中文模型\textbf{字体测试}\end{document}",encoding="utf-8")
+    source.write_text(r"\documentclass{article}\usepackage{fontspec,xeCJK}"+fontspec_declaration(r"\setCJKmainfont",fonts["cjk"],faces["cjk"])+r"\begin{document}骨直令简体中文模型\textbf{字体测试}\end{document}",encoding="utf-8")
     run(["xelatex","-interaction=nonstopmode","-halt-on-error",source.name],cwd=tmp_path)
     observed={name.split("+")[-1] for page in inspect_output_pdf(tmp_path/"face.pdf",tmp_path/"previews")["pages"] for name in page["fonts"]}
-    assert faces["cjk"]["upright"]["postscript_name"] in observed, {"faces":faces,"source":source.read_text(),"observed":sorted(observed)}
-    assert faces["cjk"]["bold"]["postscript_name"] in observed
-    assert not any("CJKjp" in name for name in observed)
+    # The shared CFF table in a collection may retain the JP outline name
+    # even for an SC face. Validate actual character CIDs against the selected
+    # face's cmap, instead of mistaking that name alone for a wrong glyph.
+    for shape in ("upright","bold"):
+        assert observed & {faces["cjk"][shape]["postscript_name"],*faces["cjk"][shape]["cff_names"]}
+    from fontTools.ttLib import TTFont
+    from pypdf import PdfReader
+    import re
+    file=run(["fc-match","-f","%{file}",fonts["cjk"]]).strip()
+    with TTFont(file,fontNumber=faces["cjk"]["upright"]["index"]) as font:cmap=font.getBestCmap()
+    actual={}
+    for entry in PdfReader(tmp_path/"face.pdf").pages[0]["/Resources"]["/Font"].values():
+        entry=entry.get_object()
+        if "Regular" not in str(entry.get("/BaseFont","")) or "/ToUnicode" not in entry:continue
+        text=entry["/ToUnicode"].get_data().decode("ascii")
+        for block in re.findall(r"beginbfchar(.*?)endbfchar",text,re.S):
+            for code,unicode in re.findall(r"<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>",block):actual[int(unicode,16)]=int(code,16)
+    expected={ord(char):int(cmap[ord(char)][3:]) for char in "骨直令"}
+    from studio.runtime import write_json
+    write_json("build/font-face-probe.json",{"faces":faces,"observed_pdf_names":sorted(observed),"expected_sc_cids":expected,"actual_pdf_cids":actual,"source":source.read_text()})
+    assert {code:actual.get(code) for code in expected}==expected
 
 def test_exact_family_and_registered_bytes_cannot_be_silently_substituted():
     from studio.qa import check_fonts
