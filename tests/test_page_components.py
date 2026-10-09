@@ -34,5 +34,6 @@ def test_component_removal_does_not_leave_hidden_page_fields(tmp_path):
     descriptor=deepcopy(load_composition("reference-journal-v1","2.0.0")[0])
     descriptor["components"].remove("page-number")
     p,_=compile_components(descriptor)
+    p.update(id=descriptor["id"],version=descriptor["version"])
     create_templates(tmp_path,p)
     assert not any(list(section.footer._element.iter(qn("w:fldSimple"))) for section in Document(tmp_path/"master-front.docx").sections)

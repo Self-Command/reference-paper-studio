@@ -29,7 +29,7 @@ def test_ttc_collection_uses_actual_sc_face_in_compiled_pdf(tmp_path):
     source.write_text(r"\documentclass{article}\usepackage{fontspec,xeCJK}"+fontspec_declaration(r"\setCJKmainfont",fonts["cjk"],faces["cjk"])+r"\begin{document}简体中文模型\textbf{字体测试}\end{document}",encoding="utf-8")
     run(["xelatex","-interaction=nonstopmode","-halt-on-error",source.name],cwd=tmp_path)
     observed={name.split("+")[-1] for page in inspect_output_pdf(tmp_path/"face.pdf",tmp_path/"previews")["pages"] for name in page["fonts"]}
-    assert faces["cjk"]["upright"]["postscript_name"] in observed
+    assert faces["cjk"]["upright"]["postscript_name"] in observed, {"faces":faces,"source":source.read_text(),"observed":sorted(observed)}
     assert faces["cjk"]["bold"]["postscript_name"] in observed
     assert not any("CJKjp" in name for name in observed)
 

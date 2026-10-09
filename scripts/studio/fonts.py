@@ -22,7 +22,8 @@ def fontspec_options(faces):
     """Collection indices are fixed from actual fontconfig matches, not guessed."""
     require_actions()
     keys={"upright":"UprightFeatures","bold":"BoldFeatures","italic":"ItalicFeatures","bolditalic":"BoldItalicFeatures"}
-    options=[keys[shape]+"={FontIndex="+str(face["index"])+"}" for shape,face in faces.items() if face["collection"]]
+    options=["FontIndex="+str(faces["upright"]["index"])] if faces["upright"]["collection"] else []
+    options += [keys[shape]+"={FontIndex="+str(face["index"])+"}" for shape,face in faces.items() if face["collection"]]
     return "["+",".join(options)+"]" if options else ""
 
 def fontspec_declaration(command,family,faces):
