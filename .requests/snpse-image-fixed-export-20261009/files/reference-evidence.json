@@ -1,0 +1,20 @@
+{
+  "provenance": "Untouched public paper inspected as input quality reference, not as replacement for the approved fixed template",
+  "observations": [],
+  "sources": [
+    {
+      "id": "PUB1",
+      "path": "paper.pdf",
+      "pages": [
+        1,
+        2,
+        3,
+        12,
+        38
+      ]
+    }
+  ],
+  "unknown_properties": [
+    "No paper-specific layout changes; existing versioned journal template governs output"
+  ]
+}
