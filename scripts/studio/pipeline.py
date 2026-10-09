@@ -27,7 +27,9 @@ def export(root, request, output, reference_rules=None):
     try:
         return _export(root, request, output, reference_rules)
     except Exception as error:
-        write_json(Path(output)/"acceptance.json", {"build":"failed", "automatic_acceptance":"failed", "visual_review":"not_available", "error":str(error), "exception_type":type(error).__name__})
+        directory=Path(output)
+        complete=all((directory/n).is_file() for n in ("manuscript.docx","word-compat-proof.pdf","latex-proof.pdf"))
+        write_json(directory/"acceptance.json", {"build":"passed" if complete else "failed", "automatic_acceptance":"failed", "visual_review":"blocked", "error":str(error), "exception_type":type(error).__name__, "execution":{"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA")},"template_request":{k:request.get(k) for k in ("template_id","template_version","template_variant")},"diagnostic_artifacts_retained":True})
         raise
 
 
@@ -144,6 +146,11 @@ def _export(root, request, output, reference_rules=None):
     word_pdf["page_flow"]=check_page_flow(output/"word-compat-proof.pdf",profile)
     word_geometry=check_column_geometry(output/"word-compat-proof.pdf",profile,ast,meta)
     write_json(output/"word-column-geometry.json",word_geometry)
+    from .math_proof import prove
+    if equations:
+        isolated_math=prove(final,output/"isolated-math-proof")
+        write_json(output/"isolated-math-summary.json",isolated_math)
+        if isolated_math["missing"]: raise StudioError("WORD_MATH_GLYPHS_MISSING: see isolated-math-proof/glyph-preservation.json")
     if equations:
         labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
         word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)

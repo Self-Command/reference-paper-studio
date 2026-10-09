@@ -91,3 +91,15 @@ def test_latex_layout_commands_rejected(tmp_path):
     from studio.manuscript import parse
     source=tmp_path/"override.md"; source.write_text(r"$$\small x+y$$")
     with pytest.raises(StudioError,match="CONTENT_LAYOUT_COMMAND_FORBIDDEN"): parse(source,tmp_path)
+
+
+def test_unknown_request_field_fails(masters):
+    with pytest.raises(StudioError,match="UNKNOWN_REQUEST_FIELDS"):
+        resolve_template({**request(),"custom_layout_override": {"columns":1}})
+
+
+def test_physical_section_tampering_fails(masters,tmp_path):
+    master,p,_=resolve_template(request())
+    doc=Document(master); doc.sections[1]._sectPr.find(qn("w:cols")).set(qn("w:num"),"1")
+    bad=tmp_path/"bad.docx";doc.save(bad)
+    with pytest.raises(StudioError,match="TEMPLATE_SECTIONS_CHANGED"):check_contract(bad,p)

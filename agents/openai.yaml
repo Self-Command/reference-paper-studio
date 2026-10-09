@@ -1,6 +1,6 @@
 interface:
   display_name: "参考论文工作室"
-  short_description: "从参考论文提炼中文建模写作规则，云端生成并验收 Word、LaTeX 与 PDF"
-  default_prompt: "使用 $reference-paper-studio 按我的参考论文提炼规则，先审查模型证据，再通过 GitHub Actions 完成双格式排版与验收。"
+  short_description: "从参考论文提炼建模规则，用代码强制的固定模板云端生成与验收双栏论文"
+  default_prompt: "使用 $reference-paper-studio 按我的参考论文提炼规则，先审查模型证据；AI 只写内容，使用登记母版强制正文双栏，通过 GitHub Actions 完成 Word、LaTeX 与 PDF 验收。"
 policy:
   allow_implicit_invocation: true
