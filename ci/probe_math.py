@@ -74,5 +74,7 @@ for number,mode in enumerate(("plain","lit-sty","nor-sty","lit-only","nor-only",
 path=folder/"continuations.docx";probe.save(path)
 run(["libreoffice","-env:UserInstallation=file:///tmp/rps-continuations","--headless","--convert-to","pdf","--outdir",folder,path])
 with pdfplumber.open(folder/"continuations.pdf") as proof:
-    (folder/"continuations.json").write_text(json.dumps([{"page":i,"text":p.extract_text()} for i,p in enumerate(proof.pages,1)],ensure_ascii=False,indent=2),encoding="utf-8")
+    diagnosis=[{"page":i,"text":p.extract_text()} for i,p in enumerate(proof.pages,1)]
+    (folder/"continuations.json").write_text(json.dumps(diagnosis,ensure_ascii=False,indent=2),encoding="utf-8")
+    print("CONTINUATION_PROBE: "+json.dumps(diagnosis,ensure_ascii=False))
 run(["pdftoppm","-r","75","-png",folder/"continuations.pdf",folder/"continuation"])

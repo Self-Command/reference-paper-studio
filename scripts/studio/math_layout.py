@@ -34,6 +34,14 @@ def restore(root, changes):
 def wrap(root, width_pt):
     require_actions()
     before = deepcopy(root); changes = []
+    # Pandoc represents TeX setminus by ASCII backslash. LibreOffice treats that
+    # as a StarMath escape and consumes the following operand. U+2216 carries
+    # the same set-difference operator without parser escape semantics.
+    slash = [node for node in root.iter(M+"t") if node.text == "\\"]
+    if slash:
+        old = etree.tostring(root,encoding="unicode")
+        for node in slash: node.text = "∖"
+        changes.append({"path":[],"before":old,"after":etree.tostring(root,encoding="unicode"),"reason":"setminus operator Unicode spelling"})
     containers = {"oMath", "e", "num", "den", "lim"}
     def visit(element, path, budget):
         name = etree.QName(element).localname
@@ -108,7 +116,7 @@ def wrap(root, width_pt):
                 # properties in schema order; appending m:nor was ignored.
                 props=row[0].find(M+"rPr")
                 if props is None: props=OxmlElement("m:rPr"); row[0].insert(0,props)
-                for inherited in list(props.findall(M+"lit")): props.remove(inherited)
+                for inherited in list(props): props.remove(inherited)
                 literal=OxmlElement("m:lit"); literal.set(M+"val","1"); props.insert(0,literal)
             for child in row: entry.append(child)
             array.append(entry)
