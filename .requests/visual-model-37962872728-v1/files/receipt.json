@@ -1,0 +1,331 @@
+{
+  "schema_version": 2,
+  "run_id": "37962872728",
+  "reviewer": "Codex: direct inspection of cloud-generated page PNGs",
+  "visual_status": "completed",
+  "visual_result": "issues_found",
+  "installation_allowed": false,
+  "artifacts": [
+    {
+      "path": "modular-model-end/manuscript.docx",
+      "sha256": "51550e286d29125cde0e1b794b29ac4e8d7abb6e25b071df27c4e0589eaead49",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/latex/main.tex",
+      "sha256": "49916ac5cc911f37c9d3237e04bdd260732c23f1536fa2d75e050e8dc3a3cd08",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/word-compat-proof.pdf",
+      "sha256": "bba12d04b15ded54b30c65650661a6eb4f43d373d562f891b6c11b29631ec865",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-1.png",
+      "sha256": "9dce6b56f13259bd17222eeb4e25a59ae009376f99c3faa47c029e3fafb841bf",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-2.png",
+      "sha256": "ff41de1a37fe73db702db9b7cbfd11c302c38fe611506f5f7fca24f4aa9f839e",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-3.png",
+      "sha256": "2c40a8a2425ce46c2695e4b2781d8f3b85268de6ef764ba8c913bdc471abb52e",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-4.png",
+      "sha256": "917e4abf7a76c8808ee04f7fba36100f23a23ccfd8f817d9c5a2d15c5ac7f626",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-5.png",
+      "sha256": "65346695fdaf83f2bf849a934d986ff22de852fc1e027a92b752fda7774d69c2",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-6.png",
+      "sha256": "b4b9c287f676cae3f6f66fa8c4076df5feed976ba3ecb56efaa0616d2fb3f1d2",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/word-compat-proof/page-7.png",
+      "sha256": "3f072e91450528df50a9f6d6531986b6c32e4cd5d032082fabd2760a66a76c45",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/latex-proof.pdf",
+      "sha256": "d6bb4931a563a70b2fe2577aeab75bc897e3ea44efb35b15d201880fa1bd20b6",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-1.png",
+      "sha256": "cf15a600226c3e7085623351e98adcdf86263be0d88b35c0fd384cf79bae0dab",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-2.png",
+      "sha256": "aedeedb15ad446cbd5f6346470b429ee4c9656e60c277fd64330da355331261d",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-3.png",
+      "sha256": "c779dc18af0dc908096300e90fb2775376b29be841d5976f57ac7ba435f0ad2e",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-4.png",
+      "sha256": "f0a748ef1f249c28a7545f8277da5bcf586aeac917559d974e6e6bfaf1619b1b",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-5.png",
+      "sha256": "954c44cce104d934a176e9a1ba24d234e35eedf194ef4188c1cb35e7237e34bb",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-end/previews/latex-proof/page-6.png",
+      "sha256": "0fc27f2ddb02c0cb42f10b8f08a44e73ad5095a5dc6535de7eae9919a5ed26e8",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/manuscript.docx",
+      "sha256": "b981f16cff2ea33ba59391c056fd6c12bb406f0bd6ad837558d203dca355e26b",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/latex/main.tex",
+      "sha256": "2309c35c1198adf7fc1fb5ab39075e4b043286b105fa25f48fa42414c58dbb20",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/word-compat-proof.pdf",
+      "sha256": "44d2ef5198d92fb7905c1a462055931de9b73e4311e781a09c54d5641d5c8b04",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-1.png",
+      "sha256": "45309a1e8dfdc65e8430bfba9a27eeec3c0092a1268dd577ae9168fbb8aa3a07",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-2.png",
+      "sha256": "e06708fd82cb3181f81e2b2ecdd0ade17b8b0c93fa086c931a90ef2ff9e2602b",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-3.png",
+      "sha256": "0b474ca287f30297dc437d03623d0fae0df317f5e3339eb5c284bf0e53f847dc",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-4.png",
+      "sha256": "06f66ca04b4e88622c115cf2045a3740eaf8f5d412829cd170233a32b538b67f",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-5.png",
+      "sha256": "0b3cb70e7cdeb6f83a2349b4de501b47626ed474dd4ff3ad541f19ef6ae9e0d7",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-6.png",
+      "sha256": "08acac93f5c3c096c9aa16c5af0530aced8acbe6707c849b841dacf81a464ec4",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/word-compat-proof/page-7.png",
+      "sha256": "1c0dc75243648a1072494f13debf50b94826450abd4b761ccb430d35a0dc6487",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/latex-proof.pdf",
+      "sha256": "2f4a30bdbc03674da7fd974212d38c835355e395950bf7c5f09ff377454484c9",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-1.png",
+      "sha256": "15b7ba6749b614050f23576669a14fdeedb304c05d1b26b8087e45b53ab1afa7",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-2.png",
+      "sha256": "e7c63e069b374256e1e8fc517200ebacada1286e2b28cab796460c860f35648a",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-3.png",
+      "sha256": "48c4e11b82b0892eebf835defbbf4e0e77d8d20e82350fc3d57f157d1b0647bf",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-4.png",
+      "sha256": "828a66e466e6e3715f188e743ff5f0523ce9cca0139ffdc44ba7c4caa9d5d324",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-5.png",
+      "sha256": "c26d488d1e6a99998abcd232da72f57aab75ce68ec926e4642d73850540421d9",
+      "reviewed": true
+    },
+    {
+      "path": "modular-model-front/previews/latex-proof/page-6.png",
+      "sha256": "2bc138bd4a81a17ff29f321d449aedda542146327a75c97bf8a66c46a8eefacf",
+      "reviewed": true
+    }
+  ],
+  "report_bindings": {
+    "modular-model-end/acceptance.json": {
+      "input_sha256": "38dde9e159556eb4634b33a5ceb02a82a737ca7a1df31f3de140d75c4b1f2e4f",
+      "sha256": "d2c1529a361da500b77a1353d0e75bbafa87df81b87507ce94fad96f0f222c72",
+      "template_manifest_sha256": "4b6ae72d98629d3ab58db7f93968b06633083b5dc63beb4a21461c399d731dbf"
+    },
+    "modular-model-front/acceptance.json": {
+      "input_sha256": "38dde9e159556eb4634b33a5ceb02a82a737ca7a1df31f3de140d75c4b1f2e4f",
+      "sha256": "c664bb9b4ca4120d0ea7750c3031e3575fe7c4c7a196cc653c5a04c3bea5af83",
+      "template_manifest_sha256": "4b6ae72d98629d3ab58db7f93968b06633083b5dc63beb4a21461c399d731dbf"
+    }
+  },
+  "checks": [
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V01",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V02",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V03",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V04",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V05",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V06",
+      "result": "issues_found"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V07",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V08",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V09",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V10",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V11",
+      "result": "issues_found"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V12",
+      "result": "issues_found"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V13",
+      "result": "not_applicable"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V14",
+      "result": "not_applicable"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V15",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V16",
+      "result": "issues_found"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V17",
+      "result": "issues_found"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V18",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V19",
+      "result": "not_applicable"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V20",
+      "result": "passed"
+    },
+    {
+      "evidence": "See docs/visual/37962872728.md, same check ID; all cloud preview pages inspected.",
+      "check_id": "V21",
+      "result": "passed"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F01",
+      "object": "M10 and long equations",
+      "check_id": "V12",
+      "description": "Display font advances reduced fragmentation, but nested conditions and several long displays still need refinement; Word page 3 and LaTeX page 2."
+    },
+    {
+      "id": "F03",
+      "object": "Word Table 1",
+      "check_id": "V17",
+      "description": "Repeated headers exist; continuation segments lack bottom continuation names, pages 1-2."
+    },
+    {
+      "id": "F04",
+      "object": "Technical fixture caption",
+      "check_id": "V16",
+      "description": "Added caption and corresponding body references await author confirmation; original manuscript unchanged."
+    },
+    {
+      "id": "F05",
+      "object": "End-variant LaTeX pages 6-7",
+      "check_id": "V06",
+      "description": "End LaTeX page 6 contains only the English region; native full-width transition still forces a page with large white space. The previous bibliography-only extra page disappeared."
+    },
+    {
+      "id": "F06",
+      "check_id": "V11",
+      "object": "LaTeX M2 M6 M8 M10",
+      "description": "Some wide display numbers move below the complete expression in both variants page 2. Word centering does not establish TeX alignment."
+    }
+  ]
+}
