@@ -49,4 +49,8 @@ if __name__ == "__main__":
     parser.add_argument("--artifact-root")
     parser.add_argument("--artifact-run")
     args = parser.parse_args()
-    execute(args.input_root, args.request, args.output, args.artifact_root, args.artifact_run)
+    try:
+        execute(args.input_root, args.request, args.output, args.artifact_root, args.artifact_run)
+    except Exception as error:
+        write_json(Path(args.output)/"task-failure.json",{"stage":"failed","error":str(error),"exception_type":type(error).__name__,"run_id":__import__("os").environ["GITHUB_RUN_ID"],"skill_commit":__import__("os").environ.get("GITHUB_SHA"),"request_path":args.request,"diagnostics_retained":True})
+        raise

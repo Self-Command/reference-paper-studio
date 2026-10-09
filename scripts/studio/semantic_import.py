@@ -42,7 +42,7 @@ def expand_semantic_tex(ast,output):
         blocks=parsed["blocks"]
         if match and match[1]=="footnotetext":blocks=[{"t":"BlockQuote","c":blocks}]
         if kind=="RawInline":
-            if len(blocks)!=1 or blocks[0]["t"] not in ("Plain","Para"):raise StudioError("UNSUPPORTED_RAW_INLINE_STRUCTURE")
+            if len(blocks)!=1 or blocks[0]["t"] not in ("Plain","Para"):raise StudioError("UNSUPPORTED_RAW_INLINE_STRUCTURE: "+source[:160])
             replacement=blocks[0]["c"]
         else:replacement=blocks
         if not replacement:raise StudioError("SEMANTIC_IMPORT_EMPTY: "+source[:160])
@@ -54,10 +54,18 @@ def expand_semantic_tex(ast,output):
             for item in value:
                 if isinstance(item,dict) and item.get("t") in ("Para","Plain"):
                     content=[n for n in item["c"] if n.get("t") not in ("Space","SoftBreak","LineBreak")]
-                    if len(content)==1 and content[0].get("t")=="RawInline":
-                        # Markdown often wraps an isolated structural command in a Para.
-                        promoted={"t":"RawBlock","c":content[0]["c"]}
-                        result.extend(visit(expand(promoted)))
+                    structural=[n for n in content if n.get("t")=="RawInline" and n["c"][0] in ("tex","latex") and re.match(r"\\(?:title|author|footnotetext|section|subsection|subsubsection|paragraph)\b",n["c"][1])]
+                    if structural:
+                        # Footnotes and headings can be interleaved with source prose.
+                        # Lift semantic blocks while retaining every surrounding inline.
+                        segment=[]
+                        for child in item["c"]:
+                            if child in structural:
+                                if any(n.get("t") not in ("Space","SoftBreak","LineBreak") for n in segment):result.append(visit({"t":item["t"],"c":segment}))
+                                segment=[]
+                                result.extend(visit(expand({"t":"RawBlock","c":child["c"]})))
+                            else:segment.append(child)
+                        if any(n.get("t") not in ("Space","SoftBreak","LineBreak") for n in segment):result.append(visit({"t":item["t"],"c":segment}))
                         continue
                 if isinstance(item,dict) and item.get("t") in ("RawInline","RawBlock"):
                     result.extend(visit(expand(item)))

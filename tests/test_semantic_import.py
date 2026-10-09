@@ -49,3 +49,12 @@ def test_nested_alignment_preserves_cases_and_matrix_columns():
 def test_unbalanced_alignment_is_an_explicit_failure():
     with pytest.raises(StudioError,match="UNBALANCED_MATH_ENVIRONMENT"):
         normalize_aligned(r"\begin{aligned}x&=1\end{matrix}")
+
+def test_interleaved_unanchored_footnote_preserves_both_prose_fragments(tmp_path):
+    source=tmp_path/"source.md"
+    source.write_text(r"Before $x$. \footnotetext{Source footnote $y$.} After $z$.",encoding="utf-8")
+    ast,equations=parse(source,tmp_path/"out")
+    assert "Before" in text_of(ast["blocks"]) and "After" in text_of(ast["blocks"])
+    assert "Source footnote" in text_of(ast["blocks"])
+    assert len([n for n in walk(ast) if n.get("t")=="Math"])==3
+    assert any(n.get("t")=="BlockQuote" for n in ast["blocks"])
