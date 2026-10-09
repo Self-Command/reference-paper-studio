@@ -11,6 +11,8 @@ records=[]
 for path in sorted((root/"templates").glob("*/template.json")):
     item=json.loads(path.read_text(encoding="utf-8"))
     target=build(item["id"],item["version"])
+    if (path.parent/"template.md").is_file():
+        from studio.md_components import compose
+        compose(item["id"],item["version"],root/"build/md-templates"/item["id"])
     records.append({"template_id":item["id"],"version":item["version"],"assets":str(target.relative_to(root)),"state":"candidate"})
 write_json(root/"build/template-candidates.json",records)
-

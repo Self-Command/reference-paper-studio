@@ -32,10 +32,11 @@ def escape(text):
     return "".join({"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}"}.get(c,c) for c in str(text))
 
 
-def front(meta, english=False):
+def front(meta, english=False, roles=None):
     suffix = "_en" if english else "_zh"
     output=[]
     for key in ("title", "authors", "affiliation", "abstract", "keywords"):
+        if roles is not None and key not in roles: continue
         value=meta.get(key+suffix, "")
         if isinstance(value,list):value="; ".join(value)
         if not value:continue
@@ -146,9 +147,9 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     # Fixed width for every illustration, regardless of its source attributes.
     body=re.sub(r"\\includegraphics(?:\[[^\]]*\])?",lambda m:r"\includegraphics[width=\linewidth,keepaspectratio]",body)
     (output/"layout-body.tex").write_text(body,encoding="utf-8")
-    header=front(metadata)
-    if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True)
-    end=front(metadata,True) if profile["english_abstract_position"]=="end" else ""
+    header=front(metadata,roles=profile.get("front_roles"))
+    if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True,profile.get("front_roles"))
+    end=front(metadata,True,profile.get("front_roles")) if profile["english_abstract_position"]=="end" else ""
     if profile.get("front_separate_page"): header+=r"\clearpage"
     columns=profile.get("body_columns",2)
     wrapped=("\n\\begin{multicols}{"+str(columns)+"}\n"+body+"\n\\end{multicols}\n") if columns>1 else "\n"+body+"\n"

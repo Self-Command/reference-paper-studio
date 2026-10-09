@@ -16,11 +16,13 @@ def load_composition(template_id, version):
     if set(descriptor["components"])-known: raise StudioError("UNKNOWN_COMPONENT")
     if "toc" in descriptor["components"] and descriptor["policy"].get("anonymous_no_toc"):
         raise StudioError("COMPONENT_CONFLICT: toc")
-    policy=deepcopy(descriptor["policy"])
+    from .components import compile_components
+    policy,component_hash=compile_components(descriptor)
     if policy.get("body_columns") not in (1,2): raise StudioError("UNSUPPORTED_REGION_COLUMNS")
     if policy.get("automatic_full_width_objects") is not False: raise StudioError("BODY_SPANNING_FORBIDDEN")
     policy.update(id=template_id,version=version)
-    policy["composition_sha256"]=digest(path)
+    import hashlib
+    policy["composition_sha256"]=hashlib.sha256((digest(path)+component_hash).encode()).hexdigest()
     return descriptor,policy
 
 def font_profile(profile_id):

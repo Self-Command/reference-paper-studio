@@ -114,6 +114,7 @@ def create_templates(directory, policy_override=None):
         def metadata(suffix):
             if suffix not in p.get("metadata_languages",["zh","en"]): return
             for key, role in (("title", "Title"), ("authors", "Author"), ("affiliation", "Author"), ("abstract", "Abstract"), ("keywords", "Keywords")):
+                if key not in p.get("front_roles",["title","authors","affiliation","abstract","keywords"]): continue
                 if p.get("anonymous") and key in ("authors","affiliation"): continue
                 body.insert(len(body)-1, paragraph("{{"+key+"_"+suffix+"}}", role))
         metadata("zh")
