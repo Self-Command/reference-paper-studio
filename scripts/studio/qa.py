@@ -32,6 +32,23 @@ def assert_text(left, right, label):
     if a != b:
         index = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
         raise StudioError(f"CONTENT_CHANGED {label} at {index}: {a[max(0,index-30):index+70]!r} != {b[max(0,index-30):index+70]!r}")
+    # Whitespace-insensitive CJK comparison must not turn English word joins
+    # ('in put' -> 'input') into equal content. Compare Latin lexical tokens too.
+    def lexical(value):
+        from copy import deepcopy
+        result=deepcopy(value)
+        def clean(node):
+            if isinstance(node,dict):
+                if node.get("t")=="Math": return {"t":"Str","c":" "}
+                if node.get("t") in ("Para","Plain","Header"):
+                    return {"t":"Str","c":text_of(clean(node["c"]))+" "}
+                return {key:clean(item) for key,item in node.items()}
+            if isinstance(node,list): return [clean(item) for item in node]
+            return node
+        return re.findall(r"[A-Za-z]+(?:['’][A-Za-z]+)*",text_of(clean(result.get("blocks",[]))))
+    from collections import Counter
+    if Counter(lexical(left))!=Counter(lexical(right)):
+        raise StudioError("CONTENT_CHANGED: Latin word boundaries "+label)
 
 
 def visible_docx(path):
@@ -39,7 +56,12 @@ def visible_docx(path):
     # caption as both a short/long alias; those aliases are not extra Word text.
     with zipfile.ZipFile(path) as package:
         xml=etree.fromstring(package.read("word/document.xml"))
-    return {"blocks":[{"t":"Str","c":"".join(t.text or "" for t in xml.iter(W+"t"))}]}
+    def text(node):
+        if node.tag in (M+"oMath",M+"oMathPara",W+"tab",W+"br"): return " "
+        if node.tag==W+"t": return node.text or ""
+        result="".join(text(child) for child in node)
+        return result+" " if node.tag==W+"p" else result
+    return {"blocks":[{"t":"Str","c":text(xml)}]}
 
 
 def latex_reader_copy(source, output):

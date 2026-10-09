@@ -33,6 +33,10 @@ def check_export(root, request, identity):
     fingerprint=snapshot(declared)
     events=json.loads(confined(root,request["approval_file"]).read_text(encoding="utf-8"))
     if not isinstance(events,list): raise StudioError("CONTRACT_INVALID: approvals must be an event list")
+    from .contracts import validate
+    validate(events,"approval")
+    ids=[event["event_id"] for event in events]
+    if len(ids)!=len(set(ids)): raise StudioError("CONTRACT_INVALID: duplicate approval event IDs")
     for kind,key in (("md_content","md_content"),("presentation","presentation"),("export","export")):
         event=require_approval(events,request["approvals"].get(key),kind,fingerprint,
             identity["manifest_sha256"] if kind in ("presentation","export") else None)

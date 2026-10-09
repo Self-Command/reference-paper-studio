@@ -40,6 +40,7 @@ for key,(url,extension) in sources.items():
         record["status"]="extracted_not_yet_reviewed"
     except Exception as error: record.update(status="failed",error=str(error))
     records.append(record)
+    print(json.dumps(record,ensure_ascii=False),flush=True)
 write_json(output/"source-manifest.json",records)
 # A network/source failure is an explicit unready capability, not a false pass.
 if any(r["status"]=="failed" for r in records): raise RuntimeError("OFFICIAL_SOURCE_INCOMPLETE: see source-manifest.json")

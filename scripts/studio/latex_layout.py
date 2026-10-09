@@ -44,7 +44,9 @@ def front(meta, english=False):
         elif key in ("authors","affiliation"):output.append(r"\begin{center}"+rendered+r"\end{center}")
         else:
             label=("Abstract: " if english else "摘要：") if key=="abstract" else ("Keywords: " if english else "关键词：")
-            output.append(r"\noindent"+(rendered if key+suffix in meta.get("_meta_tex",{}) else r"\textbf{"+label+"}"+escape(value))+"\n\n")
+            # XeTeX accepts Unicode control-word letters. An explicit group
+            # terminates \noindent before a Chinese metadata label.
+            output.append(r"\noindent{}"+(rendered if key+suffix in meta.get("_meta_tex",{}) else r"\textbf{"+label+"}"+escape(value))+"\n\n")
     return "\n".join(output)
 
 

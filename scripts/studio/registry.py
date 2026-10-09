@@ -33,6 +33,10 @@ def resolve(request):
     if digest(manifest_path)!=identity["manifest_sha256"]: raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: manifest")
     manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest["composition_sha256"]!=p["composition_sha256"]: raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: composition")
+    current_fonts=font_profile(identity["font_profile"])
+    current_font_hash=hashlib.sha256(json.dumps(current_fonts,sort_keys=True).encode()).hexdigest()
+    if manifest.get("font_profile_sha256")!=current_font_hash:
+        raise StudioError("TEMPLATE_INTEGRITY_MISMATCH: font profile")
     if manifest.get("release_state")!="released" and os.environ.get("RPS_CANDIDATE_BUILD")!="true":
         raise StudioError("TEMPLATE_NOT_READY: candidate asset")
     variant=identity["variant"]
