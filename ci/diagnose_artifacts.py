@@ -7,6 +7,19 @@ from studio.runtime import require_actions,write_json
 require_actions()
 root=Path("diagnostic-artifacts")
 records=[]
+for path in sorted(root.rglob("latex-column-geometry.json")):
+    geometry=json.loads(path.read_text(encoding="utf-8"))
+    item={"file":path.as_posix(),"violations":geometry.get("violations",[])}
+    print(json.dumps(item,ensure_ascii=False),flush=True)
+    records.append(item)
+for path in sorted(root.rglob("main.log")):
+    log=path.read_text(encoding="utf-8",errors="replace")
+    source=path.with_suffix("tex").read_text(encoding="utf-8").splitlines()
+    for match in re.finditer(r"Overfull \\hbox.*?(?:at lines|in paragraph at lines) (\d+)--(\d+)",log,re.S):
+        first,last=map(int,match.groups())
+        item={"file":path.as_posix(),"first_line":first,"last_line":last,"source":"\n".join(source[max(0,first-2):min(len(source),last+2)])}
+        print(json.dumps(item,ensure_ascii=False),flush=True)
+        records.append(item)
 for path in sorted(root.rglob("*-summary.json"))+sorted(root.glob("*regression.json")):
     print(path.as_posix()+": "+path.read_text(encoding="utf-8"),flush=True)
 for path in sorted(root.rglob("word-compat-proof.pdf")):
