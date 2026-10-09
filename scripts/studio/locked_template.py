@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import os
 import re
+import zipfile
 from lxml import etree
 from docx import Document
 from docx.oxml import OxmlElement
@@ -153,6 +154,15 @@ def check_contract(path, p):
             active = True; bookmark = item.get(W+"id"); continue
         if item.tag == W+"bookmarkEnd" and item.get(W+"id") == bookmark: active = False
         if active and list(item.iter(W+"sectPr")): raise StudioError("BODY_SECTION_FORBIDDEN")
+        if active:
+            for par in item.iter(W+"p"):
+                props=par.find(W+"pPr")
+                if props is None or props.find(W+"pStyle") is None or props.find(W+"pStyle").get(W+"val") not in {"RPS"+r for r in ROLES}:
+                    raise StudioError("CONTENT_STYLE_FORBIDDEN")
+                if any(c.tag not in {W+"pStyle",W+"numPr",W+"jc"} for c in props): raise StudioError("CONTENT_PARAGRAPH_LAYOUT_FORBIDDEN")
+            for run in item.iter(W+"r"):
+                props=run.find(W+"rPr")
+                if props is not None and any(c.tag not in {W+"b",W+"i",W+"vertAlign"} for c in props): raise StudioError("CONTENT_RUN_LAYOUT_FORBIDDEN")
     for section in doc.sections:
         expected_margin = round(2.2*1440/2.54)
         margins = section._sectPr.find(W+"pgMar")
@@ -284,5 +294,8 @@ def fill(native, metadata, equations, master, p, output):
     if list(body.iter("{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}anchor")):
         raise StudioError("FLOATING_IMAGE_FORBIDDEN")
     doc.save(output)
+    with zipfile.ZipFile(master) as original_package, zipfile.ZipFile(output) as final_package:
+        for part in ("word/styles.xml","word/settings.xml"):
+            if original_package.read(part) != final_package.read(part): raise StudioError("TEMPLATE_PART_CHANGED: "+part)
     write_json(Path(output).parent/"math-layout-ledger.json", ledger)
     return {**check_contract(output, p), "display_count": index, "table_captions_moved": moved, "math_layout_changes": sum(len(e["changes"]) for e in ledger), "native_math_count": len(list(body.iter(M+"oMath")))}

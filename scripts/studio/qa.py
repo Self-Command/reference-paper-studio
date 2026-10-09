@@ -103,6 +103,10 @@ def check_roundtrips(ast, baseline, final, latex_body, output):
     assert_text(ast, latex_ast, "LaTeX readback")
     if math_list(ast) != math_list(latex_ast):
         raise StudioError("MATH_CHANGED: LaTeX readback")
+    rendered_ast = read_ast(Path(latex_body).parent/"layout-body.tex", "latex")
+    expected_layout = json.loads((Path(output)/"layout-document.json").read_text(encoding="utf-8"))
+    assert_text(expected_layout, rendered_ast, "actual LaTeX layout body")
+    if math_list(expected_layout) != math_list(rendered_ast): raise StudioError("MATH_CHANGED: actual LaTeX layout body")
     # Check original conversion retained all inline and display equations as editable OMML.
     with zipfile.ZipFile(final) as package:
         xml = etree.fromstring(package.read("word/document.xml"))
@@ -177,3 +181,42 @@ def check_page_flow(path, profile, maximum_pages=None):
             if number<len(pdf.pages) and span<.35:
                 raise StudioError(f"SPARSE_INTERIOR_PAGE: {Path(path).name}:{number}: occupied span {span:.1%}")
     return {"pages":len(measurements),"measurements":measurements}
+
+
+def check_column_geometry(path, profile, ast, metadata):
+    """Measure the actual rendered body, excluding the template's metadata zones."""
+    require_actions()
+    from .manuscript import text_of
+    first = next((text_of(b) for b in ast["blocks"] if text_of(b).strip()), "")
+    prefix = re.sub(r"\s+", "", first)[:12]
+    end_title = re.sub(r"\s+", "", metadata.get("title_en", ""))[:12]
+    def find_line(page, fragment):
+        if not fragment: return None
+        lines = {}
+        for char in page.chars:
+            key = round((char["top"]+char["bottom"])/2/3)*3
+            lines.setdefault(key, []).append(char)
+        for values in lines.values():
+            text = re.sub(r"\s+", "", "".join(c["text"] for c in sorted(values,key=lambda c:c["x0"])))
+            if fragment in text: return min(c["top"] for c in values)
+        return None
+    violations=[]; regions=[]; started=False
+    with pdfplumber.open(path) as pdf:
+        left=profile["page"]["margin_cm"]["left"]*72/2.54
+        right=pdf.pages[0].width-profile["page"]["margin_cm"]["right"]*72/2.54
+        gap=profile["page"]["column_spacing_cm"]*72/2.54
+        midpoint=(left+right)/2; gutter=(midpoint-gap/2,midpoint+gap/2)
+        for number,page in enumerate(pdf.pages,1):
+            start=find_line(page,prefix) if not started else None
+            if not started and start is None: continue
+            top=start-1 if start is not None else profile["page"]["margin_cm"]["top"]*72/2.54
+            started=True
+            end=find_line(page,end_title) if profile["english_abstract_position"]=="end" else None
+            bottom=end-1 if end is not None else page.height-profile["page"]["margin_cm"]["bottom"]*72/2.54
+            chars=[c for c in page.chars if c["text"].strip() and c["top"]>=top and c["bottom"]<=bottom+1]
+            bad=[c for c in chars if c["x0"]<left-1 or c["x1"]>right+1 or c["x0"]<midpoint and c["x1"]>gutter[0]+1 or c["x0"]>=midpoint and c["x0"]<gutter[1]-1]
+            for char in bad[:50]: violations.append({"page":number,"text":char["text"],"x0":round(char["x0"],2),"x1":round(char["x1"],2),"top":round(char["top"],2)})
+            regions.append({"page":number,"body_top":round(top,2),"body_bottom":round(bottom,2),"characters":len(chars),"overflow_glyphs":len(bad)})
+            if end is not None: break
+    if not started: raise StudioError("BODY_REGION_NOT_LOCATED: "+prefix)
+    return {"gutter":gutter,"regions":regions,"violations":violations,"authority":"Actual compatibility/PDF geometry, not a pagination estimate"}

@@ -4,7 +4,9 @@
 
 入口为 [SKILL.md](SKILL.md)，云端操作见 [cloud-tasks.md](references/cloud-tasks.md)。仓库保留用户参考资料和模型的私有输入，公开发布需另行去除私有材料。
 
-核心实现：页码与指纹绑定的参考规则、官方模板限定消歧、模型证据门禁、Pandoc 共同文档表示、原生 Word OMML、逐节分栏、数据表三线处理、XeLaTeX 与 LibreOffice 校样、正文/数字/公式回读检查，以及绑定产物的视觉审阅收据。
+核心实现：版本化 DOCX 母版、内容无权覆盖的字体和分节、完整双栏正文、可逆原生 OMML 换行、参考规则及模型证据门禁、Pandoc 共同表示、三线表、实际栏边界测量、XeLaTeX 与 LibreOffice 校样，以及绑定产物的视觉审阅收据。
+
+0.2 候选采用 python-docx 1.2.0 与 lxml 6.0.2 填充登记母版。输入只选择模板 ID、版本及摘要位置变体，原 profile 接口拒绝。内容不能新增分节，公式、数据表、图片不能跨栏；放不下则定位失败。Node 对比实验留在独立 experiments/ 和手动工作流中，不参与正式导出。所有验收通过前，不替换已安装技能。
 
 LibreOffice 校样固定使用官方 26.8.1 Linux 发行包，并核对[官方 SHA-256](https://download.documentfoundation.org/libreoffice/stable/26.8.1/deb/x86_64/LibreOffice_26.8.1_Linux_x86-64_deb.tar.gz.sha256)。Ubuntu 自带的 24.2 保留为失败回归来源，正式校样使用新版；数学组件是必需依赖。
 

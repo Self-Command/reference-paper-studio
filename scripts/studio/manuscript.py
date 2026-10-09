@@ -45,6 +45,8 @@ def parse(source, output):
     ast = json.loads(run(["pandoc", source, "-f", MARKDOWN, "-t", "json"]))
     equations = []
     for node in walk(ast):
+        if node.get("t") == "Header" and node["c"][0] > 4:
+            raise StudioError("UNSUPPORTED_HEADING_LEVEL: fixed template supports levels 1–4")
         if node.get("t") == "Math":
             expression = node["c"][1]
             if re.search(r"\\(?:tiny|scriptsize|footnotesize|small|large|Large|LARGE|huge|Huge|fontsize|color|pagebreak|newpage|onecolumn|twocolumn)\b", expression):

@@ -78,3 +78,16 @@ def test_fill_imports_content_without_source_styles(masters, tmp_path):
     result = Document(final)
     assert "模型正文" in "".join(par.text for par in result.paragraphs)
     assert result.styles["RPSBody"].font.size.pt == 10
+
+
+def test_markdown_layout_attributes_are_not_exported():
+    from studio.manuscript import strip_layout_attributes
+    ast={"blocks":[{"t":"Image","c":[["fig:F1",["custom-style"],[["width","200%"],["font-size","48pt"]]],[],["x.png",""]]}]}
+    removed=strip_layout_attributes(ast)
+    assert removed and ast["blocks"][0]["c"][0] == ["fig:F1",[],[]]
+
+
+def test_latex_layout_commands_rejected(tmp_path):
+    from studio.manuscript import parse
+    source=tmp_path/"override.md"; source.write_text(r"$$\small x+y$$")
+    with pytest.raises(StudioError,match="CONTENT_LAYOUT_COMMAND_FORBIDDEN"): parse(source,tmp_path)

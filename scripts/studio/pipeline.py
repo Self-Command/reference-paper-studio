@@ -9,7 +9,7 @@ from .manuscript import parse, validate_assets, validate_references, model_gate,
 from .docx_layout import configure_math_font
 from .locked_template import resolve_template, fill, check_contract
 from .latex_layout import write_latex
-from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility, check_page_flow
+from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility, check_page_flow, check_column_geometry
 
 
 def strict_pandoc(args, cwd=None):
@@ -118,6 +118,7 @@ def _export(root, request, output, reference_rules=None):
             display_index += 1
     write_json(output/"shared-layout-map.json",bridge_map)
     main = write_latex(ast, equations, meta, profile, texdir, layout_ast)
+    write_json(output/"layout-document.json",layout_ast)
     for node in walk(ast):
         if node.get("t") == "Image":
             relative = node["c"][-1][0]; target = confined(texdir, relative); target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(confined(root, relative), target)
@@ -126,6 +127,8 @@ def _export(root, request, output, reference_rules=None):
     (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
     word_pdf=inspect_output_pdf(output/"word-compat-proof.pdf",output/"previews/word-compat-proof")
     word_pdf["page_flow"]=check_page_flow(output/"word-compat-proof.pdf",profile)
+    word_geometry=check_column_geometry(output/"word-compat-proof.pdf",profile,ast,meta)
+    write_json(output/"word-column-geometry.json",word_geometry)
     if equations:
         labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
         word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
@@ -137,6 +140,10 @@ def _export(root, request, output, reference_rules=None):
     if any(n > 2 for n in overflow): raise StudioError(f"LATEX_OVERFLOW: {overflow}")
     shutil.copy2(texdir/"main.pdf", output/"latex-proof.pdf")
     pdfs = {"word-compat-proof.pdf":word_pdf,"latex-proof.pdf":inspect_output_pdf(output/"latex-proof.pdf",output/"previews/latex-proof")}
+    latex_geometry=check_column_geometry(output/"latex-proof.pdf",profile,ast,meta)
+    write_json(output/"latex-column-geometry.json",latex_geometry)
+    if word_geometry["violations"] or latex_geometry["violations"]:
+        raise StudioError("BODY_COLUMN_OVERFLOW: see *-column-geometry.json")
     content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
     docx = check_docx(final)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
