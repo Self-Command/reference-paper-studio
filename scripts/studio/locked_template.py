@@ -280,6 +280,8 @@ def import_lists(source, target, elements):
 def fill(native, metadata, equations, master, p, output):
     require_actions()
     from .math_layout import wrap, tree
+    from .math_metrics import configure
+    metrics=configure(p)
     from .docx_layout import move_table_captions
     source = Document(native)
     from docxtpl import DocxTemplate
@@ -335,7 +337,7 @@ def fill(native, metadata, equations, master, p, output):
             if len(formulae) != 1: raise StudioError("UNSUPPORTED_DISPLAY_STRUCTURE: "+equation["id"])
             # Keep an extra 10 pt safety allowance for renderer width
             # differences; isolation also checks the actual number boundary.
-            changes = wrap(formulae[0], (width-550)/20-26,p["body_size_pt"])
+            changes = wrap(formulae[0], (width-550)/20-26,p["body_size_pt"],metrics=metrics)
             multiline=any(len(node.findall(M+"e"))>1 for node in formulae[0].iter(M+"eqArr")) or any(len(node.findall(M+"mr"))>1 for node in formulae[0].iter(M+"m"))
             ledger.append({"id": equation["id"], "changes": changes,"number_anchor":"center" if multiline else "baseline"})
             table = doc.add_table(rows=1, cols=2 if multiline else 1); table.autofit = False
@@ -386,7 +388,7 @@ def fill(native, metadata, equations, master, p, output):
                     cell_budget = width/20/cells-12
                 from .docx_layout import following_punctuation_width
                 cell_budget-=following_punctuation_width(formula,p["body_size_pt"])
-                changes = wrap(formula, cell_budget,p["body_size_pt"],p.get("math_array_padding_pt",0))
+                changes = wrap(formula, cell_budget,p["body_size_pt"],p.get("math_array_padding_pt",0),metrics=metrics)
                 inline_ledger.append(changes)
             anchor.addprevious(element)
     if index != len(equations): raise StudioError("FORMULA_COUNT_CHANGED")

@@ -31,9 +31,10 @@ def restore(root, changes):
     return result
 
 
-def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
+def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0, metrics=None):
     require_actions()
     before = deepcopy(root); changes = []
+    def measure(element):return math_width_pt(element,font_size_pt,metrics)
     # Pandoc represents TeX setminus by ASCII backslash. LibreOffice treats that
     # as a StarMath escape and consumes the following operand. U+2216 carries
     # the same set-difference operator without parser escape semantics.
@@ -84,7 +85,7 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
         name = etree.QName(element).localname
         # Only a piecewise delimiter may stack value/condition cells. A general
         # matrix keeps its columns: changing those would change its meaning.
-        if name == "m" and math_width_pt(element, font_size_pt) > budget:
+        if name == "m" and measure(element) > budget:
             parent = element.getparent()
             delimiter = parent.getparent() if parent is not None and parent.tag == M+"e" else parent
             props = delimiter.find(M+"dPr") if delimiter is not None and delimiter.tag == M+"d" else None
@@ -102,12 +103,12 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
                     changes.append({"path":path,"before":old,"after":etree.tostring(element,encoding="unicode"),"reason":"piecewise value then condition, one column"})
         # Reserve delimiters, fraction rules and matrix neighbours conservatively.
         children = list(element)
-        linear_overflow=name in containers and len(segments_of(element))>1 and math_width_pt(element,font_size_pt)>budget
+        linear_overflow=name in containers and len(segments_of(element))>1 and measure(element)>budget
         for index, child in enumerate(children):
             child_budget = budget
             if name in ("d", "borderBox"): child_budget -= 15
             if name in ("mr", "oMath", "e") and child.tag not in (M+"r", M+"rPr", W+"rPr"):
-                other = sum(math_width_pt(c, font_size_pt) for c in children if c is not child)
+                other = sum(measure(c) for c in children if c is not child)
                 # Only a parent with actual legal split points may move its
                 # neighbours to separate lines. Indivisible objects still
                 # reserve their neighbours and cannot borrow column width.
@@ -118,7 +119,7 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
                 # broke short function arguments that already fit the column.
                 child_budget = max(45,budget if linear_overflow else budget-other)
             visit(child, path+[index], max(45, child_budget))
-        if name not in containers or math_width_pt(element, font_size_pt) <= budget: return
+        if name not in containers or measure(element) <= budget: return
         segments=segments_of(element)
         # Pandoc renders a newly stacked OMML row as a one-column TeX array.
         # Its two outer arraycolsep spaces occupy real width. Reserve them
@@ -126,7 +127,7 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0):
         row_budget=max(45,budget-array_padding_pt)
         rows = []; row = []; used = 0
         for segment in segments:
-            size = sum(math_width_pt(t,font_size_pt) for t in segment)
+            size = sum(measure(t) for t in segment)
             if row and used+size > row_budget:
                 rows.append(row); row=[]; used=0
             row.extend(segment); used+=size

@@ -54,7 +54,7 @@ def section_break(columns, profile):
     return p
 
 
-def math_width_pt(element, size):
+def math_width_pt(element, size, metrics=None):
     """Conservative OMML width estimate for routing, not mathematical rewriting.
 
     Fractions stack, matrices/arrays take their widest row and scripts use
@@ -64,9 +64,12 @@ def math_width_pt(element, size):
     if local.endswith("Pr"):
         return 0
     if local == "t":
+        if metrics is not None:
+            return sum(size*(metrics["cjk" if 0x3400<=ord(c)<=0x9fff else "math"].get(c,
+                            .28 if c.isspace() else .70)*1.08) for c in element.text or "")
         return sum(size * (1.15 if ord(c) > 0x2fff else .28 if c.isspace() else .70) for c in element.text or "")
     children = [c for c in element if not etree.QName(c).localname.endswith("Pr")]
-    measured = [(etree.QName(c).localname, math_width_pt(c, size)) for c in children]
+    measured = [(etree.QName(c).localname, math_width_pt(c, size,metrics) if metrics is not None else math_width_pt(c,size)) for c in children]
     widths = dict(measured)
     values = [width for _,width in measured]
     if local == "r":
