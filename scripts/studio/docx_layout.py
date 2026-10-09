@@ -66,22 +66,24 @@ def math_width_pt(element, size):
     if local == "t":
         return sum(size * (1.15 if ord(c) > 0x2fff else .28 if c.isspace() else .70) for c in element.text or "")
     children = [c for c in element if not etree.QName(c).localname.endswith("Pr")]
-    widths = {etree.QName(c).localname: math_width_pt(c, size) for c in children}
+    measured = [(etree.QName(c).localname, math_width_pt(c, size)) for c in children]
+    widths = dict(measured)
+    values = [width for _,width in measured]
     if local == "f":
         return max(widths.get("num", 0), widths.get("den", 0)) + size * .4
     if local in ("sSub", "sSup", "sSubSup"):
         return widths.get("e", 0) + .75 * max(widths.get("sub", 0), widths.get("sup", 0))
     if local in ("eqArr", "m"):
-        return max((math_width_pt(c, size) for c in children), default=0)
+        return max(values, default=0)
     if local == "mr":
-        return sum(math_width_pt(c, size) for c in children) + max(0, len(children) - 1) * size
+        return sum(values) + max(0, len(children) - 1) * size
     if local == "nary":
         return widths.get("e", 0) + max(size * 1.8, .75 * max(widths.get("sub", 0), widths.get("sup", 0)))
     if local in ("limLow", "limUpp"):
         return max(widths.get("e", 0), .75 * widths.get("lim", 0))
     if local in ("d", "borderBox"):
-        return sum(math_width_pt(c, size) for c in children) + size * 1.3
-    return sum(math_width_pt(c, size) for c in children)
+        return sum(values) + size * 1.3
+    return sum(values)
 
 
 def metadata_paragraphs(meta, english=False):

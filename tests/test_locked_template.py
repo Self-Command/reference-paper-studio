@@ -156,6 +156,20 @@ def test_transparent_nested_math_boxes_do_not_consume_column_width():
     assert tree(formula)==tree(original)
 
 
+def test_nested_math_measurement_visits_each_node_once(monkeypatch):
+    import studio.docx_layout as layout
+    formula=OxmlElement("m:oMath");argument=formula
+    for _ in range(12):
+        box=OxmlElement("m:box");entry=OxmlElement("m:e");box.append(entry);argument.append(box);argument=entry
+    token=OxmlElement("m:r");text=OxmlElement("m:t");text.text="x";token.append(text);argument.append(token)
+    implementation=layout.math_width_pt;calls=[]
+    def counted(element,size):
+        calls.append(element);return implementation(element,size)
+    monkeypatch.setattr(layout,"math_width_pt",counted)
+    assert counted(formula,10)==7
+    assert len(calls)==len(list(formula.iter()))
+
+
 @pytest.mark.parametrize("expression_right,expected",[(180,False),(202,True)])
 def test_rendered_equation_number_region_rejects_collision(expression_right,expected):
     from studio.math_proof import number_region
