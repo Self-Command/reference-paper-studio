@@ -8,12 +8,16 @@ from studio.runtime import require_actions, write_json, digest
 from studio.pipeline import export
 from studio.references import analyze
 from studio.review import review
+from studio.qa import check_page_flow
 
 require_actions()
 root=Path(__file__).resolve().parents[1]
 references=analyze(root/"fixtures/references","evidence.json",root/"build/reference-analysis")
 review(root/"fixtures/model/model.md",root/"build/model-review")
-export(root/"fixtures/model",{"manuscript":"model.md","metadata":"metadata.json","profile":"profile.json","document_kind":"model","expected_equations":30},root/"build/model",references["rules"])
+model_report=export(root/"fixtures/model",{"manuscript":"model.md","metadata":"metadata.json","profile":"profile.json","document_kind":"model","expected_equations":30},root/"build/model",references["rules"])
+model_profile=json.loads((root/"fixtures/model/profile.json").read_text())
+flow=check_page_flow(root/"build/model/word-compat-proof.pdf",model_profile,maximum_pages=8)
+write_json(root/"build/model/page-flow.json",flow)
 # Synthetic values are labelled as a format test; never presented as research data.
 fixture=root/"build/synthetic-input"; fixture.mkdir(parents=True,exist_ok=True)
 from PIL import Image, ImageDraw
@@ -44,4 +48,5 @@ write_json(fixture/"metadata.json",meta)
 profile=json.loads((root/"assets/profiles/chinese-journal.json").read_text());profile["english_abstract_position"]="end"
 write_json(fixture/"profile.json",profile)
 export(fixture,{"manuscript":"model.md","metadata":"metadata.json","profile":"profile.json","expected_equations":2},root/"build/objects-end")
+write_json(root/"build/objects-end/page-flow.json",check_page_flow(root/"build/objects-end/word-compat-proof.pdf",profile,maximum_pages=1))
 write_json(root/"build/regression-summary.json",{"status":"passed","original_model_equations":30,"object_fixture":"passed","english_abstract_positions":["front","end"],"mathematical_correctness":"not_asserted"})

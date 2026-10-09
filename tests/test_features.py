@@ -10,7 +10,7 @@ from studio.references import resolve_rules, inspect_pdf
 from studio.manuscript import parse, validate_assets, validate_references, model_gate, resolve_crossrefs
 from studio.docx_layout import move_table_captions, apply_layout
 from studio.pipeline import strict_pandoc
-from studio.qa import check_fonts, check_docx, assert_text, check_equation_visibility, latex_reader_copy
+from studio.qa import check_fonts, check_docx, assert_text, check_equation_visibility, latex_reader_copy, check_page_flow
 from studio.vendor.latex_to_omml import latex_to_omml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -107,6 +107,8 @@ def test_front_body_sections_preserved(tmp_path,position):
     apply_layout(path,{"title_zh":"中文题名","abstract_zh":"摘要","abstract_en":"English abstract"},profile,[])
     assert check_docx(path)["section_columns"][0]==1
     assert 2 in check_docx(path)["section_columns"]
+    final=Document(path)
+    assert final.sections[-1]._sectPr.find(qn("w:type")).get(qn("w:val"))=="continuous"
 
 
 def test_missing_font_fails():
@@ -181,3 +183,21 @@ def test_equation_layout_never_receives_data_table_borders(tmp_path):
     assert check_docx(path)["data_tables"]==0
     assert check_docx(path)["equation_layouts"]==0
     assert "(M1)" in "".join(p.text for p in doc.paragraphs)
+
+
+def test_short_equations_do_not_fragment_body_sections(tmp_path):
+    source=tmp_path/"short.md"; source.write_text("模型正文。\n\n"+r"$$x_i+y_i=z_i$$"+"\n\n后续正文。")
+    path=tmp_path/"short.docx"; strict_pandoc(["pandoc",source,"-o",path])
+    report=apply_layout(path,{},PROFILE,[{"id":"E1","ordinal":1}])
+    assert report["equation_columns"][0]["columns_spanned"]==1
+    assert len(Document(path).sections)==2
+
+
+def test_blank_interior_page_fails_flow_check(tmp_path):
+    from pypdf import PdfWriter
+    path=tmp_path/"pages.pdf"; writer=PdfWriter()
+    writer.add_blank_page(width=595,height=842); writer.write(path)
+    # A short final page is allowed; a blank page before remaining content is not.
+    assert check_page_flow(path,PROFILE)["pages"]==1
+    writer.add_blank_page(width=595,height=842); writer.write(path)
+    with pytest.raises(StudioError,match="SPARSE_INTERIOR_PAGE"): check_page_flow(path,PROFILE)

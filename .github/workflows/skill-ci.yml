@@ -28,9 +28,8 @@ jobs:
         with:
           name: diagnostic-preview
           path: |
-            build/model/previews/word-compat-proof/page-1.png
-            build/model/previews/word-compat-proof/page-2.png
-            build/model/previews/word-compat-proof/page-3.png
+            build/model/previews/word-compat-proof/*.png
+            build/objects-end/previews/word-compat-proof/*.png
             build/model/acceptance.json
             build/model/equation-visibility.json
             build/model/latex/main.tex

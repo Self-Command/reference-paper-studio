@@ -64,7 +64,10 @@ def check_equation_visibility(path, identifiers):
                 # formula still produces no evidence.
                 nearby=[c for c in page.chars if c["text"].strip() and 45 < c["x0"] and c["x1"] < word["x0"]-5 and abs((c["top"]+c["bottom"])/2-center)<18]
                 glyphs=nearby
-                found[identifier]={"page":number,"formula_line_glyphs":len(glyphs)}
+                # Body references such as '(M4)' must not replace stronger
+                # evidence from the actual numbered display.
+                if len(glyphs) > found.get(identifier, {}).get("formula_line_glyphs", -1):
+                    found[identifier]={"page":number,"formula_line_glyphs":len(glyphs)}
     missing=[label for label in identifiers if label not in found or found[label]["formula_line_glyphs"]==0]
     write_json(Path(path).parent/"equation-visibility.json",{"equations":found,"missing":missing})
     if missing: raise StudioError("WORD_PDF_MATH_NOT_VISIBLE: "+", ".join(missing))
@@ -141,3 +144,22 @@ def inspect_output_pdf(path, preview_dir):
             pages.append({"page": index, "characters": len(text), "fonts": sorted({c.get("fontname", "") for c in page.chars})})
     run(["pdftoppm", "-r", "100", "-png", path, preview_dir/"page"], timeout=300)
     return {"sha256": digest(path), "pages": pages, "previews": [{"file": p.name, "sha256": digest(p)} for p in sorted(preview_dir.glob("*.png"))]}
+
+
+def check_page_flow(path, profile, maximum_pages=None):
+    """Catch sparse interior pages; the final page can legitimately be short."""
+    require_actions()
+    measurements=[]
+    with pdfplumber.open(path) as pdf:
+        if maximum_pages is not None and len(pdf.pages)>maximum_pages:
+            raise StudioError(f"EXCESSIVE_PAGINATION: {len(pdf.pages)} pages, regression limit {maximum_pages}")
+        for number,page in enumerate(pdf.pages,1):
+            top=profile["page"]["margin_cm"]["top"]*72/2.54
+            bottom=page.height-profile["page"]["margin_cm"]["bottom"]*72/2.54
+            objects=[c for c in page.chars if c["text"].strip() and top-2 <= c["top"] and c["bottom"] <= bottom+2]
+            objects+=page.images
+            span=(max(o["bottom"] for o in objects)-min(o["top"] for o in objects))/(bottom-top) if objects else 0
+            measurements.append({"page":number,"occupied_vertical_span":round(span,3),"final_page":number==len(pdf.pages)})
+            if number<len(pdf.pages) and span<.35:
+                raise StudioError(f"SPARSE_INTERIOR_PAGE: {Path(path).name}:{number}: occupied span {span:.1%}")
+    return {"pages":len(measurements),"measurements":measurements}

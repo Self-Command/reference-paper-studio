@@ -8,7 +8,7 @@ from .runtime import StudioError, require_actions, run, write_json, digest, conf
 from .manuscript import parse, validate_assets, validate_references, model_gate, walk, resolve_crossrefs, text_of
 from .docx_layout import apply_layout, configure_math_font
 from .latex_layout import write_latex
-from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility
+from .qa import check_fonts, check_roundtrips, check_docx, inspect_output_pdf, check_equation_visibility, check_page_flow
 
 
 def strict_pandoc(args, cwd=None):
@@ -103,6 +103,7 @@ def _export(root, request, output, reference_rules=None):
     if not (output/"manuscript.pdf").exists(): raise StudioError("DOCX_RENDER_FAILED")
     (output/"manuscript.pdf").rename(output/"word-compat-proof.pdf")
     word_pdf=inspect_output_pdf(output/"word-compat-proof.pdf",output/"previews/word-compat-proof")
+    word_pdf["page_flow"]=check_page_flow(output/"word-compat-proof.pdf",profile)
     if equations:
         labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
         word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)

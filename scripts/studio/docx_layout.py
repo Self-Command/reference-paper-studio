@@ -40,9 +40,48 @@ def section_break(columns, profile):
     p = _paragraph()
     ppr = OxmlElement("w:pPr"); sect = OxmlElement("w:sectPr")
     kind = OxmlElement("w:type"); kind.set(qn("w:val"), "continuous"); sect.append(kind)
-    _apply_sectpr(sect, {**profile["page"], "columns": columns})
-    ppr.append(sect); p.append(ppr)
+    _apply_sectpr(sect, {**profile["page"], "columns": columns, "doc_grid": False})
+    # A section marker is structure, not a body-text spacer.  Inheriting
+    # Normal's line box adds two visible empty lines around every wide object.
+    set_child(ppr, "keepNext", {"w:val": "0"})
+    set_child(ppr, "keepLines", {"w:val": "0"})
+    set_child(ppr, "snapToGrid", {"w:val": "0"})
+    set_child(ppr, "spacing", {"w:before": "0", "w:after": "0", "w:line": "20", "w:lineRule": "exact"})
+    set_child(ppr, "rPr").append(OxmlElement("w:sz"))
+    ppr.find(qn("w:rPr") + "/" + qn("w:sz")).set(qn("w:val"), "2")
+    set_child(ppr, "sectPr").extend(list(sect))
+    p.append(ppr)
     return p
+
+
+def math_width_pt(element, size):
+    """Conservative OMML width estimate for routing, not mathematical rewriting.
+
+    Fractions stack, matrices/arrays take their widest row and scripts use
+    smaller text.  The rendered cloud proof remains the acceptance authority.
+    """
+    local = etree.QName(element).localname
+    if local.endswith("Pr"):
+        return 0
+    if local == "t":
+        return sum(size * (1 if ord(c) > 0x2fff else .28 if c.isspace() else .58) for c in element.text or "")
+    children = [c for c in element if not etree.QName(c).localname.endswith("Pr")]
+    widths = {etree.QName(c).localname: math_width_pt(c, size) for c in children}
+    if local == "f":
+        return max(widths.get("num", 0), widths.get("den", 0)) + size * .4
+    if local in ("sSub", "sSup", "sSubSup"):
+        return widths.get("e", 0) + .75 * max(widths.get("sub", 0), widths.get("sup", 0))
+    if local in ("eqArr", "m"):
+        return max((math_width_pt(c, size) for c in children), default=0)
+    if local == "mr":
+        return sum(math_width_pt(c, size) for c in children) + max(0, len(children) - 1) * size
+    if local == "nary":
+        return widths.get("e", 0) + max(size * 1.8, .75 * max(widths.get("sub", 0), widths.get("sup", 0)))
+    if local in ("limLow", "limUpp"):
+        return max(widths.get("e", 0), .75 * widths.get("lim", 0))
+    if local in ("d", "borderBox"):
+        return sum(math_width_pt(c, size) for c in children) + size * 1.3
+    return sum(math_width_pt(c, size) for c in children)
 
 
 def metadata_paragraphs(meta, english=False):
@@ -106,7 +145,10 @@ def apply_layout(path, metadata, profile, equations):
     before_math = object_math(doc._element)
     body = doc._element.body
     base = doc.sections[0]._sectPr
-    _apply_sectpr(base, {**profile["page"], "columns": 2})
+    _apply_sectpr(base, {**profile["page"], "columns": 2, "doc_grid": False})
+    # The final body-level sectPr also describes a section's start.  Without
+    # w:type its default is nextPage, even when all preceding breaks continue.
+    set_child(base, "type", {"w:val": "continuous"})
     original = [e for e in list(body) if e.tag != qn("w:sectPr")]
     front = metadata_paragraphs(metadata)
     if profile["english_abstract_position"] == "front":
@@ -123,7 +165,7 @@ def apply_layout(path, metadata, profile, equations):
         body.insert(len(body)-1, section_break(2, profile))
         for element in metadata_paragraphs(metadata, True):
             body.insert(len(body)-1, element)
-        _apply_sectpr(base, {**profile["page"], "columns": 1})
+        _apply_sectpr(base, {**profile["page"], "columns": 1, "doc_grid": False})
     for name in ("Normal", "Body Text", "First Paragraph", "Abstract", "Keywords", "Author", "Title", "Caption", "Table Caption", "Image Caption"):
         style = ensure_style(doc, name)
         style.font.name = profile["fonts"]["latin"]
@@ -137,6 +179,7 @@ def apply_layout(path, metadata, profile, equations):
         set_fonts(rpr,latin=profile["fonts"]["latin"],cjk=profile["fonts"]["cjk"])
         style.paragraph_format.space_after = Pt(3)
         style.paragraph_format.line_spacing = 1.08
+        set_child(style.element.get_or_add_pPr(), "snapToGrid", {"w:val": "0"})
     for i in range(1, 5):
         style = ensure_style(doc, f"Heading {i}")
         style.font.name = profile["fonts"]["latin"]
@@ -153,13 +196,23 @@ def apply_layout(path, metadata, profile, equations):
             displays.append(element)
     if len(displays) != len(equations):
         raise StudioError(f"FORMULA_CONVERSION_FAILED: expected {len(equations)} OMML displays, got {len(displays)}")
-    # Complex model expressions use continuous full-width equation sections.
-    # Keep mathematical size/readability; return to the two-column body after each.
+    # Only expressions that exceed a body column need full-width sections.
+    # Short expressions stay with their prose instead of balancing both columns
+    # and inserting section markers for every equation.
+    equation_columns = []
     for index, p in enumerate(displays):
         equation = equations[index]
         margins=profile["page"]["margin_cm"]
-        width=page_size(profile["page"].get("size","a4"))[0]-cm_to_twips(margins["left"]+margins["right"])
-        p.addprevious(section_break(2,profile));p.addnext(section_break(1,profile))
+        full_width=page_size(profile["page"].get("size","a4"))[0]-cm_to_twips(margins["left"]+margins["right"])
+        column_width=(full_width-cm_to_twips(profile["page"].get("column_spacing_cm", .6)))//2
+        estimate=sum(math_width_pt(m, profile["body_size_pt"]) for m in p.iter(M+"oMath"))
+        number = equation["id"] if profile["equation_numbering"] == "preserve" else str(index+1)
+        label_width=(len(number)+2)*profile["body_size_pt"]*.58+8
+        wide=estimate+2*label_width > column_width/20
+        width=full_width if wide else column_width
+        equation_columns.append({"id":equation["id"], "columns_spanned":2 if wide else 1, "estimated_math_width_pt":round(estimate, 2)})
+        if wide:
+            p.addprevious(section_break(2,profile));p.addnext(section_break(1,profile))
         # Native inline OMML in a tabbed full-width paragraph avoids the table
         # importer regression. Only the display wrapper changes, never oMath.
         for wrapper in list(p.findall(M+"oMathPara")):
@@ -175,7 +228,6 @@ def apply_layout(path, metadata, profile, equations):
         for val,pos in (("center",width//2),("right",width)):
             tab=OxmlElement("w:tab");tab.set(qn("w:val"),val);tab.set(qn("w:pos"),str(pos));tabs.append(tab)
         leading=OxmlElement("w:r");leading.append(OxmlElement("w:tab"));p.insert(1,leading)
-        number = equation["id"] if profile["equation_numbering"] == "preserve" else str(index+1)
         label=OxmlElement("w:r");label.append(OxmlElement("w:tab"));text=OxmlElement("w:t");text.text=f"({number})";label.append(text);p.append(label)
     moved = move_table_captions(doc)
     for table in doc.tables:
@@ -208,7 +260,7 @@ def apply_layout(path, metadata, profile, equations):
     if before_math != object_math(doc._element):
         raise StudioError("MATH_CHANGED_DURING_LAYOUT")
     doc.save(path)
-    return {"table_captions_moved": moved, "native_math_count": len(before_math), "display_count": len(displays)}
+    return {"table_captions_moved": moved, "native_math_count": len(before_math), "display_count": len(displays), "equation_columns":equation_columns}
 
 
 def body_only_docx(source, target):
