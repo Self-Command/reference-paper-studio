@@ -183,7 +183,23 @@ def import_resources(source, target, elements):
                 if identifier not in mapping:
                     relation = source.part.rels[identifier]
                     if relation.reltype == RT.IMAGE and not relation.is_external:
-                        mapping[identifier] = target.part.get_or_add_image(BytesIO(relation.target_part.blob))[0]
+                        # Pandoc already packaged the image. Copy its original bytes
+                        # and MIME type without re-decoding it with the narrower
+                        # python-docx image-header detector. Drawing extent stays
+                        # in the checked content XML and is capped below.
+                        from docx.parts.image import ImagePart
+                        from docx.opc.packuri import PackURI
+                        incoming=relation.target_part
+                        collection=target.part.package.image_parts
+                        matched=next((part for part in collection if part.blob==incoming.blob and part.content_type==incoming.content_type),None)
+                        if matched is None:
+                            names={str(part.partname) for part in target.part.package.parts}
+                            index=1
+                            while "/word/media/rps-image"+str(index)+"."+incoming.partname.ext in names:index+=1
+                            partname=PackURI("/word/media/rps-image"+str(index)+"."+incoming.partname.ext)
+                            matched=ImagePart(partname,incoming.content_type,incoming.blob)
+                            collection.append(matched)
+                        mapping[identifier]=target.part.relate_to(matched,RT.IMAGE)
                     elif relation.reltype == RT.HYPERLINK and relation.is_external:
                         mapping[identifier] = target.part.relate_to(relation.target_ref, RT.HYPERLINK, is_external=True)
                     else: raise StudioError("UNSUPPORTED_CONTENT_RELATION: "+relation.reltype)

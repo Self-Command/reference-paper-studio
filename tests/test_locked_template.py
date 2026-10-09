@@ -154,3 +154,28 @@ def test_rendered_equation_number_region_rejects_collision(expression_right,expe
         chars=[number,expression]
         def search(self,*args,**kwargs):return [{**number,"chars":[number]}]
     assert bool(number_region(Page(),"(M24)")["violations"])==expected
+
+
+def test_packaged_image_import_preserves_opaque_bytes_and_drawing_extent(tmp_path):
+    from copy import deepcopy
+    from io import BytesIO
+    from PIL import Image
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+    from studio.locked_template import import_resources
+    source=Document();buffer=BytesIO();Image.new("RGB",(8,5),"white").save(buffer,format="PNG")
+    picture=source.add_picture(BytesIO(buffer.getvalue()))
+    source_image=next(r.target_part for r in source.part.rels.values() if r.reltype==RT.IMAGE)
+    # The importer is a package transfer, not another image decoder. A retained
+    # payload must not depend on ImagePart.image/default_cx or be recompressed.
+    opaque=b"header-not-supported-by-python-docx"+buffer.getvalue()
+    source_image._blob=opaque
+    target=Document();elements=[deepcopy(source.paragraphs[-1]._p)]
+    original_extent=elements[0].find(".//"+qn("wp:extent")).attrib.copy()
+    import_resources(source,target,elements)
+    imported=next(r.target_part for r in target.part.rels.values() if r.reltype==RT.IMAGE)
+    assert imported is not source_image and imported.blob==opaque
+    assert imported.content_type==source_image.content_type
+    assert elements[0].find(".//"+qn("wp:extent")).attrib==original_extent
+    target._element.body.insert(0,elements[0]);path=tmp_path/"retained.docx";target.save(path)
+    reopened=Document(path)
+    assert next(r.target_part.blob for r in reopened.part.rels.values() if r.reltype==RT.IMAGE)==opaque
