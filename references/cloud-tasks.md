@@ -40,3 +40,5 @@ python scripts/paper.py fetch --run RUN_ID --output DOWNLOADED_ARTIFACTS
 
 视觉审阅完成后，将审阅收据作为唯一清单输入提交 `stage: visual` 任务，同时指定 `artifact_run` 和 `artifact_name`（`document-task` 或 `skill-delivery`）。收据含 `run_id`、`reviewer`、`status: passed` 及 `artifacts`：逐项记录每套 PDF 和每张 PNG 的相对路径、SHA-256、`reviewed: true`、未解决问题。此阶段只在 Actions 下载上一运行产物并校验收据，不重新渲染导致指纹变化。覆盖不全、文件变化、自动检查未通过或仍有问题时，视觉验收失败。
 
+
+提交器仅通过 GitHub REST 上传清单中的文件及 SHA-256，不克隆或上传本地工作区。开发候选版可在 submit 使用 `--workflow-ref BRANCH_OR_SHA`，明确绑定处理程序版本；正式使用省略此参数，执行默认分支。原有论文纯格式整理使用 `document_kind: format`，模型校样继续使用 `model`。
