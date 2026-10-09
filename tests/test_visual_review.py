@@ -30,7 +30,8 @@ def test_visual_release_cannot_substitute_word_or_skill_package(tmp_path):
     path=tmp_path/"receipt.json";path.write_text(json.dumps(receipt));output=tmp_path/"release"
     verify_receipt(path,root,"456",output)
     assert (output/archive.name).read_bytes()==archive.read_bytes()
-    assert json.loads((output/"release-manifest.json").read_text())["installation_allowed"] is True
+    assert json.loads((output/"reviewed-package-manifest.json").read_text())["installation_allowed"] is False
+    assert not (output/"release-manifest.json").exists()
     word.write_bytes(b"different Word")
     with pytest.raises(StudioError,match="VISUAL_FINGERPRINT"): verify_receipt(path,root,"456",output)
     word.write_bytes(b"cloud Word bytes");archive.write_bytes(b"different archive")

@@ -35,7 +35,7 @@ def verify_receipt(receipt_path, artifact_root, run_id, output):
         item=supplied[path]
         if digest(confined(root,path)) != fingerprint or item.get("sha256") != fingerprint or item.get("reviewed") is not True or item.get("unresolved_findings"):
             raise StudioError("VISUAL_FINGERPRINT_OR_REVIEW_MISMATCH: "+path)
-    result={"build":"passed", "automatic_acceptance":"passed", "visual_review":"passed", "source_run":str(run_id), "receipt":receipt,
+    result={"build":"passed", "automatic_acceptance":"passed", "visual_review":"passed", "installation_allowed":False,"source_run":str(run_id), "receipt":receipt,
             "meaning":"Artifact identity and review coverage verified; the reviewer supplies the visual judgment."}
     write_json(Path(output)/"visual-acceptance.json",result)
     manifest=root/"package-manifest.json"
@@ -45,7 +45,9 @@ def verify_receipt(receipt_path, artifact_root, run_id, output):
         if package["automatic_acceptance"] != "passed" or digest(archive) != package["sha256"]:
             raise StudioError("RELEASE_PACKAGE_FINGERPRINT_OR_ACCEPTANCE_FAILED")
         shutil.copy2(archive,Path(output)/archive.name)
-        write_json(Path(output)/"release-manifest.json",{**package,"installation_allowed":True,"visual_review":"passed","source_run":str(run_id),"visual_run":__import__("os").environ["GITHUB_RUN_ID"],"meaning":"Exact previously built archive released after bound visual review; no rebuilding or source substitution."})
+        # A legacy proof receipt has no approved MD-template or suite-readiness
+        # evidence. Passing it cannot promote a candidate or authorize install.
+        write_json(Path(output)/"reviewed-package-manifest.json",{**package,"installation_allowed":False,"visual_review":"passed","source_run":str(run_id),"visual_run":__import__("os").environ["GITHUB_RUN_ID"],"meaning":"Exact archive retained after legacy visual coverage check; suite publication gates are not supplied by this receipt."})
     return result
 
 

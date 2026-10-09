@@ -198,10 +198,11 @@ def check_docx(path, profile=None):
 
 def check_fonts(profile):
     require_actions()
-    available = run(["fc-list", ":", "family"])
-    for font in profile["fonts"].values():
-        if font.casefold() not in available.casefold():
-            raise StudioError(f"MISSING_FONT: {font}")
+    from .fonts import resolve_faces
+    faces=resolve_faces(profile["fonts"])
+    if profile.get("font_faces") is not None and profile["font_faces"]!=faces:
+        raise StudioError("FONT_FACE_FINGERPRINT_MISMATCH: registered font bytes or collection face changed")
+    return faces
 
 
 def inspect_output_pdf(path, preview_dir):

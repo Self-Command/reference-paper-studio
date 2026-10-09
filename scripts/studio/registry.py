@@ -15,7 +15,7 @@ def build(template_id, version, profile_id="open-serif", font_assets=None):
     fonts=font_profile(profile_id)
     p["fonts"]=fonts["fonts"]
     from .qa import check_fonts
-    check_fonts(p)
+    p["font_faces"]=check_fonts(p)
     target=asset_root()/template_id/version/profile_id
     create_templates(target,p)
     manifest=json.loads((target/"manifest.json").read_text(encoding="utf-8"))

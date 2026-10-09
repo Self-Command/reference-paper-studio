@@ -3,6 +3,28 @@ from pathlib import Path
 import os,shutil
 from .runtime import require_actions,confined,digest,run,StudioError,write_json
 
+def resolve_faces(fonts):
+    """Resolve exact families and TTC faces, without accepting fontconfig fallback."""
+    require_actions()
+    records={}
+    for role,family in fonts.items():
+        records[role]={}
+        for shape,style in (("upright","Regular"),("bold","Bold"),("italic","Italic"),("bolditalic","Bold Italic")):
+            fields=run(["fc-match","-f","%{file}\n%{index}\n%{family}\n%{postscriptname}\n",family+":style="+style]).splitlines()
+            if len(fields)!=4 or family.casefold() not in {part.strip().casefold() for part in fields[2].split(",")}:
+                raise StudioError("MISSING_FONT: exact family "+family+" ("+shape+")")
+            file,index,names,postscript=fields
+            if not index.isdecimal() or not Path(file).is_file():raise StudioError("FONT_FACE_UNRESOLVED: "+family)
+            records[role][shape]={"family":family,"families":names,"file":Path(file).name,"index":int(index),"postscript_name":postscript,"sha256":digest(file),"collection":Path(file).suffix.lower() in (".ttc",".otc")}
+    return records
+
+def fontspec_options(faces):
+    """Collection indices are fixed from actual fontconfig matches, not guessed."""
+    require_actions()
+    keys={"upright":"UprightFeatures","bold":"BoldFeatures","italic":"ItalicFeatures","bolditalic":"BoldItalicFeatures"}
+    options=[keys[shape]+"={FontIndex="+str(face["index"])+"}" for shape,face in faces.items() if face["collection"]]
+    return "["+",".join(options)+"]" if options else ""
+
 def install_declared(root,request,output):
     require_actions()
     fonts=[file for file in request.get("files",[]) if file.get("role")=="font"]

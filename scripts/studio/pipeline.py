@@ -78,7 +78,7 @@ def _export(root, request, output, reference_rules=None):
     write_json(output/"effective-profile.json", {**profile,"adopted_reference_rules":applied_rules})
     if profile.get("english_abstract_position") not in ("front", "end") or profile.get("equation_numbering") not in ("preserve", "sequential"):
         raise StudioError("INVALID_PROFILE")
-    check_fonts(profile)
+    resolved_font_faces=check_fonts(profile)
     gate = model_gate(root, request["manuscript"], request.get("model_evidence"), request.get("document_kind") == "paper")
     if profile.get("anonymous") and any(value for key,value in meta.items() if key.startswith(("authors_","affiliation_"))):
         raise StudioError("ANONYMOUS_IDENTITY_FORBIDDEN")
@@ -229,6 +229,8 @@ def _export(root, request, output, reference_rules=None):
               "renderer": {"word_pdf": "LibreOffice compatibility rendering, not Microsoft Word native", "latex_pdf": "XeLaTeX"}}
     report["source_title_promoted_to_front_matter"]=promoted_title
     report["font_substitution"]["observed_word_fonts"]=sorted({font for page in word_pdf["pages"] for font in page["fonts"]})
+    report["font_substitution"]["resolved_faces"]=resolved_font_faces
+    report["font_substitution"]["observed_latex_fonts"]=sorted({font for page in pdfs["latex-proof.pdf"]["pages"] for font in page["fonts"]})
     report["font_substitution"]["word_compatibility_note"]="LibreOffice may substitute StarMath fonts when importing OMML; observed PDF fonts are reported separately from fonts encoded in the editable Word mother."
     report["template"] = template_identity
     report["content_layout_attributes_removed"] = removed_attributes
