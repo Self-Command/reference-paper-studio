@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "event_id",
+      "event_type",
+      "actor_type",
+      "user_instruction",
+      "instruction_source",
+      "content_snapshot_sha256"
+    ],
+    "properties": {
+      "event_id": {
+        "type": "string"
+      },
+      "event_type": {
+        "enum": [
+          "plan",
+          "model",
+          "md_content",
+          "presentation",
+          "export",
+          "revision",
+          "delivery"
+        ]
+      },
+      "actor_type": {
+        "const": "human"
+      },
+      "user_instruction": {
+        "type": "string",
+        "minLength": 1
+      },
+      "instruction_source": {
+        "type": "string",
+        "minLength": 1
+      },
+      "content_snapshot_sha256": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    }
+  }
+}

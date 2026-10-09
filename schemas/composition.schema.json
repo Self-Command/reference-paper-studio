@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "policy",
+    "components",
+    "availability",
+    "rules"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "policy": {
+      "type": "object"
+    },
+    "components": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "availability": {
+      "type": "object",
+      "properties": {
+        "md_ready": {
+          "type": "boolean"
+        },
+        "docx_ready": {
+          "type": "boolean"
+        },
+        "latex_ready": {
+          "type": "boolean"
+        },
+        "automatic_pass": {
+          "type": "boolean"
+        },
+        "visual_review_complete": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rules": {
+      "type": "string"
+    },
+    "variants": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "front",
+          "end"
+        ]
+      }
+    },
+    "year": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "font_profile_id": {
+      "type": "string"
+    },
+    "compliance": {
+      "type": "object"
+    },
+    "source": {
+      "type": "string"
+    },
+    "guidance": {
+      "type": "string"
+    },
+    "article_type": {
+      "type": "string"
+    }
+  }
+}

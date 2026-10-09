@@ -16,3 +16,7 @@ pytest==8.4.2
 python-docx==1.2.0
 PyYAML==6.0.3
 typing_extensions==4.16.0
+docxtpl==0.20.2
+Jinja2==3.1.6
+jsonschema==4.26.0
+transitions==0.9.3

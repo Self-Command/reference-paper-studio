@@ -1,0 +1,20 @@
+{
+  "open-serif": {
+    "fonts": {
+      "cjk": "Noto Serif CJK SC",
+      "latin": "Liberation Serif",
+      "math": "Latin Modern Math"
+    },
+    "license": "Open fonts; record installed file fingerprints",
+    "user_confirmation_required": true
+  },
+  "common-paper": {
+    "fonts": {
+      "cjk": "SimSun",
+      "latin": "Times New Roman",
+      "math": "Cambria Math"
+    },
+    "license": "Not bundled; user must provide available authorized fonts",
+    "user_confirmation_required": true
+  }
+}

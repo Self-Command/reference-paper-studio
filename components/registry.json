@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "components": [
+    {
+      "id": "page.base",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "region.front",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "region.body",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "region.end",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "title.bilingual",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "authors.affiliations",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "abstract.single",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "abstract.bilingual",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "keywords",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "summary-sheet",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.problem",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.assumptions",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.notation",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.model",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.algorithm",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.validation",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.discussion",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "section.conclusion",
+      "version": "1",
+      "kind": "content",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "math.inline",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "math.display",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "math.multiline",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "math.number",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "figure.inline",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "table.three-line",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "caption",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "cross-reference",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "bibliography",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "appendix",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "ai-use-statement",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "toc",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "page-number",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "header-footer",
+      "version": "1",
+      "kind": "layout",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "check.structure",
+      "version": "1",
+      "kind": "check",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "check.evidence",
+      "version": "1",
+      "kind": "check",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "check.content",
+      "version": "1",
+      "kind": "check",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "check.math",
+      "version": "1",
+      "kind": "check",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "check.geometry",
+      "version": "1",
+      "kind": "check",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "check.visual",
+      "version": "1",
+      "kind": "check",
+      "requires": [],
+      "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    }
+  ]
+}

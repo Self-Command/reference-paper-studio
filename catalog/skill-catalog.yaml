@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "suite_version": "0.3.0-rc.1",
+  "shared_root": "reference-paper-studio",
+  "skills": [
+    {
+      "id": "reference-paper-studio",
+      "title": "学术论文总技能",
+      "description": "根据论文、建模成果和代码整理需求规划工作，按进度调用参考、模型、MD、模板、导出和复检技能；也支持衔接已有阶段。",
+      "behavior": "读取能力目录和项目已有材料，选择所需技能，给出具体工作方案供确认。用户明确只做一个环节时直接进入该环节。",
+      "entrypoint": "skills/reference-paper-studio/SKILL.md",
+      "standalone": true,
+      "example": "$reference-paper-studio 学术论文总技能，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-studio-help",
+      "title": "技能说明与使用指导",
+      "description": "介绍学术论文套件的技能用途、输入、输出、前置条件和独立调用方法；用户只咨询使用方式时不执行文档任务。",
+      "behavior": "读取同一能力目录，解释最少需要哪些材料、如何调用、会获得什么，以及当前模板是否就绪。只说明时不跑Actions。",
+      "entrypoint": "skills/paper-studio-help/SKILL.md",
+      "standalone": true,
+      "example": "$paper-studio-help 技能说明与使用指导，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-reference-research",
+      "title": "参考论文与规则研究",
+      "description": "分析指定参考论文及目标期刊或比赛规则，生成可追踪结构、版式来源及冲突记录；不把低质量PDF抽取当成可靠版式。",
+      "behavior": "先研究现有材料。网页可读研究直接查官方来源；PDF/DOC抽取和预览提交Actions。已发表参考为优先基准，冲突用对应官方模板消歧；记录页码、置信度和未确认项。",
+      "entrypoint": "skills/paper-reference-research/SKILL.md",
+      "standalone": true,
+      "example": "$paper-reference-research 参考论文与规则研究，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-model-review",
+      "title": "数学模型凝练与验证",
+      "description": "将题目、模型、代码和数据组织成正规数学模型稿，审查符号、假设、约束、目标、推导、实现与验证证据。",
+      "behavior": "正文只写正规数学模型，说明和问题放报告。模型验证与作者确认分别记录；方向获批不等于数学证明。运行实验、求解或验证代码必须在Actions。",
+      "entrypoint": "skills/paper-model-review/SKILL.md",
+      "standalone": true,
+      "example": "$paper-model-review 数学模型凝练与验证，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-md-write",
+      "title": "MD论文写作",
+      "description": "根据已确认结构模板和真实研究证据写Markdown论文，统一题目、摘要、章节、公式、图表和文献；不自动生成Word。",
+      "behavior": "先读取用户已提供的MD模板；缺少时说明可选模板并确认结构。新模型论文先有验证与确认。MD是唯一正文源，作者身份、实验和引用使用真实材料。",
+      "entrypoint": "skills/paper-md-write/SKILL.md",
+      "standalone": true,
+      "example": "$paper-md-write MD论文写作，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-md-review",
+      "title": "MD论文审查",
+      "description": "只审查Markdown论文的标题摘要、逻辑、章节、模型、证据、公式、图表与文献，输出可定位问题；不擅自修稿。",
+      "behavior": "检查正式内容和旁置证据。按稳定对象ID报告，程序性解析/检查走Actions；数学审查与转换检查分开。确认当前MD快照后才能导出。",
+      "entrypoint": "skills/paper-md-review/SKILL.md",
+      "standalone": true,
+      "example": "$paper-md-review MD论文审查，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-template-compose",
+      "title": "论文模板组合与冻结",
+      "description": "选择或用登记组件组合MD结构与Word/LaTeX模板，核对规则、变体及字体；新母版需要云端验收后登记。",
+      "behavior": "区别模板维护与稿件填充。组件共享结构、区域、数学、图表和检查；不能拼接未知DOCX分节。参考冲突先记录，个人偏好不冒充官方合规。",
+      "entrypoint": "skills/paper-template-compose/SKILL.md",
+      "standalone": true,
+      "example": "$paper-template-compose 论文模板组合与冻结，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-export",
+      "title": "Word与LaTeX云端生成",
+      "description": "用已确认MD、登记母版、字体和有效生成授权，在GitHub Actions生成可编辑Word、LaTeX、PDF与首版诊断报告。",
+      "behavior": "核对当前内容确认、字体选择和导出授权；已有有效指令复用。只读母版，拒绝物理格式覆盖，保留首版，即使失败也提供已有Word和报告。",
+      "entrypoint": "skills/paper-export/SKILL.md",
+      "standalone": true,
+      "example": "$paper-export Word与LaTeX云端生成，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-visual-review",
+      "title": "论文视觉复检",
+      "description": "对云端论文校样或指定Word逐页检查，提供视觉附件、问题清单与复检报告；只检查时不修复。",
+      "behavior": "Word转换只走Actions。查看全部云端页图，按21项清单逐项记录。检查完成可有问题；不以绿色Actions或OOXML栏数替代真实看图。",
+      "entrypoint": "skills/paper-visual-review/SKILL.md",
+      "standalone": true,
+      "example": "$paper-visual-review 论文视觉复检，先处理当前指定范围。"
+    },
+    {
+      "id": "paper-revise",
+      "title": "论文批准范围内修订",
+      "description": "按用户批准的问题项和范围修订MD或排版代码，保留首版和差异，重新云端生成与逐页复检。",
+      "behavior": "先核对授权对应报告和版本。科学内容改动回MD确认；物理排版不偷偷改数学源。范围内可持续排查重跑，新增范围先报批。",
+      "entrypoint": "skills/paper-revise/SKILL.md",
+      "standalone": true,
+      "example": "$paper-revise 论文批准范围内修订，先处理当前指定范围。"
+    }
+  ]
+}
