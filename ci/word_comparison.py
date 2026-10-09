@@ -217,6 +217,21 @@ def verify(case):
     # Different TeX spellings may be equivalent; no automatic adoption on that basis.
     direct["literal_readback_equal"] = converted == source_math
     write_json(target / "direct-math-probe.json", direct)
+    from PIL import Image, ImageDraw
+    for name in reports:
+        images = sorted((target / "previews" / name).glob("*.png"))
+        tiles = []
+        for filename in images:
+            picture = Image.open(filename).convert("RGB")
+            picture.thumbnail((310, 440))
+            tile = Image.new("RGB", (330, 470), "#eeeeee")
+            tile.paste(picture, ((330-picture.width)//2, 24))
+            ImageDraw.Draw(tile).text((10, 6), name + " / " + filename.stem, fill="black")
+            tiles.append(tile)
+        sheet = Image.new("RGB", (330*4, 470*((len(tiles)+3)//4)), "white")
+        for index, tile in enumerate(tiles):
+            sheet.paste(tile, ((index%4)*330, (index//4)*470))
+        sheet.save(target / (name + "-contact.png"))
     result = {"case": case, "build": "passed", "automatic_content_checks": "passed" if all(not r["errors"] for r in reports.values()) else "failed",
         "visual_review": "pending", "same_master": True, "adapter_body_trees_equal": equivalence,
         "variants": reports, "node_layout": load(target / "node-layout.json"), "direct_math": direct,

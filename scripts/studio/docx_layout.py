@@ -269,11 +269,13 @@ def body_only_docx(source, target):
     doc = Document(source)
     body = doc._element.body
     active = False
+    body_bookmark_id = None
     for element in list(body):
         if element.tag == qn("w:sectPr"): continue
         if element.tag == qn("w:bookmarkStart") and element.get(qn("w:name")) == "RPS_BODY":
+            body_bookmark_id = element.get(qn("w:id"))
             active=True; body.remove(element); continue
-        if element.tag == qn("w:bookmarkEnd") and element.get(qn("w:id")) == "9181":
+        if element.tag == qn("w:bookmarkEnd") and body_bookmark_id is not None and element.get(qn("w:id")) == body_bookmark_id:
             active=False; body.remove(element); continue
         if not active:
             body.remove(element); continue

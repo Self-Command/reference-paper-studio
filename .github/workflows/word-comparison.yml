@@ -31,6 +31,7 @@ jobs:
         working-directory: experiments/docx9
         run: npm install --package-lock-only --ignore-scripts && npm ci --ignore-scripts
       - run: python ci/word_comparison.py prepare
+      - run: python -m pytest -q --junitxml=build/word-comparison/tests.xml
       - run: node experiments/docx9/fill-template.mjs build/word-comparison/model
       - run: node experiments/docx9/fill-template.mjs build/word-comparison/objects-end
       - run: python ci/word_comparison.py verify
