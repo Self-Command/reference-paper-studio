@@ -208,6 +208,8 @@ def _export(root, request, output, reference_rules=None):
     if "Missing character:" in log: raise StudioError("MISSING_GLYPH: see latex/main.log")
     overflow = [float(n) for n in re.findall(r"Overfull \\hbox \(([\d.]+)pt too wide\)", log)]
     if any(n > 2 for n in overflow): acceptance_errors.append(f"LATEX_OVERFLOW: {overflow}")
+    vertical_overflow=[float(n) for n in re.findall(r"Overfull \\vbox \(([\d.]+)pt too high\)",log)]
+    if any(n>2 for n in vertical_overflow): acceptance_errors.append(f"LATEX_VERTICAL_OVERFLOW: {vertical_overflow}")
     shutil.copy2(texdir/"main.pdf", output/"latex-proof.pdf")
     pdfs = {"word-compat-proof.pdf":word_pdf,"latex-proof.pdf":inspect_output_pdf(output/"latex-proof.pdf",output/"previews/latex-proof")}
     write_json(output/"latex-proof.pdf.json",pdfs["latex-proof.pdf"])

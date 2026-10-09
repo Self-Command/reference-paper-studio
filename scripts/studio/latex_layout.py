@@ -150,6 +150,12 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     header=front(metadata,roles=profile.get("front_roles"))
     if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True,profile.get("front_roles"))
     end=front(metadata,True,profile.get("front_roles")) if profile["english_abstract_position"]=="end" else ""
+    if end:
+        # Fixed end-region contract: short title/abstract/keywords stay one
+        # unit, instead of stranding the abstract continuation on a new page.
+        # Oversized groups fail through the renderer's vertical overflow
+        # diagnostics; do not shrink fonts to hide an unfit region.
+        end="\n\\par\\noindent\\begin{minipage}{\\textwidth}\n"+end+"\n\\end{minipage}\\par\n"
     if profile.get("front_separate_page"): header+=r"\clearpage"
     columns=profile.get("body_columns",2)
     wrapped=("\n\\begin{multicols}{"+str(columns)+"}\n"+body+"\n\\end{multicols}\n") if columns>1 else "\n"+body+"\n"
