@@ -1,0 +1,13 @@
+{
+  "id": "snpse-first-docx-preview-20261009",
+  "reference_evidence": "evidence.json",
+  "stage": "reference",
+  "files": [
+    "first-word-proof.pdf",
+    "evidence.json"
+  ],
+  "sha256": {
+    "first-word-proof.pdf": "b82b0523a0948b30d390f562e6f42302aef3a18ac85b465180544ea51e08d206",
+    "evidence.json": "00206d73fb0e8e2c1a33b9b08e756bd0064e86d5f8e764ccdd71858f47bf2b31"
+  }
+}
