@@ -150,30 +150,53 @@ def _export(root, request, output, reference_rules=None):
         for part in ("document","settings"):
             (output/("word-"+part+".xml")).write_bytes(package.read("word/"+part+".xml"))
     texdir = output/"latex"
-    # Both writers use the same reversible native layout decisions for displays.
-    from copy import deepcopy
+    # A font estimate is a routing aid. Native TeX box measurements decide
+    # whether the shared display fits both fixed formula/number regions.
     from .docx_layout import body_only_docx
     from .qa import read_ast
-    body_only_docx(final, output/"layout-bridge.docx")
-    bridge = read_ast(output/"layout-bridge.docx", "docx")
-    bridge_math = [n for n in walk(bridge) if n.get("t") == "Math"]
-    layout_ast = deepcopy(ast)
-    all_math = [n for n in walk(layout_ast) if n.get("t") == "Math"]
-    if len(bridge_math) != len(all_math): raise StudioError("LAYOUT_BRIDGE_MATH_COUNT_CHANGED")
-    ledger = json.loads((output/"math-layout-ledger.json").read_text(encoding="utf-8"))
-    inline_ledger = json.loads((output/"inline-math-layout-ledger.json").read_text(encoding="utf-8"))
-    display_index = 0; inline_index = 0; bridge_map = []
-    for index, (node, rendered) in enumerate(zip(all_math, bridge_math)):
-        if node["c"][0]["t"] == "DisplayMath":
-            if ledger[display_index]["changes"]:
-                bridge_map.append({"math_index":index,"id":equations[display_index]["id"],"original":node["c"][1],"layout":rendered["c"][1]})
-                node["c"][1] = rendered["c"][1]
-            display_index += 1
-        else:
-            if inline_ledger[inline_index]:
-                bridge_map.append({"math_index":index,"id":"inline-"+str(inline_index),"original":node["c"][1],"layout":rendered["c"][1]})
-                node["c"][1] = rendered["c"][1]
-            inline_index += 1
+    from .latex_math import measured_widths
+    from .locked_template import column_width
+    budgets={};attempts=[]
+    for attempt in range(4):
+        if attempt:layout=fill(baseline,meta,equations,master,profile,final,display_budgets=budgets)
+        body_only_docx(final, output/"layout-bridge.docx")
+        bridge = read_ast(output/"layout-bridge.docx", "docx")
+        bridge_math = [n for n in walk(bridge) if n.get("t") == "Math"]
+        layout_ast = deepcopy(ast)
+        all_math = [n for n in walk(layout_ast) if n.get("t") == "Math"]
+        if len(bridge_math) != len(all_math): raise StudioError("LAYOUT_BRIDGE_MATH_COUNT_CHANGED")
+        ledger = json.loads((output/"math-layout-ledger.json").read_text(encoding="utf-8"))
+        inline_ledger = json.loads((output/"inline-math-layout-ledger.json").read_text(encoding="utf-8"))
+        display_index = 0; inline_index = 0; bridge_map = []
+        for index, (node, rendered) in enumerate(zip(all_math, bridge_math)):
+            if node["c"][0]["t"] == "DisplayMath":
+                if ledger[display_index]["changes"]:
+                    bridge_map.append({"math_index":index,"id":equations[display_index]["id"],"original":node["c"][1],"layout":rendered["c"][1]})
+                    node["c"][1] = rendered["c"][1]
+                display_index += 1
+            else:
+                if inline_ledger[inline_index]:
+                    bridge_map.append({"math_index":index,"id":"inline-"+str(inline_index),"original":node["c"][1],"layout":rendered["c"][1]})
+                    node["c"][1] = rendered["c"][1]
+                inline_index += 1
+        measurement_profile={**profile,"_measure_unfixed_displays":True}
+        main=write_latex(ast,equations,meta,measurement_profile,texdir,layout_ast)
+        widths=measured_widths(main,output/"math-fit"/str(attempt),profile.get("body_columns",2)) if profile.get("latex_number_backend")=="fixed-slots" else []
+        failed=[record for record in widths if not record["fits"]]
+        attempts.append({"attempt":attempt,"budgets":dict(budgets),"measurements":widths,"unfit":[r["label"] for r in failed]})
+        write_json(output/"joint-math-fitting.json",attempts)
+        if not failed:break
+        if attempt==3:raise StudioError("OBJECT_DOES_NOT_FIT: "+", ".join(r["label"] for r in failed))
+        for record in failed:
+            if record["number_width_bp"]>27.5:raise StudioError("NUMBER_DOES_NOT_FIT: "+record["label"])
+            equation=next(e for e in equations if (e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]))==record["label"])
+            previous=budgets.get(equation["id"],(column_width(profile)-550)/20-26)
+            tighter=previous*min(.9,record["formula_slot_bp"]/record["math_width_bp"]*.96)
+            if tighter<45:raise StudioError("OBJECT_DOES_NOT_FIT: "+equation["id"]+"; no safe narrower container")
+            budgets[equation["id"]]=tighter
+    # The finalized Word bytes/ledger and TeX expression now use the same
+    # reversible choices. A task cannot supply these internal measured budgets.
+    with zipfile.ZipFile(final) as package:(output/"word-document.xml").write_bytes(package.read("word/document.xml"))
     write_json(output/"shared-layout-map.json",bridge_map)
     main = write_latex(ast, equations, meta, profile, texdir, layout_ast)
     write_json(output/"layout-document.json",layout_ast)

@@ -277,7 +277,7 @@ def import_lists(source, target, elements):
             reference.set(W+"val", mapping[old])
 
 
-def fill(native, metadata, equations, master, p, output):
+def fill(native, metadata, equations, master, p, output, display_budgets=None):
     require_actions()
     from .math_layout import wrap, tree
     from .math_metrics import configure
@@ -337,7 +337,8 @@ def fill(native, metadata, equations, master, p, output):
             if len(formulae) != 1: raise StudioError("UNSUPPORTED_DISPLAY_STRUCTURE: "+equation["id"])
             # Keep an extra 10 pt safety allowance for renderer width
             # differences; isolation also checks the actual number boundary.
-            changes = wrap(formulae[0], (width-550)/20-26,p["body_size_pt"],metrics=metrics)
+            budget=(display_budgets or {}).get(equation["id"],(width-550)/20-26)
+            changes = wrap(formulae[0], budget,p["body_size_pt"],metrics=metrics)
             multiline=any(len(node.findall(M+"e"))>1 for node in formulae[0].iter(M+"eqArr")) or any(len(node.findall(M+"mr"))>1 for node in formulae[0].iter(M+"m"))
             ledger.append({"id": equation["id"], "changes": changes,"number_anchor":"center" if multiline else "baseline"})
             table = doc.add_table(rows=1, cols=2 if multiline else 1); table.autofit = False

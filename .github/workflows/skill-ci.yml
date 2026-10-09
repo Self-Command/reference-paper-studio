@@ -97,6 +97,7 @@ jobs:
             build/modular-model-*/acceptance.json
             build/modular-model-*/content-report.json
             build/modular-model-*/equation-alignment.json
+            build/modular-model-*/joint-math-fitting.json
             build/modular-model-*/latex/main.tex
             build/modular-model-*/fixture-changes.json
             build/modular-input-*/fixture-changes.json

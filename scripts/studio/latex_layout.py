@@ -180,6 +180,10 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     layout["blocks"]=blocks
     layout_path=output/"layout.json";layout_path.write_text(json.dumps(layout,ensure_ascii=False),encoding="utf-8")
     body=run(["pandoc",layout_path,"-f","json","-t","latex","--wrap=none"])
+    if profile.get("latex_number_backend")=="fixed-slots" and not profile.get("_measure_unfixed_displays"):
+        from .latex_math import replace_displays,MACRO
+        body=replace_displays(body)
+        preamble=preamble.replace(r"\begin{document}",MACRO+"\n"+r"\begin{document}")
     body=body.replace(r"\begin{figure}",r"\begin{figure}[H]")
     # Fixed width for every illustration, regardless of its source attributes.
     body=re.sub(r"\\includegraphics(?:\[[^\]]*\])?",lambda m:r"\includegraphics[width=\linewidth,keepaspectratio]",body)

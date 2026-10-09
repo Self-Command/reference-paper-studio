@@ -158,7 +158,11 @@ def check_roundtrips(ast, baseline, final, latex_body, output, input_root=None):
     if math_list(ast) != math_list(latex_ast):
         raise StudioError("MATH_CHANGED: LaTeX readback")
     from .latex_tables import reader_copy
-    rendered_ast = read_ast(reader_copy(Path(latex_body).parent/"layout-body.tex",output), "latex")
+    from .latex_math import reader_text
+    actual_body=Path(latex_body).parent/"layout-body.tex"
+    fixed_reader=Path(output)/"fixed-math-reader.tex"
+    fixed_reader.write_text(reader_text(actual_body.read_text(encoding="utf-8")),encoding="utf-8")
+    rendered_ast = read_ast(reader_copy(fixed_reader,output), "latex")
     expected_layout = json.loads((Path(output)/"layout-document.json").read_text(encoding="utf-8"))
     assert_text(expected_layout, rendered_ast, "actual LaTeX layout body")
     if math_list(expected_layout) != math_list(rendered_ast): raise StudioError("MATH_CHANGED: actual LaTeX layout body")
