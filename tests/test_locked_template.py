@@ -105,3 +105,9 @@ def test_physical_section_tampering_fails(masters,tmp_path):
     doc=Document(master); doc.sections[1]._sectPr.find(qn("w:cols")).set(qn("w:num"),"1")
     bad=tmp_path/"bad.docx";doc.save(bad)
     with pytest.raises(StudioError,match="TEMPLATE_SECTIONS_CHANGED"):check_contract(bad,p)
+
+
+def test_glyph_probe_ignores_only_invisible_spacing():
+    from studio.math_proof import glyphs
+    assert glyphs("x\u200b≤y = z") == glyphs("x≤y=z")
+    assert glyphs("x<y") != glyphs("xy")

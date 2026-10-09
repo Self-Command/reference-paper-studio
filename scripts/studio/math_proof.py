@@ -14,7 +14,7 @@ from .vendor.ptlib.ooxml import set_child
 
 def glyphs(text):
     # Unicode font alphabets map to their letter identity, never operator deletion.
-    return Counter(c for c in unicodedata.normalize("NFKC",text) if not c.isspace())
+    return Counter(c for c in unicodedata.normalize("NFKC",text) if not c.isspace() and c not in "\u200b\u200c\u200d\ufeff")
 
 
 def prove(path, directory):
