@@ -59,11 +59,16 @@ def wrap(root, width_pt):
                         copy = deepcopy(child); copy.find(M+"t").text = piece; tokens.append(copy)
                     continue
             tokens.append(deepcopy(child))
-        segments = []; segment = []
+        segments = []; segment = []; depth = 0; previous = ""
         for token in tokens:
-            safe = token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−,;\u3400-\u9fff]", token.findtext(M+"t", "")))
+            value = token.findtext(M+"t", "") if token.tag == M+"r" else ""
+            safe = depth == 0 and (token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−,;\u3400-\u9fff]", value)) or previous.endswith(")") and value == "1")
             if safe and segment: segments.append(segment); segment=[]
             segment.append(token)
+            for character in value:
+                if character in "([{": depth += 1
+                elif character in ")]}": depth = max(0,depth-1)
+            previous = value
         if segment: segments.append(segment)
         rows = []; row = []; used = 0
         for segment in segments:
@@ -79,6 +84,11 @@ def wrap(root, width_pt):
         props = OxmlElement("m:eqArrPr"); jc = OxmlElement("m:baseJc"); jc.set(M+"val", "top"); props.append(jc); array.append(props)
         for row in rows:
             entry = OxmlElement("m:e")
+            first = row[0].findtext(M+"t", "") if row[0].tag == M+"r" else ""
+            if re.match(r"^[=<>≤≥]",first):
+                # A zero-width operand keeps compatibility renderers from
+                # treating a continuation relation as an incomplete expression.
+                empty=OxmlElement("m:box"); empty.append(OxmlElement("m:e")); entry.append(empty)
             for child in row: entry.append(child)
             array.append(entry)
         element.append(array)
