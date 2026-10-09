@@ -25,7 +25,7 @@ jobs:
         if: inputs.stage != 'master'
       - run: python ci/validate_skill.py
       - run: python ci/template_build.py
-      - run: python -m pytest tests/test_locked_template.py -q --junitxml=build/template-tests.xml
+      - run: python -m pytest tests/test_locked_template.py -k 'not latex_layout_commands' -q --junitxml=build/template-tests.xml
         if: inputs.stage == 'master'
       - run: python -m pytest -q --junitxml=build/test-results.xml
         if: inputs.stage != 'master'

@@ -80,8 +80,23 @@ def _export(root, request, output, reference_rules=None):
         write_json(output/"document.json", ast)
     write_json(output/"document.json", ast)
     baseline, final = output/"native.docx", output/"manuscript.docx"
+    # Pandoc's aligned→OMML writer emits literal '&' in eqArr rows. Translate
+    # alignment-only syntax to a one-column array; author source stays unchanged.
+    from copy import deepcopy
+    word_ast=deepcopy(ast); converter_normalizations=[]
+    for index,node in enumerate(n for n in walk(word_ast) if n.get("t")=="Math"):
+        expression=node["c"][1]
+        if r"\begin{aligned}" in expression:
+            if r"\begin{cases}" in expression or r"\begin{matrix}" in expression:
+                raise StudioError("UNSUPPORTED_NESTED_ALIGNMENT: explicit array required")
+            normalized=expression.replace(r"\begin{aligned}",r"\begin{array}{l}").replace(r"\end{aligned}",r"\end{array}")
+            normalized=re.sub(r"(?<!\\)&","",normalized)
+            converter_normalizations.append({"math_index":index,"source":expression,"word_input":normalized,"reason":"alignment separators, not literal math symbols"})
+            node["c"][1]=normalized
+    write_json(output/"word-input.json",word_ast)
+    write_json(output/"converter-normalizations.json",converter_normalizations)
     try:
-        strict_pandoc(["pandoc", output/"document.json", "-f", "json", "-o", baseline, "--resource-path", root])
+        strict_pandoc(["pandoc", output/"word-input.json", "-f", "json", "-o", baseline, "--resource-path", root])
     except StudioError as error:
         bad=[]
         for index, node in enumerate(n for n in walk(ast) if n.get("t") == "Math"):

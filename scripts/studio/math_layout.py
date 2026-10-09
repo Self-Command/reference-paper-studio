@@ -42,9 +42,9 @@ def wrap(root, width_pt):
         for index, child in enumerate(children):
             child_budget = budget
             if name in ("d", "borderBox"): child_budget -= 15
-            if name == "mr":
+            if name in ("mr", "oMath", "e") and child.tag not in (M+"r", M+"rPr", W+"rPr"):
                 other = sum(math_width_pt(c, 10) for c in children if c is not child)
-                child_budget = max(55, budget-other-10)
+                child_budget = max(45, budget-other-8)
             visit(child, path+[index], max(45, child_budget))
         if name not in containers or math_width_pt(element, 10) <= budget: return
         tokens = []
@@ -52,20 +52,25 @@ def wrap(root, width_pt):
             if child.tag == M+"r":
                 texts = child.findall(M+"t")
                 if len(texts) == 1:
-                    pieces = re.split(r"(?=[=<>≤≥+−,;])", texts[0].text or "")
+                    value = texts[0].text or ""
+                    # Ordinary mathematical text may wrap between Chinese characters.
+                    pieces = re.split(r"(?=[=<>≤≥+−,;]|[\u3400-\u9fff])", value)
                     for piece in filter(None, pieces):
                         copy = deepcopy(child); copy.find(M+"t").text = piece; tokens.append(copy)
                     continue
             tokens.append(deepcopy(child))
-        rows = []; row = []; used = 0
+        segments = []; segment = []
         for token in tokens:
-            size = math_width_pt(token, 10)
-            text = "".join(token.itertext())
-            safe = token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−,;]", token.findtext(M+"t", "")))
-            # A separate top-level term after explicit spacing can begin a new row.
-            if row and used+size > budget and (safe or row[-1].tag == M+"r" and (row[-1].findtext(M+"t", "").endswith(" "))):
-                rows.append(row); row = []; used = 0
-            row.append(token); used += size
+            safe = token.tag == M+"r" and bool(re.match(r"^[=<>≤≥+−,;\u3400-\u9fff]", token.findtext(M+"t", "")))
+            if safe and segment: segments.append(segment); segment=[]
+            segment.append(token)
+        if segment: segments.append(segment)
+        rows = []; row = []; used = 0
+        for segment in segments:
+            size = sum(math_width_pt(t,10) for t in segment)
+            if row and used+size > budget:
+                rows.append(row); row=[]; used=0
+            row.extend(segment); used+=size
         if row: rows.append(row)
         if len(rows) < 2: return
         old = etree.tostring(element, encoding="unicode")
