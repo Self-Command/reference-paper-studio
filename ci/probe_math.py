@@ -61,9 +61,9 @@ for number,mode in enumerate(("plain","lit-sty","nor-sty","lit-only","nor-only",
             if not text:continue
             token=OxmlElement("m:r"); prop=OxmlElement("m:rPr")
             if text=="=" and mode!="plain":
-                if "lit" in mode: set_child(prop,"m:lit",{"m:val":"0" if "false" in mode else "1"})
-                if "nor" in mode: set_child(prop,"m:nor",{"m:val":"1"})
-                if "sty" in mode:set_child(prop,"m:sty",{"m:val":"p"})
+                for name,value in (("lit","0" if "false" in mode else "1"),("nor","1"),("sty","p")):
+                    if name in mode:
+                        node=OxmlElement("m:"+name);node.set(qn("m:val"),value);prop.append(node)
                 token.append(prop)
             literal=OxmlElement("m:t"); literal.text=text; token.append(literal)
             if text=="=" and mode=="box":
