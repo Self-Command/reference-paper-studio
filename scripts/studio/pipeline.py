@@ -28,6 +28,8 @@ def export(root, request, output, reference_rules=None):
         return _export(root, request, output, reference_rules)
     except Exception as error:
         directory=Path(output)
+        existing=directory/"acceptance.json"
+        if existing.is_file() and json.loads(existing.read_text(encoding="utf-8")).get("pdfs"): raise
         complete=all((directory/n).is_file() for n in ("manuscript.docx","word-compat-proof.pdf","latex-proof.pdf"))
         write_json(directory/"acceptance.json", {"build":"passed" if complete else "failed", "automatic_acceptance":"failed", "visual_review":"blocked", "error":str(error), "exception_type":type(error).__name__, "execution":{"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA")},"template_request":{k:request.get(k) for k in ("template_id","template_version","template_variant")},"diagnostic_artifacts_retained":True})
         raise
@@ -146,31 +148,35 @@ def _export(root, request, output, reference_rules=None):
     word_pdf["page_flow"]=check_page_flow(output/"word-compat-proof.pdf",profile)
     word_geometry=check_column_geometry(output/"word-compat-proof.pdf",profile,ast,meta)
     write_json(output/"word-column-geometry.json",word_geometry)
+    acceptance_errors=[]
     from .math_proof import prove
     if equations:
         isolated_math=prove(final,output/"isolated-math-proof")
         write_json(output/"isolated-math-summary.json",isolated_math)
-        if isolated_math["missing"]: raise StudioError("WORD_MATH_GLYPHS_MISSING: see isolated-math-proof/glyph-preservation.json")
+        if isolated_math["missing"]: acceptance_errors.append("WORD_MATH_GLYPHS_MISSING: "+", ".join(r["label"] for r in isolated_math["missing"]))
     if equations:
         labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
-        word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
+        try: word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)
+        except StudioError as error: acceptance_errors.append(str(error))
     for _ in range(2):
         run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", "-file-line-error", "main.tex"], cwd=texdir, timeout=300)
     log = (texdir/"main.log").read_text(encoding="utf-8", errors="replace")
     if "Missing character:" in log: raise StudioError("MISSING_GLYPH: see latex/main.log")
     overflow = [float(n) for n in re.findall(r"Overfull \\hbox \(([\d.]+)pt too wide\)", log)]
-    if any(n > 2 for n in overflow): raise StudioError(f"LATEX_OVERFLOW: {overflow}")
+    if any(n > 2 for n in overflow): acceptance_errors.append(f"LATEX_OVERFLOW: {overflow}")
     shutil.copy2(texdir/"main.pdf", output/"latex-proof.pdf")
     pdfs = {"word-compat-proof.pdf":word_pdf,"latex-proof.pdf":inspect_output_pdf(output/"latex-proof.pdf",output/"previews/latex-proof")}
     latex_geometry=check_column_geometry(output/"latex-proof.pdf",profile,ast,meta)
     write_json(output/"latex-column-geometry.json",latex_geometry)
     if word_geometry["violations"] or latex_geometry["violations"]:
-        raise StudioError("BODY_COLUMN_OVERFLOW: see *-column-geometry.json")
-    content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
+        acceptance_errors.append("BODY_COLUMN_OVERFLOW: see *-column-geometry.json")
+    try: content = check_roundtrips(ast, baseline, final, texdir/"body.tex", output)
+    except StudioError as error:
+        content={"status":"failed","error":str(error)}; acceptance_errors.append(str(error))
     docx = check_docx(final)
     mapping = {e["id"]: {"ordinal": e["ordinal"], "display": e["id"] if profile["equation_numbering"] == "preserve" else str(e["ordinal"])} for e in equations}
     write_json(output/"reference-map.json", {"equations": mapping, "literature": "shared resolved AST", "objects": object_map})
-    report = {"build": "passed", "automatic_acceptance": "passed", "visual_review": "pending", "model_gate": gate,
+    report = {"build": "passed", "automatic_acceptance": "failed" if acceptance_errors else "passed", "visual_review": "blocked" if acceptance_errors else "pending", "model_gate": gate,
               "input_sha256": digest(source), "layout": layout, "docx": docx, "content": content, "pdfs": pdfs,
               "font_substitution": {"fonts": profile["fonts"], "exact_reference_match": False, "reason": "Open-source portable proof fonts"},
               "renderer": {"word_pdf": "LibreOffice compatibility rendering, not Microsoft Word native", "latex_pdf": "XeLaTeX"}}
@@ -180,4 +186,7 @@ def _export(root, request, output, reference_rules=None):
     report["implementation_version"] = __import__("studio").__version__
     report["execution"] = {"run_id":os.environ["GITHUB_RUN_ID"],"skill_commit":os.environ.get("GITHUB_SHA"),"input_files":{p.relative_to(root).as_posix():digest(p) for p in root.rglob("*") if p.is_file()}}
     write_json(output/"acceptance.json", report)
+    report["errors"]=acceptance_errors
+    write_json(output/"acceptance.json", report)
+    if acceptance_errors: raise StudioError("AUTOMATIC_ACCEPTANCE_FAILED: "+"; ".join(acceptance_errors))
     return report

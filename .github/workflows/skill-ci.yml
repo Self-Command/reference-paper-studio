@@ -28,13 +28,15 @@ jobs:
       - run: python -m pytest tests/test_locked_template.py -k 'not latex_layout_commands' -q --junitxml=build/template-tests.xml
         if: inputs.stage == 'master'
       - run: python -m pytest -q --junitxml=build/test-results.xml
+        id: tests
         if: inputs.stage != 'master'
       - run: python ci/probe_math.py
         if: inputs.stage != 'master'
       - run: python ci/regression.py
+        id: regression
         if: inputs.stage != 'master'
       - run: python ci/package.py
-        if: inputs.stage != 'master'
+        if: always() && inputs.stage != 'master' && steps.tests.outcome == 'success'
       - run: git rev-parse HEAD > build/skill-commit.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()

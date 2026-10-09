@@ -9,12 +9,16 @@ from studio.pipeline import export
 from studio.references import analyze
 from studio.review import review
 from studio.qa import check_page_flow
+from studio.runtime import StudioError
 
 require_actions()
 root=Path(__file__).resolve().parents[1]
 references=analyze(root/"fixtures/references","evidence.json",root/"build/reference-analysis")
 review(root/"fixtures/model/model.md",root/"build/model-review")
-model_report=export(root/"fixtures/model",{"manuscript":"model.md","metadata":"metadata.json","template_id":"reference-journal-v1","template_version":1,"document_kind":"model","expected_equations":30},root/"build/model",references["rules"])
+failures=[]
+try:
+    model_report=export(root/"fixtures/model",{"manuscript":"model.md","metadata":"metadata.json","template_id":"reference-journal-v1","template_version":1,"document_kind":"model","expected_equations":30},root/"build/model",references["rules"])
+except StudioError as error: failures.append({"case":"model","error":str(error)})
 model_profile=json.loads((root/"fixtures/model/profile.json").read_text())
 flow=check_page_flow(root/"build/model/word-compat-proof.pdf",model_profile)
 write_json(root/"build/model/page-flow.json",flow)
@@ -47,6 +51,9 @@ meta={"title_zh":"排版能力回归样例","authors_zh":"测试作者（非论�
 write_json(fixture/"metadata.json",meta)
 profile=json.loads((root/"assets/profiles/chinese-journal.json").read_text());profile["english_abstract_position"]="end"
 write_json(fixture/"profile.json",profile)
-export(fixture,{"manuscript":"model.md","metadata":"metadata.json","template_id":"reference-journal-v1","template_version":1,"template_variant":"end","expected_equations":2},root/"build/objects-end")
+try:
+    export(fixture,{"manuscript":"model.md","metadata":"metadata.json","template_id":"reference-journal-v1","template_version":1,"template_variant":"end","expected_equations":2},root/"build/objects-end")
+except StudioError as error: failures.append({"case":"objects-end","error":str(error)})
 write_json(root/"build/objects-end/page-flow.json",check_page_flow(root/"build/objects-end/word-compat-proof.pdf",profile))
-write_json(root/"build/regression-summary.json",{"status":"passed","original_model_equations":30,"object_fixture":"passed","english_abstract_positions":["front","end"],"mathematical_correctness":"not_asserted"})
+write_json(root/"build/regression-summary.json",{"status":"failed" if failures else "passed","failures":failures,"original_model_equations":30,"english_abstract_positions":["front","end"],"mathematical_correctness":"not_asserted"})
+if failures: raise StudioError("REGRESSION_FAILED: "+str(failures))

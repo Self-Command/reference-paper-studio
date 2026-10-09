@@ -5,11 +5,11 @@
   "variants": {
     "front": {
       "file": "master-front.docx",
-      "sha256": "1e6779e17a7fd748056a5026111736f5418fb80e4c253c932c36f94126532eda"
+      "sha256": "8cfb85dd68d72833d64beb2f76a6b019cf901ef814f97d2f31c891b8b91c8b43"
     },
     "end": {
       "file": "master-end.docx",
-      "sha256": "ba62b9e99ea505fbbf0493bf2c9a31c6c88acaa7594842fe1614dd877a433b18"
+      "sha256": "a84df4fd8e68eed1e966ce713412e2aa5349682098a732de7781795af2d549d6"
     }
   }
 }
