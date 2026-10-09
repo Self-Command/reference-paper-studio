@@ -187,7 +187,9 @@ def _export(root, request, output, reference_rules=None):
     if equations:
         isolated_math=prove(final,output/"isolated-math-proof")
         write_json(output/"isolated-math-summary.json",isolated_math)
-        if isolated_math["missing"]: acceptance_errors.append("WORD_MATH_GLYPHS_MISSING: "+", ".join(r["label"] for r in isolated_math["missing"]))
+        if isolated_math["missing"]:
+            print("WORD_MATH_DIAGNOSTICS: "+json.dumps(isolated_math["missing"],ensure_ascii=False),flush=True)
+            acceptance_errors.append("WORD_MATH_GLYPHS_OR_NUMBER_REGION_FAILED: "+", ".join(r["label"] for r in isolated_math["missing"]))
     if equations:
         labels=[e["id"] if profile["equation_numbering"]=="preserve" else str(e["ordinal"]) for e in equations]
         try: word_pdf["equation_visibility"]=check_equation_visibility(output/"word-compat-proof.pdf",labels)

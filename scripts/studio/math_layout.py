@@ -60,6 +60,13 @@ def wrap(root, width_pt, font_size_pt=10):
     if current != old:
         changes.append({"path":[],"before":old,"after":current,"reason":"editable leading operators in existing math arguments"})
     containers = {"oMath", "e", "num", "den", "lim"}
+    def contains_piecewise(element):
+        for delimiter in element.iter(M+"d"):
+            props=delimiter.find(M+"dPr")
+            if props is None: continue
+            begin,end=props.find(M+"begChr"),props.find(M+"endChr")
+            if begin is not None and end is not None and begin.get(M+"val")=="{" and end.get(M+"val")=="": return True
+        return False
     def visit(element, path, budget):
         name = etree.QName(element).localname
         # Only a piecewise delimiter may stack value/condition cells. A general
@@ -82,7 +89,7 @@ def wrap(root, width_pt, font_size_pt=10):
                     changes.append({"path":path,"before":old,"after":etree.tostring(element,encoding="unicode"),"reason":"piecewise value then condition, one column"})
         # Reserve delimiters, fraction rules and matrix neighbours conservatively.
         children = list(element)
-        linear_overflow=name in containers and math_width_pt(element,font_size_pt)>budget
+        linear_overflow=name in containers and contains_piecewise(element) and math_width_pt(element,font_size_pt)>budget
         for index, child in enumerate(children):
             child_budget = budget
             if name in ("d", "borderBox"): child_budget -= 15
