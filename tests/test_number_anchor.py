@@ -3,9 +3,11 @@ import json
 from docx import Document
 from studio.manuscript import parse
 from studio.pipeline import strict_pandoc
-from studio.locked_template import create_templates,fill,policy
+from studio.locked_template import create_templates,fill,policy,check_contract
 from studio.docx_layout import body_only_docx,M,W
 from studio.math_layout import tree
+from studio.runtime import StudioError
+import pytest
 
 def test_single_line_has_shared_baseline_and_audit_restores_display_wrapper(tmp_path):
     source=tmp_path/"source.md"
@@ -25,3 +27,8 @@ def test_single_line_has_shared_baseline_and_audit_restores_display_wrapper(tmp_
     assert len(list(result._element.iter(M+"oMathPara")))==2
     assert [tree(m) for m in result._element.iter(M+"oMath")]==[tree(m) for m in Document(native)._element.iter(M+"oMath")]
     assert "(E1)" not in "".join(p.text for p in result.paragraphs)
+    tab=paragraph.find(W+"pPr/"+W+"tabs/"+W+"tab")
+    tab.set(W+"pos","100")
+    doc.save(output)
+    with pytest.raises(StudioError,match="EQUATION_NUMBER_TABS_CHANGED"):
+        check_contract(output,policy())

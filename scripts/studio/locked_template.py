@@ -175,7 +175,18 @@ def check_contract(path, p):
                 props=par.find(W+"pPr")
                 if props is None or props.find(W+"pStyle") is None or props.find(W+"pStyle").get(W+"val") not in {"RPS"+r for r in ROLES}:
                     raise StudioError("CONTENT_STYLE_FORBIDDEN")
-                if any(c.tag not in {W+"pStyle",W+"numPr",W+"jc",W+"keepNext"} for c in props): raise StudioError("CONTENT_PARAGRAPH_LAYOUT_FORBIDDEN")
+                allowed={W+"pStyle",W+"numPr",W+"jc",W+"keepNext"}
+                if props.find(W+"tabs") is not None or props.find(W+"textAlignment") is not None:
+                    parent=next((ancestor for ancestor in par.iterancestors() if ancestor.tag==W+"tbl"),None)
+                    if parent is None or not is_equation_table(parent) or len(parent.findall(W+"tr/"+W+"tc"))!=1 or par.find(M+"oMath") is None:
+                        raise StudioError("CONTENT_PARAGRAPH_LAYOUT_FORBIDDEN: equation baseline scope")
+                    tabs=props.find(W+"tabs"); alignment=props.find(W+"textAlignment")
+                    expected=[("center",str((column_width(p)-550)//2)),("right",str(column_width(p)))]
+                    if tabs is None or [(node.get(W+"val"),node.get(W+"pos")) for node in tabs]!=expected or any(set(node.attrib)!={W+"val",W+"pos"} for node in tabs):
+                        raise StudioError("EQUATION_NUMBER_TABS_CHANGED")
+                    if alignment is None or alignment.attrib!={W+"val":"baseline"}: raise StudioError("EQUATION_NUMBER_ANCHOR_CHANGED")
+                    allowed.update((W+"tabs",W+"textAlignment"))
+                if any(c.tag not in allowed for c in props): raise StudioError("CONTENT_PARAGRAPH_LAYOUT_FORBIDDEN")
             for run in item.iter(W+"r"):
                 props=run.find(W+"rPr")
                 if props is not None and any(c.tag not in {W+"b",W+"i",W+"vertAlign"} for c in props): raise StudioError("CONTENT_RUN_LAYOUT_FORBIDDEN")
