@@ -94,6 +94,11 @@ def _export(root, request, output, reference_rules=None):
     if ast["blocks"] and ast["blocks"][0].get("t")=="Header" and ast["blocks"][0]["c"][0]==1 and text_of(ast["blocks"][0])==meta.get("title_zh"):
         promoted_title=text_of(ast["blocks"].pop(0))
     object_map = resolve_crossrefs(ast, equations, profile["equation_numbering"])
+    if request.get("schema_version")==2:
+        from .object_audit import inspect as inspect_objects
+        objects=inspect_objects(ast,require_references=request.get("document_kind")=="paper")
+        write_json(output/"object-audit.json",objects)
+        if objects["issues"]: raise StudioError("OBJECT_CONTRACT_FAILED: "+json.dumps(objects["issues"],ensure_ascii=False))
     if request.get("document_kind")=="paper" and any(r["property"]=="bilingual_captions" and r["value"] is True for r in applied_rules):
         for node in walk(ast):
             if node.get("t") in ("Table","Figure"):

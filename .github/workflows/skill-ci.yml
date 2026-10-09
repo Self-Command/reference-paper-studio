@@ -34,7 +34,7 @@ jobs:
       - run: python ci/suite_check.py
       - run: python ci/template_matrix.py
         if: inputs.stage == 'modular'
-      - run: python -m pytest tests/test_suite_core.py -q --junitxml=build/suite-tests.xml
+      - run: python -m pytest tests/test_suite_core.py tests/test_export_authorization.py tests/test_revision_scope.py -q --junitxml=build/suite-tests.xml
         if: inputs.stage == 'core'
       - run: python ci/validate_skill.py
       - run: python ci/template_build.py

@@ -55,7 +55,7 @@ def parse(source, output):
             raise StudioError("UNSUPPORTED_HEADING_LEVEL: fixed template supports levels 1–4")
         if node.get("t") == "Math":
             expression = node["c"][1]
-            if re.search(r"\\(?:tiny|scriptsize|footnotesize|small|large|Large|LARGE|huge|Huge|fontsize|color|pagebreak|newpage|onecolumn|twocolumn)\b", expression):
+            if re.search(r"\\(?:tiny|scriptsize|footnotesize|small|large|Large|LARGE|huge|Huge|fontsize|fontfamily|fontseries|fontshape|selectfont|color|textcolor|pagebreak|newpage|onecolumn|twocolumn|newgeometry|geometry|vspace|hspace|setlength|resizebox|scalebox|rotatebox|phantom|hphantom|vphantom|input|include|usepackage|documentclass|write|openout|catcode|def|gdef|edef|newcommand|renewcommand|directlua)\b", expression):
                 raise StudioError("CONTENT_LAYOUT_COMMAND_FORBIDDEN: " + expression[:100])
             if node["c"][0]["t"] == "DisplayMath":
                 tags = re.findall(r"\\tag\{([^}]+)\}", expression)
