@@ -170,7 +170,7 @@ def test_packaged_image_import_preserves_opaque_bytes_and_drawing_extent(tmp_pat
     opaque=b"header-not-supported-by-python-docx"+buffer.getvalue()
     source_image._blob=opaque
     target=Document();elements=[deepcopy(source.paragraphs[-1]._p)]
-    original_extent=elements[0].find(".//"+qn("wp:extent")).attrib.copy()
+    original_extent=dict(elements[0].find(".//"+qn("wp:extent")).attrib)
     import_resources(source,target,elements)
     imported=next(r.target_part for r in target.part.rels.values() if r.reltype==RT.IMAGE)
     assert imported is not source_image and imported.blob==opaque
