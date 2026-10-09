@@ -15,3 +15,23 @@ def test_visual_receipt_bound_to_existing_artifacts(tmp_path):
     assert verify_receipt(path,folder,"123",tmp_path/"out")["visual_review"]=="passed"
     preview.write_bytes(b"changed")
     with pytest.raises(StudioError,match="VISUAL_FINGERPRINT"): verify_receipt(path,folder,"123",tmp_path/"out")
+
+
+def test_visual_release_cannot_substitute_word_or_skill_package(tmp_path):
+    root=tmp_path/"cloud"; root.mkdir()
+    word=root/"manuscript.docx"; word.write_bytes(b"cloud Word bytes")
+    pdf=root/"word-proof.pdf"; pdf.write_bytes(b"cloud proof bytes")
+    archive=root/"reference-paper-studio.zip"; archive.write_bytes(b"exact built archive")
+    report={"build":"passed","automatic_acceptance":"passed","execution":{"run_id":"456"},"editable_outputs":{"manuscript.docx":digest(word)},"pdfs":{"word-proof.pdf":{"sha256":digest(pdf),"previews":[]}}}
+    (root/"acceptance.json").write_text(json.dumps(report))
+    manifest={"file":archive.name,"sha256":digest(archive),"automatic_acceptance":"passed","installation_allowed":False}
+    (root/"package-manifest.json").write_text(json.dumps(manifest))
+    receipt={"run_id":"456","reviewer":"reviewer","status":"passed","artifacts":[{"path":p.name,"sha256":digest(p),"reviewed":True} for p in (word,pdf)]}
+    path=tmp_path/"receipt.json";path.write_text(json.dumps(receipt));output=tmp_path/"release"
+    verify_receipt(path,root,"456",output)
+    assert (output/archive.name).read_bytes()==archive.read_bytes()
+    assert json.loads((output/"release-manifest.json").read_text())["installation_allowed"] is True
+    word.write_bytes(b"different Word")
+    with pytest.raises(StudioError,match="VISUAL_FINGERPRINT"): verify_receipt(path,root,"456",output)
+    word.write_bytes(b"cloud Word bytes");archive.write_bytes(b"different archive")
+    with pytest.raises(StudioError,match="RELEASE_PACKAGE_FINGERPRINT"): verify_receipt(path,root,"456",output)
