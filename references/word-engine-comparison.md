@@ -10,6 +10,8 @@
 
 `docx/layout` 与 `latexToMath` 是独立的候选能力。布局估计可能遇到未知字体或对象；猜测结果不用于验收。原生 LaTeX 转换器即使能生成对象，也需要语义回读及视觉验证，不能自动取代现有 Pandoc 公式链路。失败不得降级为图片或普通文字。
 
+9.9.0 的 `src/layout/equations.ts` 使用 Cambria Math 的字形与 MATH 参数。当前开源字体校样使用 Latin Modern Math，因此不能把该模块对公式的宽度估计当作当前字体下的实测值；也不能为满足它而暗中依赖商业 Office 字体。严格模式提前停止或分页数缺失应明确报告。
+
 运行入口：`.github/workflows/word-comparison.yml`；默认以已通过 CI 的原模型运行 `37863960356` 为基线，并校验当前模型指纹。云端产物 `word-comparison` 包含母版、三份 DOCX/PDF、逐页 PNG、公式转换探测、分页诊断及对比报告；检查状态与视觉状态分别记录。
 
 上游：<https://github.com/dolanmiu/docx>，MIT；本轮通过公开 API 使用依赖，不复制上游源码。版本依据：<https://github.com/dolanmiu/docx/releases/tag/9.9.0>。

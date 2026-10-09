@@ -18,6 +18,7 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt
+from docx.enum.text import WD_LINE_SPACING
 from lxml import etree
 import pdfplumber
 from studio.runtime import require_actions, write_json, digest, run, StudioError
@@ -64,6 +65,7 @@ def compact_styles(doc):
             style.paragraph_format.space_after = Pt(3)
             # Explicit baseline spacing avoids Noto's large default line box.
             style.paragraph_format.line_spacing = Pt(14)
+            style.paragraph_format.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
             style.paragraph_format.keep_with_next = False
             style.paragraph_format.keep_together = False
         elif name.startswith("heading"):
@@ -71,6 +73,9 @@ def compact_styles(doc):
             style.paragraph_format.space_after = Pt(3)
             style.paragraph_format.line_spacing = Pt(15)
             style.paragraph_format.keep_with_next = True
+        elif name == "title":
+            style.paragraph_format.line_spacing = Pt(24)
+            style.paragraph_format.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
 
 
 def prepare(case):
@@ -117,6 +122,7 @@ def prepare(case):
         for cell in [c for row in table.rows for c in row.cells]:
             for paragraph in cell.paragraphs:
                 paragraph.paragraph_format.line_spacing = Pt(12)
+                paragraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
                 paragraph.paragraph_format.space_after = Pt(2)
                 paragraph.paragraph_format.keep_with_next = False
                 set_child(paragraph._p.get_or_add_pPr(), "w:ind", {"w:left": 0, "w:right": 0, "w:firstLine": 0, "w:firstLineChars": 0})
@@ -194,6 +200,8 @@ def verify(case):
                 if math_list(baseline_readback) != math_list(read_ast(target / (name + "-body.docx"), "docx")):
                     raise StudioError("MATH_READBACK_CHANGED")
                 check_docx(docx)
+                if any(etree.QName(node).localname == "undefined" for node in xml(docx).iter()):
+                    raise StudioError("INVALID_XML_WRAPPER")
             except Exception as error:
                 errors.append(str(error))
             run(["libreoffice", "-env:UserInstallation=file:///tmp/rps-compare-" + name + case, "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", target, docx], timeout=300)

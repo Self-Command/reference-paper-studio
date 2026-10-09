@@ -6,12 +6,19 @@ if (process.env.GITHUB_ACTIONS !== "true" || !process.env.GITHUB_RUN_ID) {
 
 const fs = await import("node:fs/promises");
 const path = await import("node:path");
-const { patchDocument, PatchType, ImportedXmlComponent, Document, Packer, Paragraph } = await import("docx");
+const { patchDocument, PatchType, convertToXmlComponent, Document, Packer, Paragraph } = await import("docx");
+const { xml2js } = await import("xml-js");
 const { estimatePageNumbersWith } = await import("docx/layout");
 const { Math: WordMath, latexToMath } = await import("docx/math");
 const directory = path.resolve(process.argv[2]);
 const request = JSON.parse(await fs.readFile(path.join(directory, "template-input.json"), "utf8"));
-const components = request.blocks.map((xml) => ImportedXmlComponent.fromXmlString(xml));
+const components = request.blocks.map((xml) => {
+    // fromXmlString returns a document container whose key is undefined in
+    // 9.9.0. Convert its actual element; never write <undefined> into a DOCX.
+    const element = xml2js(xml, { compact: false }).elements.find((entry) => entry.type === "element");
+    if (!element) throw new Error("EMPTY_XML_BODY_BLOCK");
+    return convertToXmlComponent(element);
+});
 const fontFiles = await Promise.all(request.fonts.map(async (font) => ({ name: font.name, data: await fs.readFile(font.path) })));
 const strictEstimator = estimatePageNumbersWith({ fonts: fontFiles, guess: false });
 const guessingEstimator = estimatePageNumbersWith({ fonts: fontFiles, guess: true });
