@@ -113,7 +113,10 @@ def wrap(root, width_pt, font_size_pt=10):
                 # reserve their neighbours and cannot borrow column width.
                 # Reserving ALL unwrapped neighbours here would give a cases
                 # condition only 45 pt even after its parent moves to a new row.
-                child_budget = max(45,budget-8 if linear_overflow else budget-other-8)
+                # Transparent single-child argument wrappers add no physical
+                # width. Subtracting 8 pt at every nesting level eventually
+                # broke short function arguments that already fit the column.
+                child_budget = max(45,budget if linear_overflow else budget-other)
             visit(child, path+[index], max(45, child_budget))
         if name not in containers or math_width_pt(element, font_size_pt) <= budget: return
         segments=segments_of(element)

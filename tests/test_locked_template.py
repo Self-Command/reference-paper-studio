@@ -144,6 +144,17 @@ def test_parenthesized_objective_wraps_without_losing_bracket_scope():
     assert tree(restore(formula,ledger))==tree(original)
     assert "".join(t.text for t in formula.iter(qn("m:t")))=="min(aaaaaaaaaaaa(x),bbbbbbbbbbbb(x),cccccccccccc(x))"
 
+def test_transparent_nested_math_boxes_do_not_consume_column_width():
+    from copy import deepcopy
+    from studio.math_layout import wrap,tree
+    formula=OxmlElement("m:oMath");argument=formula
+    for _ in range(12):
+        box=OxmlElement("m:box");entry=OxmlElement("m:e");box.append(entry);argument.append(box);argument=entry
+    token=OxmlElement("m:r");text=OxmlElement("m:t");text.text="f(aa,bb)";token.append(text);argument.append(token)
+    original=deepcopy(formula)
+    assert wrap(formula,80)==[]
+    assert tree(formula)==tree(original)
+
 
 @pytest.mark.parametrize("expression_right,expected",[(180,False),(202,True)])
 def test_rendered_equation_number_region_rejects_collision(expression_right,expected):
