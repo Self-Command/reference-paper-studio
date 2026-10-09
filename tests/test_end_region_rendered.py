@@ -1,4 +1,4 @@
-import json
+import re
 import pdfplumber
 from studio.composition import load_composition
 from studio.manuscript import parse
@@ -24,6 +24,7 @@ def test_registered_end_abstract_can_share_last_native_column_page(tmp_path):
     with pdfplumber.open(proof) as pdf:
         assert len(pdf.pages)==1
         text=pdf.pages[0].extract_text()
-        assert "Registered end abstract" in text and "end region" in text
+        compact=re.sub(r"\s+","",text)
+        assert "Registeredendabstract" in compact and "endregion" in compact
         assert text.index("Registered body") < text.index("Registered end abstract")
     assert check_column_geometry(proof,profile,ast,metadata)["violations"]==[]
