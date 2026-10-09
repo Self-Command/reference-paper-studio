@@ -66,6 +66,9 @@ The manuscript is only a layout fixture. Successful conversion is not mathematic
     try:
         report=export(folder,request,root/"build/matrix"/key)
         results.append({"id":key,"status":"passed","template_state":"candidate","official_compliance":False,"md_approved":False})
-    except Exception as error: results.append({"id":key,"status":"failed","error":str(error)})
+    except Exception as error:
+        results.append({"id":key,"status":"failed","error":str(error)})
+        print(key+": "+str(error),flush=True)
 write_json(root/"build/matrix-summary.json",results)
+print(json.dumps(results,ensure_ascii=False),flush=True)
 if any(item["status"]=="failed" for item in results): raise RuntimeError("TEMPLATE_MATRIX_FAILED")

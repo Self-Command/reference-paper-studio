@@ -7,7 +7,7 @@ require_actions()
 root=Path(__file__).resolve().parents[1]
 sources={
  "gmcm-rules-2026":("https://cpipc.acge.org.cn/sysFile/downFile.do?fileId=97a93e3a9e074738aea95eea986508f2","docx"),
- "gmcm-template-2026":("https://cpipc.acge.org.cn/sysFile/downFile.do?fileId=a730b312331e492baad17b248bad6b51","docx"),
+ "gmcm-template-2026":("https://cpipc.acge.org.cn/sysFile/downFile.do?fileId=a730b312331e492baad17b248bad6b51","doc"),
  "seet-writing-template":("https://www.sys-ele.com/attached/file/20210316/20210316135031_500.doc","doc"),
  "cjms-writing-rules":("https://www.zgglkx.com/fileup/1003-207x/ITEM/20241015170318.doc","doc"),
  "setp-latex":("https://sysengi.cjoe.ac.cn/CN/item/downloadFile.do?uuid=e4d02914149c49a3afe11dd1acc48f1f","zip"),
@@ -25,11 +25,11 @@ for key,(url,extension) in sources.items():
         target.write_bytes(content); record["sha256"]=digest(target)
         if extension=="doc":
             run(["libreoffice","-env:UserInstallation=file:///tmp/rps-source-"+key,"--headless","--convert-to","docx","--outdir",output,target],timeout=120)
-            target=target.with_suffix("docx")
+            target=target.with_suffix(".docx")
         if extension in ("docx","doc"):
             run(["pandoc",target,"-t","markdown","-o",output/(key+".md")])
             run(["libreoffice","-env:UserInstallation=file:///tmp/rps-preview-"+key,"--headless","--convert-to","pdf","--outdir",output,target],timeout=120)
-            pdf=target.with_suffix("pdf")
+            pdf=target.with_suffix(".pdf")
             if pdf.is_file(): run(["pdftoppm","-f","1","-l","4","-r","90","-png",pdf,output/(key+"-page")])
         else:
             with zipfile.ZipFile(target) as package:

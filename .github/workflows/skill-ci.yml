@@ -8,12 +8,19 @@ on:
       stage:
         type: choice
         default: full
-        options: [core, modular, matrix, sources, master, full]
+        options: [core, modular, matrix, sources, diagnose, master, full]
+      source_run:
+        type: string
+        default: ''
+      source_artifact:
+        type: choice
+        default: skill-delivery
+        options: [skill-delivery, template-matrix]
 permissions:
   contents: read
 jobs:
   validate:
-    if: inputs.stage != 'matrix' && inputs.stage != 'sources'
+    if: inputs.stage != 'matrix' && inputs.stage != 'sources' && inputs.stage != 'diagnose'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -82,3 +89,28 @@ jobs:
     uses: ./.github/workflows/build-core.yml
     with:
       stage: ${{ inputs.stage }}
+  diagnose:
+    if: inputs.stage == 'diagnose'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      - uses: actions/setup-python@06da6279cdbca41027908073e81a4544dc79c06b
+        with:
+          python-version: '3.12.8'
+      - run: pip install -r requirements.lock
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: '${{ inputs.source_artifact }}'
+          run-id: '${{ inputs.source_run }}'
+          github-token: '${{ github.token }}'
+          path: diagnostic-artifacts
+      - run: python ci/diagnose_artifacts.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: proof-diagnostics
+          path: build/
+          retention-days: 30
