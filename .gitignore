@@ -6,4 +6,5 @@ dist/
 build/
 artifacts/
 .requests/
+node_modules/
 *.log
