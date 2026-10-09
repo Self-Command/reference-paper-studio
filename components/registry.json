@@ -243,9 +243,9 @@
     },
     {
       "id": "page-number",
-      "version": "1",
+      "version": "2",
       "kind": "layout",
-      "requires": [],
+      "requires": ["page.base"],
       "source": "Shared studio adapter over Pandoc/python-docx",
       "license": "MIT"
     },

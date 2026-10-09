@@ -65,6 +65,7 @@
     "caption",
     "cross-reference",
     "bibliography",
+    "page-number",
     "check.structure",
     "check.content",
     "check.math",

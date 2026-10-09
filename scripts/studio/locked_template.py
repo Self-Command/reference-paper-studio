@@ -21,7 +21,7 @@ from .vendor.ptlib.ooxml import set_child, set_fonts
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ROOT / "assets/templates/reference-journal-v1.json"
 R = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
-ROLES = ("Body", "Title", "Author", "Abstract", "Keywords", "Caption", "TableText", "Equation", "Marker", "Heading1", "Heading2", "Heading3", "Heading4", "List")
+ROLES = ("Body", "Title", "Author", "Abstract", "Keywords", "Caption", "TableText", "Equation", "Marker", "Heading1", "Heading2", "Heading3", "Heading4", "List", "PageNumber")
 
 
 def policy():
@@ -104,7 +104,7 @@ def create_templates(directory, policy_override=None):
             fmt.widow_control = True; fmt.page_break_before = False
             fmt.first_line_indent = Pt(20 if role == "Body" else 0)
             fmt.left_indent = Pt(0); fmt.right_indent = Pt(0)
-            fmt.alignment = 1 if role in ("Title", "Author", "Caption") else 3 if role in ("Body", "Abstract") else 0
+            fmt.alignment = 1 if role in ("Title", "Author", "Caption", "PageNumber") else 3 if role in ("Body", "Abstract") else 0
         normal = doc.styles["Normal"]; normal.font.name = p["fonts"]["latin"]; normal.font.size = Pt(p["body_size_pt"])
         set_fonts(normal.element.get_or_add_rPr(), latin=p["fonts"]["latin"], cjk=p["fonts"]["cjk"])
         settings = doc.settings.element
@@ -129,6 +129,16 @@ def create_templates(directory, policy_override=None):
         final = body.find(W+"sectPr")
         _apply_sectpr(final, {**p["page"], "columns": p.get("body_columns",2) if variant == "front" else 1, "doc_grid": False})
         set_child(final, "type", {"w:val": "continuous"})
+        if p.get("page_numbers"):
+            if p["page_numbers"]!={"position":"footer-center","start":1,"scope":"all"}:raise StudioError("PAGE_NUMBER_POLICY_UNSUPPORTED")
+            footer=doc.sections[0].footer.paragraphs[0]._p
+            pstyle(footer,"PageNumber")
+            field=OxmlElement("w:fldSimple");field.set(W+"instr","PAGE")
+            field.append(paragraph("1","PageNumber").find(W+"r"));footer.append(field)
+            for index,section in enumerate(doc.sections):
+                section.footer_distance=Twips(round(1440/2.54))
+                set_child(section._sectPr,"pgNumType",{"w:fmt":"decimal",**({"w:start":"1"} if index==0 else {})})
+            set_child(settings,"updateFields",{"w:val":"true"})
         path = directory/("master-"+variant+".docx"); doc.save(path)
         variants[variant] = {"file": path.name, "sha256": digest(path)}
     write_json(directory/"manifest.json", {"id": p["id"], "version": p["version"], "policy_sha256": digest(POLICY), "variants": variants})
@@ -194,6 +204,9 @@ def check_contract(path, p):
         margins = section._sectPr.find(W+"pgMar")
         if any(abs(int(margins.get(W+side))-round(p["page"]["margin_cm"][side]*1440/2.54))>1 for side in ("top", "bottom", "left", "right")):
             raise StudioError("TEMPLATE_MARGINS_CHANGED")
+        if p.get("page_numbers"):
+            if [node.get(W+"instr","").strip() for node in section.footer._element.iter(W+"fldSimple")]!=["PAGE"]:
+                raise StudioError("TEMPLATE_PAGE_NUMBER_CHANGED")
     return {"section_columns": columns, "body_columns": p.get("body_columns",2), "body_section_changes": 0, "content_layout_overrides": False}
 
 
@@ -384,6 +397,7 @@ def fill(native, metadata, equations, master, p, output):
         set_child(props, "tblW", {"w:w": str(width), "w:type": "dxa"})
         for column in table.columns: column.width = Twips(width//len(table.columns))
         for row in table.rows:
+            set_child(row._tr.get_or_add_trPr(),"cantSplit")
             for cell in row.cells:
                 cell.width = Twips(width//len(table.columns))
                 for child in list(cell._tc.get_or_add_tcPr()):
@@ -411,7 +425,8 @@ def fill(native, metadata, equations, master, p, output):
         raise StudioError("FLOATING_IMAGE_FORBIDDEN")
     doc.save(output)
     with zipfile.ZipFile(master) as original_package, zipfile.ZipFile(output) as final_package:
-        for part in ("word/styles.xml","word/settings.xml"):
+        immutable_parts=["word/styles.xml","word/settings.xml"]+[part for part in original_package.namelist() if re.fullmatch(r"word/(?:header|footer)\d+\.xml",part)]
+        for part in immutable_parts:
             if original_package.read(part) != final_package.read(part): raise StudioError("TEMPLATE_PART_CHANGED: "+part)
     write_json(Path(output).parent/"math-layout-ledger.json", ledger)
     write_json(Path(output).parent/"inline-math-layout-ledger.json", inline_ledger)

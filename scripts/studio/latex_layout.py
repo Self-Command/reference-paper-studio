@@ -132,6 +132,8 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     preamble=preamble.replace("[10pt,a4paper]", f"[{profile['body_size_pt']}pt,a4paper]")
     preamble=preamble.replace(r"\columnsep}{0.6cm}",r"\columnsep}{"+str(profile["page"].get("column_spacing_cm",0.6))+"cm}")
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
+    if "component_versions" in profile:
+        preamble=preamble.replace(r"\begin{document}",r"\pagestyle{"+("plain" if profile.get("page_numbers") else "empty")+"}\n"+r"\begin{document}")
     # A single body multicols region. Content has no section/column authority.
     layout=latex_ast(layout_ast or ast,equations,profile["equation_numbering"]); blocks=[]
     for block in layout["blocks"]:
