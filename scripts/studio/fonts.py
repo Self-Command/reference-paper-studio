@@ -37,9 +37,12 @@ def fontspec_declaration(command,family,faces):
         if any(char in path for char in ("{","}","%","#","\\")):raise StudioError("FONT_PATH_UNSAFE: "+family)
         paths[shape]=path
     options=fontspec_options(faces)[1:-1]
+    directories={str(Path(path).parent) for path in paths.values()}
+    if len(directories)!=1:raise StudioError("FONT_COLLECTION_DIRECTORY_MISMATCH: "+family)
+    options="Path={"+str(Path(paths["upright"]).parent)+"/},"+options
     for shape,key in (("bold","BoldFont"),("italic","ItalicFont"),("bolditalic","BoldItalicFont")):
-        options+=","+key+"={"+paths[shape]+"}"
-    return command+"{"+paths["upright"]+"}["+options+"]"
+        options+=","+key+"={"+Path(paths[shape]).name+"}"
+    return command+"{"+Path(paths["upright"]).name+"}["+options+"]"
 
 def install_declared(root,request,output):
     require_actions()
