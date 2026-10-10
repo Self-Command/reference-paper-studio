@@ -1,0 +1,492 @@
+{
+  "schema_version": 2,
+  "run_id": "38009710472",
+  "reviewer": "Codex: direct inspection of cloud-generated page PNGs",
+  "visual_status": "completed",
+  "visual_result": "issues_found",
+  "installation_allowed": false,
+  "artifacts": [
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/manuscript.docx",
+      "sha256": "97af232fe940b35d670572a5643a0c033d4ab5869b6611bed368281d2607adaf"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/latex/main.tex",
+      "sha256": "89f1551578a125dc3e9d41d2664a5ebfbb48e66e734bb81ea10cd09dd01e7c11"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/word-compat-proof.pdf",
+      "sha256": "fe64c07f3b51639ea10cfe75318019a2738c61b2481dc47bae63bf3ad5eec57b"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/previews/word-compat-proof/page-1.png",
+      "sha256": "103a577c3f266b131453e96bf6dcf6ed81e79b7ce0a054b8b809dd74aa40db5d"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/previews/word-compat-proof/page-2.png",
+      "sha256": "25bc638107fc9400ec0675baf6bcc671575dc74845f27e7b2d9a80e3dd9b618a"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/latex-proof.pdf",
+      "sha256": "83548219ebd183a74569bb43cfc5d260750261095d097ea93a157b585f1fa129"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/previews/latex-proof/page-1.png",
+      "sha256": "04e8d6ccdfe4d173158e3f24393ed00ecc10cd4d928d32fc22b56101898703be"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cjms/previews/latex-proof/page-2.png",
+      "sha256": "47b5268ab4f9184b72d4b889d3da40211771a730aec3de0ab6d5174bc5b40bce"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/manuscript.docx",
+      "sha256": "5dc36a7d2445e46cbce33bf6d1e0ce3543971e328413162cbd27d294d458a22d"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/latex/main.tex",
+      "sha256": "0288aa50af24f4af07a558b96be6881e89c4c9c59a1537e85de08c7bc600442e"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/word-compat-proof.pdf",
+      "sha256": "56289dee779ac4f80b3acfea5bf395770a870ff7b070b2cfa26eb30b1ced5cd7"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/previews/word-compat-proof/page-1.png",
+      "sha256": "6415de0aaecb5ba66fcb8936f2365427cb6ffbe0418eb33310f21f0acb74cdf4"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/previews/word-compat-proof/page-2.png",
+      "sha256": "9d275e01d54a584c5101b8a9448caaf19023cf59b63f28ab6ecc733ee8f555a5"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/latex-proof.pdf",
+      "sha256": "10413de956d51a7af6e84caac7a09e34bad31a4550341c2e9ea076a4e42ac15c"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/previews/latex-proof/page-1.png",
+      "sha256": "8dfab614cc3d8d819248418231c1795317ab728e42a29bd859845336ddbf29a8"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/cumcm/previews/latex-proof/page-2.png",
+      "sha256": "d0ff68d762ed3da789e5a5ab6e19713de739c9eedcbd846bc60bc07deec3c060"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-algorithm/manuscript.docx",
+      "sha256": "5ae834a0f1f8c7bd8812bc2cd065932e071e38e66e6a2c918392301a2f7e0662"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-algorithm/latex/main.tex",
+      "sha256": "92bd14a6df1d2c257040fd21e2eb275adb9be5a52fc29d42185c93052e40d9d6"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-algorithm/word-compat-proof.pdf",
+      "sha256": "7d4701c5b65d60a9701dcd9509ee73e6def963536444ed672e11997dba7086d4"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-algorithm/previews/word-compat-proof/page-1.png",
+      "sha256": "3219d7c874964ca1fc40e2f82bd54b3c6b8dffbcd5eda8d29f1d611ece341fa2"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-algorithm/latex-proof.pdf",
+      "sha256": "106398ca897d991f30e84bc6cb30690d08c7111f9b246c6733f3bc141a8a2c5f"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-algorithm/previews/latex-proof/page-1.png",
+      "sha256": "c04d173882ed95e5a81b71357764ef5cb04e24b191e80c5bd133c45bd011152f"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-modeling/manuscript.docx",
+      "sha256": "c36ae503ddd956ff197a7662eb9be28f7240b9bb3ccf39b399a731f468007a5a"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-modeling/latex/main.tex",
+      "sha256": "92bd14a6df1d2c257040fd21e2eb275adb9be5a52fc29d42185c93052e40d9d6"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-modeling/word-compat-proof.pdf",
+      "sha256": "440e8101eb7096831354e6edcf913ffd26ca409e75a924a4da1bd9dd6c30a7e9"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-modeling/previews/word-compat-proof/page-1.png",
+      "sha256": "3219d7c874964ca1fc40e2f82bd54b3c6b8dffbcd5eda8d29f1d611ece341fa2"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-modeling/latex-proof.pdf",
+      "sha256": "9652ebc1d1bfa094b1b1c53a9feb5b6b97df2f362d9b9d3c468f0ce740b85e27"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/general-modeling/previews/latex-proof/page-1.png",
+      "sha256": "c04d173882ed95e5a81b71357764ef5cb04e24b191e80c5bd133c45bd011152f"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/manuscript.docx",
+      "sha256": "b7f2b8516be5954d8faf84a3a61b4d872263ed091217828c5919e91e63526151"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/latex/main.tex",
+      "sha256": "0288aa50af24f4af07a558b96be6881e89c4c9c59a1537e85de08c7bc600442e"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/word-compat-proof.pdf",
+      "sha256": "955ea16540ebcda844d158e62d842e3d0a68cfcd79d211064fb990edd0cccc5b"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/previews/word-compat-proof/page-1.png",
+      "sha256": "6415de0aaecb5ba66fcb8936f2365427cb6ffbe0418eb33310f21f0acb74cdf4"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/previews/word-compat-proof/page-2.png",
+      "sha256": "9d275e01d54a584c5101b8a9448caaf19023cf59b63f28ab6ecc733ee8f555a5"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/latex-proof.pdf",
+      "sha256": "8ee6a40febe7a07f7ba1d29cc1ac6fed6eef4c93778e9997d2e36956547be9f7"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/previews/latex-proof/page-1.png",
+      "sha256": "8dfab614cc3d8d819248418231c1795317ab728e42a29bd859845336ddbf29a8"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/gmcm/previews/latex-proof/page-2.png",
+      "sha256": "d0ff68d762ed3da789e5a5ab6e19713de739c9eedcbd846bc60bc07deec3c060"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/ieee-access/manuscript.docx",
+      "sha256": "c7cfaf170d5cb0b39b453b0275a05d84710d82adec18aa582ad4e18918bb03d4"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/ieee-access/latex/main.tex",
+      "sha256": "8451f64a402f1f97b03e649e90fa4bff87d521d6ec563e0c948b7a604830ec2b"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/ieee-access/word-compat-proof.pdf",
+      "sha256": "eb0b5cdf47f030a45f9df4f5d49c953bd5c409c343ee40da62ebc7b247a34775"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/ieee-access/previews/word-compat-proof/page-1.png",
+      "sha256": "ccc6c9936c21895d62142519de3747bae03582751d03b3b9053bb30d71cc22b6"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/ieee-access/latex-proof.pdf",
+      "sha256": "983bb7a927636b43c4028b569781421416b2de46c8f078f94ce2ea97b77cddd4"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/ieee-access/previews/latex-proof/page-1.png",
+      "sha256": "ae63292e6b4b7d21cce3de18853dbba16176e0b6200c141d5d434fab940889e3"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/manuscript.docx",
+      "sha256": "88de149e093e966cffd46f0e5521d0531f3eec4473790324b65fbb5f033c249c"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/latex/main.tex",
+      "sha256": "95c9f4c4047a710ab5aafdde7584b73b8b156c1ec817a64285713f8b34194656"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/word-compat-proof.pdf",
+      "sha256": "934e9765b6a096a2aa37f6fa10a8a11576fd55ac407712f5daee7f857a0d4cb0"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/previews/word-compat-proof/page-1.png",
+      "sha256": "f19b086159b4f401456ca7b875e3c67646dcc1b803c94ec81614ab30c2d5c1b1"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/previews/word-compat-proof/page-2.png",
+      "sha256": "e5a3f816653d5b05af875c2115bcafb30d8dfb2b3ae0307598b1fe829620ad4b"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/latex-proof.pdf",
+      "sha256": "62443d49493a1621d2c031116ef49b6dd03017cf4f08c91691d399c520763053"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/previews/latex-proof/page-1.png",
+      "sha256": "925c26500a9bcc00cdb555a2c0e90d8e742cfb88997ed841ae1bef5e620f53fd"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/mcm-icm/previews/latex-proof/page-2.png",
+      "sha256": "83e3d5b910e46f4cf78cde0c8e4781a961dc008f4961c377947348c3f4be6444"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/seet/manuscript.docx",
+      "sha256": "973e9d4a5c6104ba4dfff6bc2cadfad63224f6823f82130567a8fc69ee4f9bb8"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/seet/latex/main.tex",
+      "sha256": "92bd14a6df1d2c257040fd21e2eb275adb9be5a52fc29d42185c93052e40d9d6"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/seet/word-compat-proof.pdf",
+      "sha256": "8d137581097c85b74815fe62de83433f63192b54fe76d84ae9dcb98796718355"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/seet/previews/word-compat-proof/page-1.png",
+      "sha256": "3219d7c874964ca1fc40e2f82bd54b3c6b8dffbcd5eda8d29f1d611ece341fa2"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/seet/latex-proof.pdf",
+      "sha256": "418f7ed761505c60dd45e4c332b69769dc1096635542d35bc2c1736c8b048ec0"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/seet/previews/latex-proof/page-1.png",
+      "sha256": "c04d173882ed95e5a81b71357764ef5cb04e24b191e80c5bd133c45bd011152f"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/manuscript.docx",
+      "sha256": "fa40ae86abc59debf2376d347ddfa42c4f85370d11e33fd2639e40324c01f415"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/latex/main.tex",
+      "sha256": "89f1551578a125dc3e9d41d2664a5ebfbb48e66e734bb81ea10cd09dd01e7c11"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/word-compat-proof.pdf",
+      "sha256": "866acf024c2fcb84d2adfca020dd2b179c427bf8361c06681b8cc5a4d9a05e5b"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/previews/word-compat-proof/page-1.png",
+      "sha256": "103a577c3f266b131453e96bf6dcf6ed81e79b7ce0a054b8b809dd74aa40db5d"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/previews/word-compat-proof/page-2.png",
+      "sha256": "25bc638107fc9400ec0675baf6bcc671575dc74845f27e7b2d9a80e3dd9b618a"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/latex-proof.pdf",
+      "sha256": "686bb02a80d269a71b29b790d7f7d85d7aaab0009c8e17f7be77491574ec3d59"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/previews/latex-proof/page-1.png",
+      "sha256": "04e8d6ccdfe4d173158e3f24393ed00ecc10cd4d928d32fc22b56101898703be"
+    },
+    {
+      "reviewed": true,
+      "path": "matrix/setp/previews/latex-proof/page-2.png",
+      "sha256": "47b5268ab4f9184b72d4b889d3da40211771a730aec3de0ab6d5174bc5b40bce"
+    }
+  ],
+  "report_bindings": {
+    "matrix/cjms/acceptance.json": {
+      "template_manifest_sha256": "c477a345b33e4c49a0bea94d0806ce302fa68b9a1219c7db3f494acc0fbedb8f",
+      "sha256": "26fbab812da9753d3cf6d971fea6108704e815b08e3a013ed9a5a3b7aff6703c",
+      "input_sha256": "9d3e6bbe906adf209f6436f05267a7afd23fc29c8fff1a05cfff2d3fd4340fd9"
+    },
+    "matrix/cumcm/acceptance.json": {
+      "template_manifest_sha256": "9608038e58bae02879a3ebf76e5abc7bf6392905d87e0945553e49ac79c7d8ac",
+      "sha256": "d43568e4e214c726e25e01e4a1f6e7a3d59accc917f8227e0b9e640528626c9f",
+      "input_sha256": "f6415e688b7b5385f49369ee0e11ec1e0e4c48c1a6913fa1b74d53bf97254ed6"
+    },
+    "matrix/general-algorithm/acceptance.json": {
+      "template_manifest_sha256": "e2b93a46050cfbe53e1ad4626442e79834559fc051c66daef9cb5fe0fefd9bf3",
+      "sha256": "22ac162f84be89b9aab3932bbda140ab9af37f1c60d9646c674f06d979d42a91",
+      "input_sha256": "9d3e6bbe906adf209f6436f05267a7afd23fc29c8fff1a05cfff2d3fd4340fd9"
+    },
+    "matrix/general-modeling/acceptance.json": {
+      "template_manifest_sha256": "c8d75ddd7583fb941cb95928f06988aa75eb028c400ead1c409ee0a56c05d7a9",
+      "sha256": "badca9b046ed87c7a339803db5c82dc1903fcd360dedbebefbe8f61dd92f0399",
+      "input_sha256": "9d3e6bbe906adf209f6436f05267a7afd23fc29c8fff1a05cfff2d3fd4340fd9"
+    },
+    "matrix/gmcm/acceptance.json": {
+      "template_manifest_sha256": "5b721f1f6957f43fb84559e8e184cf3ac632f6127d40506a8a6046c1a4092237",
+      "sha256": "e8bbc9a3f44b2f0c8ccff82528e4462a989d693a39d67f671776c03658511782",
+      "input_sha256": "f6415e688b7b5385f49369ee0e11ec1e0e4c48c1a6913fa1b74d53bf97254ed6"
+    },
+    "matrix/ieee-access/acceptance.json": {
+      "template_manifest_sha256": "554f9812b318c6fa6d84ce7819480e1c8e7c9312e7a947ae73bba043ff278c70",
+      "sha256": "bb8075cc5fdb024056d9aa181b5ccdef494d4aeb7c840b9c75ff8b7886fa3cde",
+      "input_sha256": "dcf76d0056936484fbe1c12e32dbf34f0116337a90f1f7ec0931ad7d8ab877fd"
+    },
+    "matrix/mcm-icm/acceptance.json": {
+      "template_manifest_sha256": "2eda1467aa320e0e4051d384be3834be9923424960bb657728e74bdc5d5815a1",
+      "sha256": "13474d1264d9813c6267341e6ec69fad1da638b4d3043dd016b9986cc8acf92f",
+      "input_sha256": "e7d077f63b4042e84a0bfe2c6de29ee7a15e8247a722a4c5ed58aadcfcaad81b"
+    },
+    "matrix/seet/acceptance.json": {
+      "template_manifest_sha256": "f46c67befc54ee844ebff5d0db531ca3a781d960db4adcfb5114f48a77fd1697",
+      "sha256": "7f0f0712a0cc2785098cf624fab9d4fcab6cf97a4beca8fe8af5a711a092fb6f",
+      "input_sha256": "9d3e6bbe906adf209f6436f05267a7afd23fc29c8fff1a05cfff2d3fd4340fd9"
+    },
+    "matrix/setp/acceptance.json": {
+      "template_manifest_sha256": "cc2aa9ff1deac37d2fde8408835d756ae124b886a029e6db92815adc95e40d38",
+      "sha256": "5f69921e4e5a9e2b681240cb15975997231816c300246de13add970eed19290f",
+      "input_sha256": "9d3e6bbe906adf209f6436f05267a7afd23fc29c8fff1a05cfff2d3fd4340fd9"
+    }
+  },
+  "checks": [
+    {
+      "result": "passed",
+      "check_id": "V01",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V02",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V03",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "issues_found",
+      "check_id": "V04",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V05",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V06",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V07",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V08",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V09",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V10",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V11",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V12",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V13",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V14",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V15",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V16",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V17",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V18",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "not_applicable",
+      "check_id": "V19",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V20",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    },
+    {
+      "result": "passed",
+      "check_id": "V21",
+      "evidence": "See docs/visual/38009710472.md, same check ID; all cloud preview pages inspected."
+    }
+  ],
+  "findings": [
+    {
+      "description": "Official fonts, page-number, identity, summary/cover and required declaration roles remain incomplete; no official readiness claim.",
+      "object": "Nine engineering candidates",
+      "check_id": "V04",
+      "id": "F03"
+    }
+  ]
+}

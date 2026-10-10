@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "gmcm",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "article_type": "中国研究生数学建模竞赛",
   "year": 2026,
   "policy": {
@@ -21,7 +21,7 @@
       "latin": "Liberation Serif",
       "math": "Latin Modern Math"
     },
-    "body_size_pt": 10,
+    "body_size_pt": 12,
     "body_line_minimum_pt": 14,
     "table_line_minimum_pt": 12,
     "tables": {
@@ -46,7 +46,18 @@
     ],
     "anonymous": true,
     "anonymous_no_toc": false,
-    "front_separate_page": true
+    "front_separate_page": true,
+    "line_spacing": "single",
+    "role_styles": {
+      "Heading1": {
+        "alignment": "center",
+        "size_pt": 14
+      },
+      "Title": {
+        "alignment": "center",
+        "size_pt": 16
+      }
+    }
   },
   "components": [
     "page.base",
@@ -72,7 +83,9 @@
     "check.content",
     "check.math",
     "check.geometry",
-    "check.visual"
+    "check.visual",
+    "style.roles",
+    "page-number"
   ],
   "variants": [
     "front",

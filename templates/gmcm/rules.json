@@ -17,7 +17,7 @@
       "source": "https://cpipc.acge.org.cn/cw/contestNews/detail/4/2c90800c8a895b7a018a96d636512bc2?page=6",
       "status": "pending_user_review",
       "confidence": "recommendation",
-      "adoption_reason": "当前年份附件尚待核实，内容结构为推荐，不能声明官方格式"
+      "adoption_reason": "章节结构为推荐，仍待用户审定；2026官方格式附件已独立核对，不能以格式规则代替MD审批"
     },
     {
       "property": "page_parameters",
@@ -58,6 +58,47 @@
       "source_type": "engineering_default",
       "status": "test_fixture_only",
       "adoption_reason": "User must choose before production export"
+    },
+    {
+      "property": "anonymous_page_roles",
+      "value": {
+        "no_header": true,
+        "page_numbers": {
+          "start": 1,
+          "position": "footer-center",
+          "scope": "all"
+        },
+        "front_separate_page": true
+      },
+      "source_type": "official_rule",
+      "source": "https://cpipc.acge.org.cn/sysFile/downFile.do?fileId=97a93e3a9e074738aea95eea986508f2",
+      "source_sha256": "46d2e2a87e90608ace764203d5326d7c7e41f01a5eb79986724a6f159fd70e16",
+      "page": 1,
+      "confidence": "high",
+      "status": "implemented_pending_cloud_validation",
+      "adoption_reason": "摘要后正文另页，摘要页起阿拉伯数字连续居中页码，无页眉和身份标志"
+    },
+    {
+      "property": "role_styles",
+      "value": {
+        "body_size_pt": 12,
+        "Title": {
+          "size_pt": 16,
+          "alignment": "center"
+        },
+        "line_spacing": "single",
+        "Heading1": {
+          "size_pt": 14,
+          "alignment": "center"
+        }
+      },
+      "source_type": "official_rule_with_font_substitution",
+      "source": "https://cpipc.acge.org.cn/sysFile/downFile.do?fileId=97a93e3a9e074738aea95eea986508f2",
+      "source_sha256": "46d2e2a87e90608ace764203d5326d7c7e41f01a5eb79986724a6f159fd70e16",
+      "page": 1,
+      "confidence": "high",
+      "status": "implemented_pending_cloud_validation",
+      "adoption_reason": "三号题名、四号一级标题居中，小四正文与单倍行距；仍使用开源测试字体，未冒称宋体和黑体完全复现"
     }
   ]
 }

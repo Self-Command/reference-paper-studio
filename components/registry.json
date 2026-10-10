@@ -245,7 +245,9 @@
       "id": "page-number",
       "version": "2",
       "kind": "layout",
-      "requires": ["page.base"],
+      "requires": [
+        "page.base"
+      ],
       "source": "Shared studio adapter over Pandoc/python-docx",
       "license": "MIT"
     },
@@ -303,6 +305,16 @@
       "kind": "check",
       "requires": [],
       "source": "Shared studio adapter over Pandoc/python-docx",
+      "license": "MIT"
+    },
+    {
+      "id": "style.roles",
+      "version": "1",
+      "kind": "layout",
+      "requires": [
+        "page.base"
+      ],
+      "source": "Registered role styles via native OOXML and LaTeX article section commands",
       "license": "MIT"
     }
   ]

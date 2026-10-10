@@ -32,7 +32,7 @@ def escape(text):
     return "".join({"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}"}.get(c,c) for c in str(text))
 
 
-def front(meta, english=False, roles=None):
+def front(meta, english=False, roles=None, role_styles=None):
     suffix = "_en" if english else "_zh"
     output=[]
     for key in ("title", "authors", "affiliation", "abstract", "keywords"):
@@ -41,7 +41,10 @@ def front(meta, english=False, roles=None):
         if isinstance(value,list):value="; ".join(value)
         if not value:continue
         rendered=meta.get("_meta_tex",{}).get(key+suffix,escape(value))
-        if key=="title":output.append(r"\begin{center}\Large\bfseries "+rendered+r"\end{center}")
+        if key=="title":
+            size=(role_styles or {}).get("Title",{}).get("size_pt")
+            font=(r"\fontsize{"+str(size)+"bp}{"+str(round(size*1.2,3))+r"bp}\selectfont" if size else r"\Large")
+            output.append(r"\begin{center}"+font+r"\bfseries "+rendered+r"\end{center}")
         elif key in ("authors","affiliation"):output.append(r"\begin{center}"+rendered+r"\end{center}")
         else:
             label=("Abstract: " if english else "摘要：") if key=="abstract" else ("Keywords: " if english else "关键词：")
@@ -134,6 +137,17 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     for key,value in page.items():preamble=preamble.replace(key.upper()+"cm",str(value)+"cm")
     if "component_versions" in profile:
         preamble=preamble.replace(r"\begin{document}",r"\pagestyle{"+("plain" if profile.get("page_numbers") else "empty")+"}\n"+r"\begin{document}")
+    if profile.get("line_spacing")=="single":
+        preamble=preamble.replace(r"\begin{document}",r"\linespread{1}"+"\n"+r"\begin{document}")
+    # Role geometry belongs to the registered template, not manuscript TeX.
+    # The native article section command avoids an additional layout package.
+    for role,level,command in (("Heading1",1,"section"),("Heading2",2,"subsection"),("Heading3",3,"subsubsection"),("Heading4",4,"paragraph")):
+        style=profile.get("role_styles",{}).get(role)
+        if not style: continue
+        size=style.get("size_pt",profile["body_size_pt"])
+        alignment={"center":r"\centering","left":r"\raggedright","right":r"\raggedleft"}[style.get("alignment","left")]
+        declaration=("\\makeatletter\\renewcommand{\\"+command+r"}{\@startsection{"+command+"}{"+str(level)+r"}{\z@}{-3.5ex plus -1ex minus -.2ex}{2.3ex plus .2ex}{\normalfont\fontsize{"+str(size)+"bp}{"+str(round(size*1.2,3))+r"bp}\selectfont\bfseries"+alignment+r"}}\makeatother")
+        preamble=preamble.replace(r"\begin{document}",declaration+"\n"+r"\begin{document}")
     native=profile.get("latex_body_backend")=="native-columns"
     breaking=profile.get("paragraph_breaking",{})
     if breaking:
@@ -188,9 +202,10 @@ def write_latex(ast, equations, metadata, profile, output, layout_ast=None):
     # Fixed width for every illustration, regardless of its source attributes.
     body=re.sub(r"\\includegraphics(?:\[[^\]]*\])?",lambda m:r"\includegraphics[width=\linewidth,keepaspectratio]",body)
     (output/"layout-body.tex").write_text(body,encoding="utf-8")
-    header=front(metadata,roles=profile.get("front_roles"))
-    if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True,profile.get("front_roles"))
-    end=front(metadata,True,profile.get("front_roles")) if profile["english_abstract_position"]=="end" else ""
+    role_styles=profile.get("role_styles")
+    header=front(metadata,roles=profile.get("front_roles"),role_styles=role_styles)
+    if profile["english_abstract_position"]=="front":header+="\n"+front(metadata,True,profile.get("front_roles"),role_styles)
+    end=front(metadata,True,profile.get("front_roles"),role_styles) if profile["english_abstract_position"]=="end" else ""
     if end:
         # Fixed end-region contract: short title/abstract/keywords stay one
         # unit, instead of stranding the abstract continuation on a new page.

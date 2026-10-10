@@ -44,7 +44,7 @@ def test_single_column_front_starts_body_on_next_page_and_renders_title(tmp_path
     from studio.locked_template import fill
     from studio.frontmatter import prepare
     from studio.qa import check_rendered_frontmatter,check_page_flow
-    _,p=load_composition("gmcm","1.0.0")
+    _,p=load_composition("gmcm","1.1.0")
     p["english_abstract_position"]=variant
     create_templates(tmp_path/"master",p)
     native=tmp_path/"native.docx";doc=Document();doc.add_heading("BodyStart",1);doc.add_paragraph("Actual body content.");doc.save(native)
@@ -60,3 +60,4 @@ def test_single_column_front_starts_body_on_next_page_and_renders_title(tmp_path
     observed=check_rendered_frontmatter(proof,p,ast,metadata,tmp_path/"metadata-source.json")
     assert observed["title_visibility"]==[{"role":"title_zh","pages":[1],"math_visibility":"checked separately"}]
     assert check_page_flow(proof,p)["pages"]==2
+

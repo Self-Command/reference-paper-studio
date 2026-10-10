@@ -43,8 +43,8 @@ def test_data_caption_moves_below_and_does_not_gain_vertical_borders():
 def test_contest_year_and_ieee_identity_cannot_be_substituted(tmp_path,monkeypatch):
     monkeypatch.setenv("RPS_REGISTRY_ROOT",str(tmp_path))
     monkeypatch.setenv("RPS_CANDIDATE_BUILD","true")
-    target=build("gmcm","1.0.0")
-    identity={"id":"gmcm","version":"1.0.0","year":2026,"variant":"front","font_profile":"open-serif","manifest_sha256":digest(target/"manifest.json")}
+    target=build("gmcm","1.1.0")
+    identity={"id":"gmcm","version":"1.1.0","year":2026,"variant":"front","font_profile":"open-serif","manifest_sha256":digest(target/"manifest.json")}
     assert resolve({"template":identity})[0].is_file()
     with pytest.raises(StudioError,match="TEMPLATE_YEAR_MISMATCH"):
         resolve({"template":{**identity,"year":2025}})
@@ -78,3 +78,4 @@ def test_build_cannot_repair_tampered_mother_silently(tmp_path,monkeypatch):
     with pytest.raises(StudioError,match="TEMPLATE_INTEGRITY_MISMATCH"):
         build("reference-journal-v1","2.0.0")
     assert digest(target/"master-front.docx")==fingerprint
+

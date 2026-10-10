@@ -92,6 +92,8 @@ def create_templates(directory, policy_override=None):
             style = doc.styles.add_style("RPS"+role, 1); style.base_style = doc.styles["Normal"]
             style.font.name = p["fonts"]["latin"]
             style.font.size = Pt(16 if role == "Title" else 12 if role == "Heading1" else 1 if role == "Marker" else p["body_size_pt"])
+            role_style=p.get("role_styles",{}).get(role,{})
+            if "size_pt" in role_style: style.font.size=Pt(role_style["size_pt"])
             style.font.bold = role == "Title" or role.startswith("Heading")
             style.font.color.rgb = RGBColor(0, 0, 0)
             set_fonts(style.element.get_or_add_rPr(), latin=p["fonts"]["latin"], cjk=p["fonts"]["cjk"])
@@ -105,6 +107,9 @@ def create_templates(directory, policy_override=None):
             fmt.first_line_indent = Pt(20 if role == "Body" else 0)
             fmt.left_indent = Pt(0); fmt.right_indent = Pt(0)
             fmt.alignment = 1 if role in ("Title", "Author", "Caption", "PageNumber") else 3 if role in ("Body", "Abstract") else 0
+            if "alignment" in role_style: fmt.alignment={"left":0,"center":1,"right":2}[role_style["alignment"]]
+            if p.get("line_spacing")=="single" and role!="Marker":
+                fmt.line_spacing=1.0; fmt.line_spacing_rule=WD_LINE_SPACING.SINGLE
         normal = doc.styles["Normal"]; normal.font.name = p["fonts"]["latin"]; normal.font.size = Pt(p["body_size_pt"])
         set_fonts(normal.element.get_or_add_rPr(), latin=p["fonts"]["latin"], cjk=p["fonts"]["cjk"])
         settings = doc.settings.element
@@ -209,6 +214,16 @@ def check_contract(path, p):
         if p.get("page_numbers"):
             if [node.get(W+"instr","").strip() for node in section.footer._element.iter(W+"fldSimple")]!=["PAGE"]:
                 raise StudioError("TEMPLATE_PAGE_NUMBER_CHANGED")
+    for role,expected in p.get("role_styles",{}).items():
+        style=doc.styles["RPS"+role]
+        if "size_pt" in expected and style.font.size!=Pt(expected["size_pt"]):
+            raise StudioError("TEMPLATE_ROLE_STYLE_CHANGED: "+role+" size")
+        if "alignment" in expected and style.paragraph_format.alignment!={"left":0,"center":1,"right":2}[expected["alignment"]]:
+            raise StudioError("TEMPLATE_ROLE_STYLE_CHANGED: "+role+" alignment")
+    if p.get("line_spacing")=="single":
+        for role in ROLES:
+            if role!="Marker" and doc.styles["RPS"+role].paragraph_format.line_spacing_rule!=WD_LINE_SPACING.SINGLE:
+                raise StudioError("TEMPLATE_ROLE_STYLE_CHANGED: "+role+" line spacing")
     return {"section_columns": columns, "body_columns": p.get("body_columns",2), "body_section_changes": 0, "content_layout_overrides": False}
 
 

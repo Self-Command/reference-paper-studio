@@ -24,6 +24,15 @@ def compile_components(descriptor):
     if "math.multiline" in selected and "math.display" not in selected: raise StudioError("COMPONENT_DEPENDENCY_MISSING: multiline display")
     if {"figure.inline","table.three-line"}&set(selected) and "caption" not in selected: raise StudioError("COMPONENT_DEPENDENCY_MISSING: captions")
     p=deepcopy(descriptor["policy"])
+    if (p.get("role_styles") or p.get("line_spacing")) and "style.roles" not in selected:
+        raise StudioError("STYLE_COMPONENT_REQUIRED")
+    for role,style in p.get("role_styles",{}).items():
+        if role not in {"Title","Heading1","Heading2","Heading3","Heading4"} or set(style)-{"size_pt","alignment"}:
+            raise StudioError("ROLE_STYLE_UNSUPPORTED: "+role)
+        if ("size_pt" in style and (type(style["size_pt"]) not in (int,float) or not 8<=style["size_pt"]<=24)) or style.get("alignment","left") not in ("left","center","right"):
+            raise StudioError("ROLE_STYLE_INVALID: "+role)
+    if p.get("line_spacing") not in (None,"single"):
+        raise StudioError("LINE_SPACING_UNSUPPORTED")
     roles=[role for name in selected for role in ROLE_COMPONENTS.get(name,[])]
     p["front_roles"]=[role for role in ("title","authors","affiliation","abstract","keywords") if role in roles]
     p["enabled_objects"]=[role for name,role in OBJECT_COMPONENTS.items() if name in selected]
