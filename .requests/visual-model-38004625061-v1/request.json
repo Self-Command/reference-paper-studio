@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "operation": "visual-receipt",
+  "task_id": "visual-model-38004625061-v1",
+  "artifact_run": "38004625061",
+  "visual_receipt": "receipt.json",
+  "artifact_name": "review-delivery",
+  "files": [
+    {
+      "sha256": "6bf6bb2fd0ca886931941c0607ecca397c17f99570c25caea0d944d250c35211",
+      "role": "visual_receipt",
+      "path": "receipt.json"
+    }
+  ],
+  "engine_commit": "8f6bd2d2dc73a2ca9262a1a0455f15cc4afdef59"
+}
