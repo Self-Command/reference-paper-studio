@@ -43,11 +43,11 @@ def test_gmcm_registered_mother_and_actual_word_style_geometry(tmp_path):
 
 
 def test_gmcm_native_tex_heading_size_and_continuous_footer(tmp_path):
-    from studio.latex_layout import write
+    from studio.latex_layout import write_latex
     _,policy=load_composition("gmcm","1.1.0")
     policy["english_abstract_position"]="front"
     ast={"pandoc-api-version":[1,23,1],"meta":{},"blocks":[{"t":"Header","c":[1,["",[],[]],[{"t":"Str","c":"RegisteredHeading"}]]},{"t":"Para","c":[{"t":"Str","c":"Body"}]}]}
-    main=write(ast,[],{"title_zh":"中文题目","abstract_zh":"摘要内容"},policy,tmp_path)
+    main=write_latex(ast,[],{"title_zh":"中文题目","abstract_zh":"摘要内容"},policy,tmp_path)
     run(["xelatex","-interaction=nonstopmode","-halt-on-error",main.name],cwd=tmp_path)
     with pdfplumber.open(tmp_path/"main.pdf") as pdf:
         assert len(pdf.pages)==2
