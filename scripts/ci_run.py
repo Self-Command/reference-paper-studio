@@ -59,11 +59,14 @@ def execute(input_root, request_path, output, artifact_root=None, artifact_run=N
         fonts=install_declared(root,request,output)
         target=build(choice["id"],choice["version"],choice["font_profile"],fonts)
         result={"assets":str(target),"status":"candidate","registered_for_production":False}
-    elif stage == "export":
+    elif stage in ("export", "word-export"):
         if not version2: raise StudioError("APPROVAL_MISSING: migrate legacy document-task export to schema version 2")
         from studio.fonts import install_declared
         install_declared(root,request,output)
-        result = export(root, request, output)
+        if stage == 'word-export':
+            from studio.word_adapter import export as word_export
+            result = word_export(root, request, output)
+        else: result = export(root, request, output)
     elif stage in ("visual","visual-receipt") and artifact_root and artifact_run:
         from studio.visual_review import verify_receipt
         result = verify_receipt(confined(root,request["visual_receipt"]),artifact_root,artifact_run,output)

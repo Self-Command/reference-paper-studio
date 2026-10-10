@@ -23,6 +23,7 @@
         "md-review",
         "template-build",
         "export",
+        "word-export",
         "visual-receipt",
         "package"
       ]

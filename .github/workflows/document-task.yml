@@ -15,7 +15,7 @@ on:
       phase:
         required: true
         type: choice
-        options: [reference, review, model-review, md-review, template-build, export, visual, visual-receipt, package]
+        options: [reference, review, model-review, md-review, template-build, export, word-export, visual, visual-receipt, package]
       artifact_run:
         type: string
         default: ''
@@ -41,6 +41,22 @@ jobs:
         with:
           python-version: '3.12.8'
       - run: pip install -r requirements.lock
+      - id: word-pin
+        if: inputs.phase == 'word-export'
+        run: echo "commit=$(python -c 'import json; print(json.load(open("catalog/word-engine.json"))["commit"])')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: inputs.phase == 'word-export'
+        with:
+          repository: Self-Command/word-module-studio
+          ref: ${{ steps.word-pin.outputs.commit }}
+          path: .word-engine
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        if: inputs.phase == 'word-export'
+        with:
+          dotnet-version: '10.0.100'
+      - run: bash ci/bootstrap.sh && bash ci/render-bootstrap.sh
+        if: inputs.phase == 'word-export'
+        working-directory: .word-engine
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         if: inputs.phase != 'visual' && inputs.phase != 'visual-receipt'
         with:
@@ -48,7 +64,7 @@ jobs:
           key: rps-linux-pinned-tools-${{ hashFiles('ci/setup.sh') }}
           restore-keys: rps-linux-pinned-tools-
       - run: bash ci/setup.sh
-        if: inputs.phase != 'visual' && inputs.phase != 'visual-receipt'
+        if: inputs.phase != 'visual' && inputs.phase != 'visual-receipt' && inputs.phase != 'word-export'
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: inputs.phase == 'visual' || inputs.phase == 'visual-receipt'
         with:
@@ -63,6 +79,7 @@ jobs:
           TASK_ID: '${{ inputs.task_id }}'
           PHASE: '${{ inputs.phase }}'
           ARTIFACT_RUN: '${{ inputs.artifact_run }}'
+          WMS_ENGINE_ROOT: '${{ github.workspace }}/.word-engine'
         run: |
           python scripts/ci_run.py --input-root task-inputs --request "$REQUEST_PATH" --output build/task --artifact-root visual-artifacts --artifact-run "$ARTIFACT_RUN"
           git rev-parse HEAD > build/skill-commit.txt

@@ -1,0 +1,39 @@
+name: Pinned Word engine consumer
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/modular-paper-studio]
+    paths: [scripts/studio/word_adapter.py, ci/word_adapter_regression.py, catalog/word-engine.json, '.github/workflows/word-engine.yml']
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - id: pin
+        run: echo "commit=$(python -c 'import json; print(json.load(open("catalog/word-engine.json"))["commit"])')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: Self-Command/word-module-studio
+          ref: ${{ steps.pin.outputs.commit }}
+          path: .word-engine
+      - uses: actions/setup-python@06da6279cdbca41027908073e81a4544dc79c06b
+        with:
+          python-version: '3.12.8'
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.100'
+      - run: bash ci/bootstrap.sh && bash ci/render-bootstrap.sh
+        working-directory: .word-engine
+      - run: python ci/word_adapter_regression.py
+        env:
+          WMS_ENGINE_ROOT: ${{ github.workspace }}/.word-engine
+          PYTHONPATH: ${{ github.workspace }}/.word-engine/src
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pinned-word-consumer-${{ github.run_id }}
+          path: build/word-adapter/
+          retention-days: 30

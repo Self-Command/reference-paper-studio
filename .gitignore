@@ -10,3 +10,4 @@ deliveries/
 node_modules/
 *.log
 /.tool-downloads/
+/.word-engine/

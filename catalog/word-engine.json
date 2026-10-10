@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "repository": "Self-Command/word-module-studio",
+  "commit": "81c8b3242dbdcdee5d25f9e657ca31b4bb2403d2",
+  "version": "0.1.0rc1",
+  "state": "candidate",
+  "default_dual_export_unchanged": true
+}
