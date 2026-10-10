@@ -2,7 +2,7 @@
 
 中文参考论文驱动的 Codex 学术写作与双格式排版技能。统一稿件生成 Word、LaTeX 和 PDF；测试、编译和渲染全部在 GitHub Actions。
 
-入口为 [SKILL.md](SKILL.md)，云端操作见 [cloud-tasks.md](references/cloud-tasks.md)。仓库保留用户参考资料和模型的私有输入，公开发布需另行去除私有材料。
+入口为 [SKILL.md](SKILL.md)，云端操作见 [cloud-tasks.md](references/cloud-tasks.md)。用户已于2026-10-10确认仓库现有材料为可公开测试材料，并明确授权直接公开原仓库；历史、分支和附件保留。后续正式作者稿不因此获得公开授权，提交器仍检查目标可见性与公开范围。
 
 核心实现：版本化 DOCX 母版、内容无权覆盖的字体和分节、完整双栏正文、可逆原生 OMML 换行、参考规则及模型证据门禁、Pandoc 共同表示、三线表、实际栏边界测量、XeLaTeX 与 LibreOffice 校样，以及绑定产物的视觉审阅收据。
 

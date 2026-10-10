@@ -43,7 +43,8 @@ def submit(args):
     if not names or len(set(names))!=len(names): raise ValueError("Explicit unique file list required")
     sources=[(name,safe_input(root,name)) for name in names]
     info = json.loads(command(["gh", "repo", "view", args.repo, "--json", "isPrivate,defaultBranchRef"]))
-    if not info["isPrivate"]: raise ValueError("Task submission requires a private repository")
+    if not info["isPrivate"] and not getattr(args,"public_inputs",False):
+        raise ValueError("PUBLIC_INPUTS_NOT_AUTHORIZED: use --public-inputs only for explicitly approved public materials")
     # REST transfers exactly the listed blobs; avoids cloning private fixtures or
     # depending on native Git connectivity. It performs no document processing.
     def api(path,payload=None):
@@ -86,6 +87,7 @@ def main():
     parser.add_argument("--repo", default=DEFAULT_REPO)
     commands = parser.add_subparsers(dest="operation", required=True)
     p = commands.add_parser("submit"); p.add_argument("--root", required=True); p.add_argument("--request", required=True); p.add_argument("--workflow-ref", help="Development workflow ref; defaults to repository default branch")
+    p.add_argument("--public-inputs",action="store_true",help="Explicit authorization to upload these declared inputs to a public repository")
     p = commands.add_parser("status"); p.add_argument("--run"); p.add_argument("--task")
     p = commands.add_parser("fetch"); p.add_argument("--run", required=True); p.add_argument("--output", required=True)
     args = parser.parse_args()

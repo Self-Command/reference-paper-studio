@@ -61,18 +61,21 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0, metrics=None):
     if current != old:
         changes.append({"path":[],"before":old,"after":current,"reason":"editable leading operators in existing math arguments"})
     containers = {"oMath", "e", "num", "den", "lim"}
-    def segments_of(element):
+    def segments_of(element, tail_budget=None):
         tokens=[]
         for child in element:
             if child.tag==M+"r" and len(child.findall(M+"t"))==1:
                 value=child.findtext(M+"t","")
-                for piece in filter(None,re.split(r"(?=[=<>≤≥+−×∧∨,;]|[\u3400-\u9fff])",value)):
+                for piece in filter(None,re.split(r"(?=[=<>≤≥+−×∧∨,;:]|[\u3400-\u9fff])",value)):
                     token=deepcopy(child); token.find(M+"t").text=piece; tokens.append(token)
             else: tokens.append(deepcopy(child))
         segments=[]; segment=[]; depth=0; previous=""
         for token in tokens:
             value=token.findtext(M+"t","") if token.tag==M+"r" else ""
-            safe=(depth==0 and (token.tag==M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;\u3400-\u9fff]",value)) or previous.endswith(")") and value=="1")) or (depth==1 and token.tag==M+"r" and value.startswith(","))
+            # A quantified condition's colon is a legal break before its
+            # predicate. Keeping the range and predicate in one segment was
+            # pushing a short trailing '=1' onto a line of its own.
+            safe=(depth==0 and (token.tag==M+"r" and bool(re.match(r"^[=<>≤≥+−×∧∨,;:\u3400-\u9fff]",value)) or previous.endswith(")") and value=="1")) or (depth==1 and token.tag==M+"r" and value.startswith(","))
             if safe and segment: segments.append(segment); segment=[]
             segment.append(token)
             for character in value:
@@ -80,6 +83,16 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0, metrics=None):
                 elif character in ")]}": depth=max(0,depth-1)
             previous=value
         if segment: segments.append(segment)
+        if tail_budget is not None:
+            merged=[]
+            for item in segments:
+                literal="".join(t.text or "" for token in item for t in token.iter(M+"t"))
+                if merged and re.fullmatch(r"[=<>≤≥]\s*-?\d+(?:\.\d+)?[.,;]?",literal) and sum(measure(t) for t in merged[-1]+item)<=tail_budget:
+                    # Join only a short scalar relation that actually fits.
+                    # Never borrow the number region or change the operand.
+                    merged[-1].extend(item)
+                else: merged.append(item)
+            segments=merged
         return segments
     def visit(element, path, budget):
         name = etree.QName(element).localname
@@ -120,11 +133,11 @@ def wrap(root, width_pt, font_size_pt=10, array_padding_pt=0, metrics=None):
                 child_budget = max(45,budget if linear_overflow else budget-other)
             visit(child, path+[index], max(45, child_budget))
         if name not in containers or measure(element) <= budget: return
-        segments=segments_of(element)
         # Pandoc renders a newly stacked OMML row as a one-column TeX array.
         # Its two outer arraycolsep spaces occupy real width. Reserve them
         # only when creating that array, never at transparent nesting levels.
         row_budget=max(45,budget-array_padding_pt)
+        segments=segments_of(element,row_budget)
         rows = []; row = []; used = 0
         for segment in segments:
             size = sum(measure(t) for t in segment)

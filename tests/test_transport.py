@@ -25,7 +25,8 @@ def test_transport_has_no_processing_imports():
     assert not any(name.startswith(("studio","pytest","docx","pypdf","pdfplumber")) for name in imported)
 
 
-def test_submission_uses_only_declared_rest_blobs_and_frozen_workflow(tmp_path,monkeypatch):
+@pytest.mark.parametrize("public",[False,True])
+def test_submission_uses_only_declared_rest_blobs_and_frozen_workflow(tmp_path,monkeypatch,public):
     import base64,json
     from types import SimpleNamespace
     (tmp_path/"paper.md").write_text("unchanged public source")
@@ -35,7 +36,7 @@ def test_submission_uses_only_declared_rest_blobs_and_frozen_workflow(tmp_path,m
     calls=[]
     def command(args,cwd=None,input_text=None):
         calls.append((args,json.loads(input_text) if input_text else None))
-        if args[:3]==["gh","repo","view"]:return json.dumps({"isPrivate":True,"defaultBranchRef":{"name":"main"}})
+        if args[:3]==["gh","repo","view"]:return json.dumps({"isPrivate":not public,"defaultBranchRef":{"name":"main"}})
         if args[:2]==["gh","workflow"]:return ""
         path=args[2]
         if path.endswith("git/ref/heads/main"):return '{"object":{"sha":"parent"}}'
@@ -46,7 +47,7 @@ def test_submission_uses_only_declared_rest_blobs_and_frozen_workflow(tmp_path,m
         if path.endswith("git/refs"):return '{"ref":"refs/heads/request/first-use"}'
         raise AssertionError(args)
     monkeypatch.setattr(paper,"command",command)
-    result=paper.submit(SimpleNamespace(root=tmp_path,request=request,repo="owner/private",workflow_ref="frozen-skill-sha"))
+    result=paper.submit(SimpleNamespace(root=tmp_path,request=request,repo="owner/target",workflow_ref="frozen-skill-sha",public_inputs=public))
     payloads=[payload for args,payload in calls if args[2].endswith("git/blobs")]
     assert len(payloads)==2
     assert base64.b64decode(payloads[0]["content"])==b"unchanged public source"
@@ -55,3 +56,20 @@ def test_submission_uses_only_declared_rest_blobs_and_frozen_workflow(tmp_path,m
     dispatch=next(args for args,payload in calls if args[:2]==["gh","workflow"])
     assert dispatch[dispatch.index("--ref")+1]=="frozen-skill-sha"
     assert result["workflow_ref"]=="frozen-skill-sha"
+
+
+def test_public_submission_without_explicit_scope_stops_before_upload(tmp_path,monkeypatch):
+    import json
+    from types import SimpleNamespace
+    (tmp_path/"paper.md").write_text("private manuscript")
+    request=tmp_path/"request.json"
+    request.write_text(json.dumps({"id":"blocked","stage":"review","files":["paper.md"]}))
+    calls=[]
+    def command(args,**kwargs):
+        calls.append(args)
+        assert args[:3]==["gh","repo","view"]
+        return json.dumps({"isPrivate":False,"defaultBranchRef":{"name":"main"}})
+    monkeypatch.setattr(paper,"command",command)
+    with pytest.raises(ValueError,match="PUBLIC_INPUTS_NOT_AUTHORIZED"):
+        paper.submit(SimpleNamespace(root=tmp_path,request=request,repo="owner/public",workflow_ref=None))
+    assert len(calls)==1

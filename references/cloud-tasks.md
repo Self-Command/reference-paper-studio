@@ -9,7 +9,7 @@ python scripts/paper.py status --run RUN_ID
 python scripts/paper.py fetch --run RUN_ID --output DOWNLOADED_ARTIFACTS
 ```
 
-`--repo OWNER/REPO` 为全局参数，须放在 `submit/status/fetch` 之前。默认仓库为 `Self-Command/reference-paper-studio`，提交前要求仓库私有。任务 ID 唯一；重新提交使用新 ID，避免覆盖历史输入。
+`--repo OWNER/REPO` 为全局参数，须放在 `submit/status/fetch` 之前。默认仓库为 `Self-Command/reference-paper-studio`，现为公开开发仓库。公开资料经用户明确授权后在 `submit` 加 `--public-inputs`，将该公开范围落实为传输参数；没有此参数即拒绝公开上传。作者私人正式稿应指定其私有任务仓库，不需要公开参数。任务 ID 唯一，重新提交使用新 ID，不覆盖历史输入。
 
 输入目录中的请求示例：
 
@@ -28,7 +28,7 @@ python scripts/paper.py fetch --run RUN_ID --output DOWNLOADED_ARTIFACTS
 }
 ```
 
-所有文件使用相对于输入目录的路径与 `/` 分隔符。`files` 必须逐项列出图片、文献库、参考论文、规则证据、模型验证报告和证据清单；不支持通配符、目录上传、远程图片或越界路径。提交器复制这些文件到私有 `request/任务ID` 分支，附 SHA-256 后触发默认分支工作流。工作流代码与输入提交分别检出，防止输入分支替换处理程序。
+所有文件使用相对于输入目录的路径与 `/` 分隔符。`files` 必须逐项列出图片、文献库、参考论文、规则证据、模型验证报告和证据清单；不支持通配符、目录上传、远程图片或越界路径。提交器只复制这些文件到目标仓库的 `request/任务ID` 分支，分支继承目标可见性，附SHA-256后触发工作流。工作流代码与输入提交分别检出，输入分支不能替换处理程序。
 
 阶段：`reference` 需要 `reference_evidence` 指定规则证据 JSON；`review` 需要 `manuscript`；`export` 需要 `manuscript`、`metadata`、`template_id` 与 `template_version`；可选 `template_variant` 默认 front。旧 profile 请求明确拒绝，须迁移到固定模板。元数据采用 `title/authors/affiliation/abstract/keywords` 加 `_zh/_en` 后缀。作者信息仅使用真实用户提供值，允许留空。可选 `bibliography` 接受 Pandoc 支持的文献库，顺序编码在共同 AST 中解析一次。原稿的 `[1]` 型文献条目直接保留并检查断引。
 
