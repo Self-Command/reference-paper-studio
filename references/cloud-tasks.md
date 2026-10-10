@@ -1,44 +1,72 @@
 # 本地传输与云端任务
 
-本地仅执行以下传输命令（需要 Python 3.10+、Git 和已登录的 GitHub CLI）：
+本地只负责上传清单、查询、下载和查看云端页图，不执行测试、转换、编译、渲染或程序验收。需要Python 3.10+、GitHub CLI和有效登录。
 
 ```text
-python scripts/paper.py submit --root INPUT_DIRECTORY --request request.json
-python scripts/paper.py status --task my-model-proof
+python scripts/paper.py submit --root INPUT_DIRECTORY --request INPUT_DIRECTORY/request.json
+python scripts/paper.py status --task TASK_ID
 python scripts/paper.py status --run RUN_ID
-python scripts/paper.py fetch --run RUN_ID --output DOWNLOADED_ARTIFACTS
+python scripts/paper.py fetch --run RUN_ID --output EMPTY_DESTINATION
 ```
 
-`--repo OWNER/REPO` 为全局参数，须放在 `submit/status/fetch` 之前。默认仓库为 `Self-Command/reference-paper-studio`，现为公开开发仓库。公开资料经用户明确授权后在 `submit` 加 `--public-inputs`，将该公开范围落实为传输参数；没有此参数即拒绝公开上传。作者私人正式稿应指定其私有任务仓库，不需要公开参数。任务 ID 唯一，重新提交使用新 ID，不覆盖历史输入。
+`--repo OWNER/REPO`是全局参数，放在操作之前。开发仓库Self-Command/reference-paper-studio已按用户指示公开；明确授权的公开材料在submit加`--public-inputs`。正式私人稿件指定其私有任务仓库，不能继承本项目测试材料的公开授权。本次授权范围内无需再次询问。
 
-输入目录中的请求示例：
+开发任务可加`--workflow-ref codex/modular-paper-studio`绑定候选处理分支；省略时用默认分支。输入提交与处理程序分别检出，任务分支不能替换执行程序。不要把手动工作流分支参数描述为任意提交SHA；引擎身份由提交器解析并写入请求。
+
+## 版本2契约
+
+导出任务必须使用schema_version: 2。旧导出请求缺少审批绑定，即使能上传也会被云端拒绝；不要用旧id/stage/template_id示例冒充可执行导出。
 
 ```json
 {
-  "id": "my-model-proof",
-  "stage": "export",
-  "document_kind": "model",
-  "manuscript": "model.md",
-  "metadata": "metadata.json",
-  "template_id": "reference-journal-v1",
-  "template_version": 1,
-  "template_variant": "front",
-  "expected_equations": 30,
-  "files": ["model.md", "metadata.json"]
+  "schema_version": 2,
+  "task_id": "my-format-first",
+  "operation": "export",
+  "document_kind": "format",
+  "manuscript": "manuscript.md",
+  "files": [
+    {"path": "manuscript.md", "sha256": "ACTUAL_MANUSCRIPT_SHA256", "role": "manuscript"},
+    {"path": "approvals.json", "sha256": "ACTUAL_APPROVALS_SHA256", "role": "approvals"}
+  ],
+  "approval_file": "approvals.json",
+  "approvals": {"md_content": "content-1", "presentation": "fonts-1", "export": "export-1"},
+  "template": {
+    "id": "reference-journal-v1",
+    "version": "2.0.0",
+    "variant": "front",
+    "font_profile": "open-serif",
+    "manifest_sha256": "ACTUAL_REGISTERED_MANIFEST_SHA256"
+  },
+  "outputs": ["docx", "latex", "docx-proof-pdf", "latex-pdf", "previews"]
 }
 ```
 
-所有文件使用相对于输入目录的路径与 `/` 分隔符。`files` 必须逐项列出图片、文献库、参考论文、规则证据、模型验证报告和证据清单；不支持通配符、目录上传、远程图片或越界路径。提交器只复制这些文件到目标仓库的 `request/任务ID` 分支，分支继承目标可见性，附SHA-256后触发工作流。工作流代码与输入提交分别检出，输入分支不能替换处理程序。
+大写指纹占位符必须替换成实际64位SHA-256，审批事件必须来自当前用户指令，不能复制示例替用户批准。当前测试母版均为候选，正常任务仍受TEMPLATE_NOT_READY门禁；示例不承诺候选已经正式可用。母版先独立构建、验收与登记，填充只读已登记版本，不在每次导出时重建母版或设置候选绕过开关。
 
-阶段：`reference` 需要 `reference_evidence` 指定规则证据 JSON；`review` 需要 `manuscript`；`export` 需要 `manuscript`、`metadata`、`template_id` 与 `template_version`；可选 `template_variant` 默认 front。旧 profile 请求明确拒绝，须迁移到固定模板。元数据采用 `title/authors/affiliation/abstract/keywords` 加 `_zh/_en` 后缀。作者信息仅使用真实用户提供值，允许留空。可选 `bibliography` 接受 Pandoc 支持的文献库，顺序编码在共同 AST 中解析一次。原稿的 `[1]` 型文献条目直接保留并检查断引。
+请求不声明input_commit，由云端绑定真正输入提交。engine_commit可省略，由提交器绑定处理分支；已有声明必须与所选引擎一致。详细字段见[请求契约](../schemas/request.schema.json)和[审批契约](../schemas/approval.schema.json)。
 
-完整论文使用 `document_kind: paper`，并提供 `model_evidence`：包括 `status: passed`、`author_approved: true`、`model`、`report`、两者 SHA-256，以及每条定量主张对应的 `source` 和 SHA-256。技能仍需实际阅读报告，不能仅凭字段为真宣称数学正确性。模型格式校样用 `document_kind: model`，不宣称验证通过。
+files逐项列出稿件、元数据、图片、文献库、证据与审批，使用相对输入目录的`/`路径。没有通配符、目录上传、远程图片或越界路径。仅上传清单文件，不上传整个工作区。任务ID唯一；重新提交用新ID，保留以前输入和首版。
 
-产物中的 `acceptance.json` 分别记录构建、自动检查和视觉审阅状态。两套 PDF 分别为 XeLaTeX 与 LibreOffice Word 兼容校样；PNG 来自云端 Poppler。本地只查看下载的图片，不运行任何渲染器。视觉审阅记录必须指明运行、PDF 与 PNG 指纹、检查页码和发现的问题；存在问题应修改源文件后重新提交云端。
+MD元数据使用title/authors/affiliation/abstract/keywords加_zh/_en后缀。外来title/authors/funding等字段不会静默丢弃；先报告位置，确认语义映射。图片和表格要有名称、稳定标识与正文引用。公式保留LaTeX数学及稳定编号；物理排版指令拒绝，稿件不能覆盖模板字体、字号、页边距、栏数或分节。
 
-手动触发、轮询与下载不自动完成写作、投稿或发布。Actions 产物默认保留 30 天，需保存时及时下载。安装包不含私人模型和参考论文。
+## 阶段与授权
 
-视觉审阅完成后，将审阅收据作为唯一清单输入提交 `stage: visual` 任务，同时指定 `artifact_run` 和 `artifact_name`（`document-task` 或 `skill-delivery`）。收据含 `run_id`、`reviewer`、`status: passed` 及 `artifacts`：逐项记录每套 PDF 和每张 PNG 的相对路径、SHA-256、`reviewed: true`、未解决问题。此阶段只在 Actions 下载上一运行产物并校验收据，不重新渲染导致指纹变化。覆盖不全、文件变化、自动检查未通过或仍有问题时，视觉验收失败。
+| operation | 输入与边界 |
+|---|---|
+| reference | 参考PDF与带页码证据；参考一致项优先，冲突才由指定官方模板消歧 |
+| model-review | 定义、符号、模型与验证证据；程序不宣称数学证明 |
+| md-review | 标题、逻辑、公式、图表、引用与资源；只检查，不自动修复 |
+| template-build | 登记组合及字体；独立母版维护，不按稿件临时调模板 |
+| export | MD确认、字体选择、生成授权绑定当前文件、资源和母版；已有批准复用 |
+| visual-receipt | 真实逐页复检报告与冻结产物；核验覆盖和身份，不重新渲染 |
+| package | 候选包及白名单检查；不代替发布或安装门禁 |
 
+模型校样用document_kind: model；已发表稿件纯格式整理用format，不重新宣称验证科学结论。新研究完整论文用paper，须有模型验证报告、作者确认及定量主张对应证据；方向批准不替代这些要求。字体先问用户，开发合成测试用已批准开源方案，正式稿件不自动替用户选字体。
 
-提交器仅通过 GitHub REST 上传清单中的文件及 SHA-256，不克隆或上传本地工作区。开发候选版可在 submit 使用 `--workflow-ref BRANCH_OR_SHA`，明确绑定处理程序版本；正式使用省略此参数，执行默认分支。原有论文纯格式整理使用 `document_kind: format`，模型校样继续使用 `model`。
+## 产物与视觉收据
+
+产物包括已生成的Word、LaTeX项目、XeLaTeX PDF、LibreOffice Word兼容PDF、云端Poppler逐页PNG和报告。构建、自动检查、视觉复检与交付状态分开记录；兼容PDF不冒称Microsoft Word原生效果。失败时提供实际已经生成的Word与诊断；若在母版、审批或输入检查前拒绝，明确没有Word，不能虚构首版。
+
+看完两套校样所有页后记录21项清单，结果可以为issues_found。收据任务使用operation: visual-receipt、artifact_run、artifact_name、visual_receipt和仅含收据的清单。收据记录运行ID、检查人、所有Word/TeX/PDF/PNG指纹、输入及母版绑定、检查结果和问题。云端下载冻结产物核验，覆盖不全或身份变化失败；收据成功不意味着视觉无问题。
+
+先交Word、视觉附件与报告，用户批准对应问题范围后再修复。已批准技术开发范围内排查与重跑不重复询问。首版和每次修订独立保留，不用后来的校样改写首次结果。Actions附件默认保存30天，及时下载所需产物；正式安装包不含稿件、实验或任务材料。

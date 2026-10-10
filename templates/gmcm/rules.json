@@ -75,7 +75,9 @@
       "source_sha256": "46d2e2a87e90608ace764203d5326d7c7e41f01a5eb79986724a6f159fd70e16",
       "page": 1,
       "confidence": "high",
-      "status": "implemented_pending_cloud_validation",
+      "status": "cloud_checked_fixture_only",
+      "validation_run": "38016552113",
+      "visual_report": "docs/visual/38016552113.md",
       "adoption_reason": "摘要后正文另页，摘要页起阿拉伯数字连续居中页码，无页眉和身份标志"
     },
     {
@@ -97,7 +99,9 @@
       "source_sha256": "46d2e2a87e90608ace764203d5326d7c7e41f01a5eb79986724a6f159fd70e16",
       "page": 1,
       "confidence": "high",
-      "status": "implemented_pending_cloud_validation",
+      "status": "cloud_checked_fixture_only",
+      "validation_run": "38016552113",
+      "visual_report": "docs/visual/38016552113.md",
       "adoption_reason": "三号题名、四号一级标题居中，小四正文与单倍行距；仍使用开源测试字体，未冒称宋体和黑体完全复现"
     }
   ]

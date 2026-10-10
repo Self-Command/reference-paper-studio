@@ -9,11 +9,12 @@
 |通用数学建模研究论文|[template.md](../templates/general-modeling/template.md)|[guidance.md](../templates/general-modeling/guidance.md)|自建推荐结构，非官方模板；非年度模板|
 |全国大学生数学建模竞赛|[template.md](../templates/cumcm/template.md)|[guidance.md](../templates/cumcm/guidance.md)|2026全国组委会规范；2026|
 |MCM/ICM美赛|[template.md](../templates/mcm-icm/template.md)|[guidance.md](../templates/mcm-icm/guidance.md)|COMAP当前2027规则；题目专用交付需另确认；2027|
-|中国研究生数学建模竞赛|[template.md](../templates/gmcm/template.md)|[guidance.md](../templates/gmcm/guidance.md)|当前年份附件尚待核实，内容结构为推荐，不能声明官方格式；2026|
+|中国研究生数学建模竞赛|[template.md](../templates/gmcm/template.md)|[guidance.md](../templates/gmcm/guidance.md)|2026官方格式附件已核对，内容结构仍为待审推荐；物理候选尚未完整合规；2026|
 |通用算法与实验研究论文|[template.md](../templates/general-algorithm/template.md)|[guidance.md](../templates/general-algorithm/guidance.md)|自建推荐结构，非官方模板；非年度模板|
 |IEEE Access研究论文|[template.md](../templates/ieee-access/template.md)|[guidance.md](../templates/ieee-access/guidance.md)|IEEE Access官方准备指南；本版为开源字体个人审阅适配；非年度模板|
 |系统工程与电子技术|[template.md](../templates/seet/template.md)|[guidance.md](../templates/seet/guidance.md)|参考论文优先，冲突按本刊官方写作模板消歧；非年度模板|
-|系统工程理论与实践|[template.md](../templates/setp/template.md)|[guidance.md](../templates/setp/guidance.md)|官方LaTeX模板仍需云端读取；本版为个人审阅结构与工程版式；非年度模板|
-|中国管理科学|[template.md](../templates/cjms/template.md)|[guidance.md](../templates/cjms/guidance.md)|官方撰写规范仍需云端读取；推荐章节并非官方固定章节；非年度模板|
+|系统工程理论与实践|[template.md](../templates/setp/template.md)|[guidance.md](../templates/setp/guidance.md)|官方LaTeX模板已云端提取，物理适配待完成；本版为个人审阅结构与工程版式；非年度模板|
+|中国管理科学|[template.md](../templates/cjms/template.md)|[guidance.md](../templates/cjms/guidance.md)|官方撰写规范已云端提取并核对；推荐章节并非官方固定章节；非年度模板|
 
 请审定这些推荐章节的名称、顺序和各章内容要求。模板类别已批准；本次确认的是具体MD骨架。字体与生成Word的授权不由此自动代替。
+
